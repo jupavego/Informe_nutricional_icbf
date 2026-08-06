@@ -732,7 +732,7 @@ function mosaico(partes, cfg) {
 function reglasPuntos(reglas, bloques) {
   const p = el("div", "panel");
   const c = el("div", "catdato");
-  c.append(el("i"), document.createTextNode("Registros marcados sobre las 174.489 filas de toma"));
+  c.append(el("i"), document.createTextNode("Registros marcados sobre las " + mil(D.meta.filas_nn) + " filas de toma"));
   p.append(c);
   const max = Math.max(...reglas.map(r => r.pct), 0.0001);
   const esc_ = v => Math.pow(v / max, 0.42);   /* raiz: comprime lo grande, abre lo chico */
@@ -2115,7 +2115,7 @@ function vOperadores() {
 function vCalidad() {
   const s = $("#v-calidad"); s.textContent = "";
   s.append(h2("Reglas de depuración aplicadas a la descarga", "calidad"));
-  s.append(el("p", "note", "Estas 27 reglas se evalúan sobre las 168.493 filas de toma, antes de deduplicar; por eso son cifras regionales y no responden a los filtros. Ninguna regla borra datos: cada una marca y deja constancia en un log trazable."));
+  s.append(el("p", "note", "Estas 27 reglas se evalúan sobre las " + mil(D.meta.filas_nn) + " filas de toma, antes de deduplicar; por eso son cifras regionales y no responden a los filtros. Ninguna regla borra datos: cada una marca y deja constancia en un log trazable."));
   s.append(reglasPuntos(D.reglas, {
     A: "Integridad de la descarga",
     B: "Validez de dominio · catálogo Res. 2465",
@@ -2128,7 +2128,7 @@ function vCalidad() {
 
   const peor = D.reglas.slice().sort((a, b) => b.pct - a.pct)[0];
   const d1 = D.reglas.find(x => x.cod === "D1");
-  s.append(lectura(`La regla más disparada es <b>${esc(peor.cod)}</b> — ${esc(peor.desc.toLowerCase())} — con ${arriba(mil(peor.n) + " registros")} (${p2(peor.pct)}).${d1 && d1.n === 0 ? ` En cambio <b>D1</b> está en cero: la clasificación que entrega el sistema coincide exactamente con el puntaje Z en las 168.493 filas, así que ${abajo("la clasificación antropométrica es confiable")}. Lo que falla es todo lo que la rodea.` : ""}`));
+  s.append(lectura(`La regla más disparada es <b>${esc(peor.cod)}</b> — ${esc(peor.desc.toLowerCase())} — con ${arriba(mil(peor.n) + " registros")} (${p2(peor.pct)}).${d1 && d1.n === 0 ? ` En cambio <b>D1</b> está en cero: la clasificación que entrega el sistema coincide exactamente con el puntaje Z en las ${mil(D.meta.filas_nn)} filas, así que ${abajo("la clasificación antropométrica es confiable")}. Lo que falla es todo lo que la rodea.` : ""}`));
   s.append(h2("Unidades de servicio con mayor tasa de marcas", "talla_inf"));
   s.append(el("p", "note", "Porcentaje de beneficiarios con al menos una marca de plausibilidad o coherencia. Responde a los filtros. Mínimo 25 beneficiarios. Es la lista de reinducción."));
   const ix = idxNN(); const m = new Map();
@@ -2729,7 +2729,8 @@ function vAnatomia() {
     t: "Flag de plausibilidad", u2: "marca del sistema", ic: "calc", calc: 1,
     datos: [
       ["Qué hace", "marca las mediciones biológicamente imposibles según los límites de la OMS."],
-      ["Verificado", "con Flag = 0 el 99,75 % tiene |Z| ≤ 5; con Flag distinto de cero, el 100 % lo supera."],
+      ["Verificado", (() => { const f = D.calidad_extra.flag, okD = f.ok_dentro || 0, okF = f.ok_fuera || 0, malD = f.mal_dentro || 0, malF = f.mal_fuera || 0;
+        return "con Flag = 0 el " + p1(pct(okD, okD + okF)) + " tiene el puntaje Z dentro de los límites OMS; con Flag distinto de cero, el " + p1(pct(malF, malD + malF)) + " los supera."; })()],
       ["En este corte", "<b>" + mil(flags) + "</b> registros marcados (" + p2f(pct(flags, ix.length)) + ")."],
       ["Uso", "el tablero los excluye del índice de riesgo y los deja como <b>no evaluables</b>."],
     ],
@@ -2738,7 +2739,10 @@ function vAnatomia() {
     t: "Criterio de cumplimiento", u2: "marca del sistema", ic: "calc", calc: 1,
     datos: [
       ["Qué hace", "el sistema evalúa si el registro nutricional cumple lo exigido."],
-      ["No mide nutrición", "mide <b>disciplina de registro</b>. Su dispersión entre centros zonales de la misma regional llega a ser de cinco veces."],
+      ["No mide nutrición", "mide <b>disciplina de registro</b>. Su dispersión entre centros zonales de la misma regional llega a ser de " + (() => {
+        const g = porDim(idxNN(), "cz", DIC.cz, 300).map(x => pct(x.r.nc, x.r.n)).filter(v => v > 0);
+        return (g.length > 1 ? Math.max(...g) / Math.min(...g) : 1).toFixed(1).replace(".", ",");
+      })() + " veces."],
       ["En este corte", "<b>" + p1(pct(resumen(ix).nc, ix.length)) + "</b> en NO CUMPLE."],
     ],
   }));
