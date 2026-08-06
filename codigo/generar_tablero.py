@@ -15,6 +15,9 @@ from collections import Counter, defaultdict
 
 D = r"E:\REGIONAL ANTIOQUIA\GESTION SUPERVISION REGIONAL\VIDEOCONFERENCIAS\7. 2026\6. JUNIO\18-06-2026 SEGUIMIENTO NUTRICIONAL\REPS\_procesado"
 OUT = os.path.dirname(os.path.abspath(__file__))
+# OUT es la carpeta del script; los recursos ya procesados estan un nivel
+# arriba, en recursos/. Antes coincidian y por eso no se notaba.
+REC = os.path.join(os.path.dirname(OUT), "recursos")
 
 PT = ["", "DESNUTRICION AGUDA SEVERA", "DESNUTRICION AGUDA MODERADA",
       "RIESGO DE DESNUTRICION AGUDA", "PESO ADECUADO PARA LA TALLA",
@@ -303,8 +306,8 @@ data = {
     "gs": G,
     "trans": [{"a": a, "b": b, "n": n} for (a, b), n in trans.most_common(20)],
     "reglas": reglas,
-    "mapa": json.load(io.open(os.path.join(OUT, "mapa.json"), encoding="utf-8")),
-    "uds": json.load(io.open(os.path.join(OUT, "uds.json"), encoding="utf-8")),
+    "mapa": json.load(io.open(os.path.join(REC, "mapa.json"), encoding="utf-8")),
+    "uds": json.load(io.open(os.path.join(REC, "uds.json"), encoding="utf-8")),
     "historico": {"nn": HIST_NN, "gs": HIST_GS},
     "calidad_extra": CALIDAD_EXTRA,
     "alias": {   # nombre en el reporte -> nombre en la cartografia

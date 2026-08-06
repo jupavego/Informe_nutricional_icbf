@@ -12,10 +12,16 @@ filtro, para que herede la tinta institucional.
 from PIL import Image
 import io, os, base64, json
 
-SRC = (r"E:\REGIONAL ANTIOQUIA\GESTION SUPERVISION REGIONAL\VIDEOCONFERENCIAS"
-       r"\7. 2026\6. JUNIO\18-06-2026 SEGUIMIENTO NUTRICIONAL\REPS"
-       r"\ChatGPT Image 6 ago 2026, 02_06_42 a.m.png")
+# la lamina de origen vive con los demas recursos, no en la raiz
+SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                   "recursos", "figuras_fuente", "ChatGPT Image 6 ago 2026, 02_06_42 a.m.png")
 OUT = os.path.dirname(os.path.abspath(__file__))
+# la raiz del proyecto es la carpeta que contiene a codigo/; los recursos ya
+# procesados viven aparte para no mezclarlos con el codigo
+RAIZ = os.path.dirname(OUT)
+REC = os.path.join(RAIZ, "recursos")
+os.makedirs(REC, exist_ok=True)
+OUT = REC
 ALTO = 620          # alto final de cada figura
 
 

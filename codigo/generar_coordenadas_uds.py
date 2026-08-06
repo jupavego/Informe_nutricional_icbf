@@ -24,6 +24,12 @@ CUPOS_XLSX = (r"E:\REGIONAL ANTIOQUIA\GESTION SUPERVISION REGIONAL\VIDEOCONFEREN
 PROC = (r"E:\REGIONAL ANTIOQUIA\GESTION SUPERVISION REGIONAL\VIDEOCONFERENCIAS"
         r"\7. 2026\6. JUNIO\18-06-2026 SEGUIMIENTO NUTRICIONAL\REPS\_procesado")
 OUT = os.path.dirname(os.path.abspath(__file__))
+# la raiz del proyecto es la carpeta que contiene a codigo/; los recursos ya
+# procesados viven aparte para no mezclarlos con el codigo
+RAIZ = os.path.dirname(OUT)
+REC = os.path.join(RAIZ, "recursos")
+os.makedirs(REC, exist_ok=True)
+OUT = REC
 
 # recuadro de Antioquia con un margen prudente
 LAT = (5.2, 9.1)

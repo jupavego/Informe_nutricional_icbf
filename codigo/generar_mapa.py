@@ -16,6 +16,12 @@ import json, io, os, math, unicodedata
 GEO = (r"E:\REGIONAL ANTIOQUIA\GESTION SUPERVISION REGIONAL\VIDEOCONFERENCIAS"
        r"\7. 2026\5. MAYO\20-05-2026 CONTROL COBERTURAL\antioquia_con_comunas v5.geojson")
 OUT = os.path.dirname(os.path.abspath(__file__))
+# la raiz del proyecto es la carpeta que contiene a codigo/; los recursos ya
+# procesados viven aparte para no mezclarlos con el codigo
+RAIZ = os.path.dirname(OUT)
+REC = os.path.join(RAIZ, "recursos")
+os.makedirs(REC, exist_ok=True)
+OUT = REC
 TOL = 0.0022      # grados ~ 240 m
 DEC = 4           # 4 decimales ~ 11 m
 
