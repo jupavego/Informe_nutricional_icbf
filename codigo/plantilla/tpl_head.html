@@ -1,0 +1,1547 @@
+<style>
+:root{
+  /* silueta de persona para los pictogramas. Va incrustada porque el CSP
+     bloquea recursos externos, y no se usa un glifo Unicode porque cada
+     sistema lo dibuja distinto o lo vuelve emoji a color. */
+  --fig-persona:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Ccircle cx='12' cy='4.4' r='3.9' fill='black'/%3E%3Cpath fill='black' d='M16.3 9.4H7.7c-1.4 0-2.5 1.1-2.5 2.5v6.4c0 .7.6 1.3 1.3 1.3h.8l.6 10.3c0 .8.7 1.4 1.4 1.4h.5c.8 0 1.4-.6 1.4-1.4l.5-7.3h.6l.5 7.3c.1.8.7 1.4 1.4 1.4h.5c.8 0 1.4-.6 1.4-1.4l.6-10.3h.8c.7 0 1.3-.6 1.3-1.3v-6.4c0-1.4-1.1-2.5-2.5-2.5z'/%3E%3C/svg%3E");
+  color-scheme:light;
+  /* --- identidad ICBF (Manual de Imagen Corporativa) --- */
+  --icbf-verde:#72BF44;      /* PANTONE 368C · R114 G191 B68  · institucional */
+  --icbf-verde-osc:#4F8245;  /* PANTONE 356C */
+  --icbf-verde-med:#74A43D;  /* PANTONE 369C */
+  --icbf-lima:#B8C32E;       /* PANTONE 583C */
+  --icbf-azul:#5C82BC;       /* PANTONE 279C */
+  --icbf-azul-osc:#00528D;   /* PANTONE 301C */
+  --icbf-magenta:#A72079;    /* PANTONE 233C */
+  --icbf-purpura:#7A0978;    /* PANTONE 249C */
+  --icbf-naranja:#FF7300;    /* PANTONE 151C */
+  --icbf-rojo:#B21B15;       /* PANTONE 485C */
+  --icbf-amarillo:#FFCD00;   /* PANTONE 116C */
+
+  /* --- superficies --- */
+  --paper:#EFF6EE; --paper2:#E2EFE0;
+  --card:#FDFEFD; --glass:rgba(255,255,255,.72);
+  --sunk:#E6EFE4;
+  --ink:#0C1912; --ink2:#2F443A; --ink3:#53695F;
+  --rule:#BFD5B9; --rule2:#D6E5D2;
+  --accent:var(--icbf-verde-osc); --accent2:var(--icbf-verde);
+  --halo:rgba(114,191,68,.22);
+  --shadow:0 1px 2px rgba(18,33,26,.06),0 6px 18px rgba(18,33,26,.07);
+  --gloss:linear-gradient(180deg,rgba(255,255,255,.85) 0%,rgba(255,255,255,.25) 45%,rgba(255,255,255,0) 46%);
+
+  /* --- marcas de datos: rampas ordinales derivadas de los tonos ICBF --- */
+  --d1:#E8908B; --d2:#CE4038; --d3:#B21B15;   /* deficit, ancla 485C */
+  --ok:#72BF44;                                /* adecuado, 368C */
+  --e1:#7FA9CE; --e2:#3C7FB5; --e3:#00528D;    /* exceso, ancla 301C */
+  --grid:#DFEBDC;
+
+  --sans:"Segoe UI Variable Display","Segoe UI Variable Text","Segoe UI",-apple-system,"SF Pro Text","Helvetica Neue",Frutiger,"Frutiger Linotype",Univers,system-ui,sans-serif;
+  --mono:"Cascadia Code","Cascadia Mono","SF Mono",Consolas,ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:.002em;
+  background:var(--paper);
+  background-image:radial-gradient(1200px 420px at 12% -8%,var(--halo),transparent 62%),
+                   radial-gradient(900px 380px at 92% 2%,rgba(92,130,188,.16),transparent 60%);
+  background-attachment:fixed;-webkit-font-smoothing:antialiased}
+.wrap{display:contents}
+
+/* ---------- cabecera ---------- */
+header{padding:0}
+.hero{position:relative;overflow:hidden;border-radius:16px;padding:20px 22px 18px;
+  background:linear-gradient(135deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 42%,var(--icbf-verde) 100%);
+  box-shadow:var(--shadow);color:#fff}
+.hero::before{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+.hero::after{content:"";position:absolute;right:-70px;top:-120px;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle at 34% 34%,rgba(255,255,255,.35),rgba(255,255,255,0) 62%);pointer-events:none}
+.hero h1{font-size:clamp(19px,2.5vw,26px);font-weight:600;letter-spacing:-.01em;margin:0 0 3px;position:relative}
+.hero .s{font-size:13px;opacity:.93;position:relative}
+.hero .k{position:relative;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;opacity:.8;margin-bottom:7px}
+
+.alert{margin-top:12px;display:flex;gap:11px;align-items:flex-start;border-radius:12px;padding:11px 15px;
+  background:var(--glass);border:1px solid var(--rule);box-shadow:var(--shadow);font-size:13.5px;color:var(--ink2)}
+.alert .ic{flex:none;width:20px;height:20px;border-radius:50%;background:var(--icbf-amarillo);color:#3a2b00;
+  display:grid;place-items:center;font-weight:700;font-size:12px}
+.alert b{color:var(--ink)}
+
+/* ---------- controles ---------- */
+.bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin:16px 0 0;
+  background:var(--glass);border:1px solid var(--rule);border-radius:12px;padding:11px 14px;box-shadow:var(--shadow)}
+label.f{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%}
+label.f>select{max-width:100%;min-width:0}
+select,input[type=search]{font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--card);
+  border:1px solid var(--rule);padding:6px 9px;min-width:200px;border-radius:8px}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.pop{margin-left:auto;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink2);text-align:right;line-height:1.35}
+.pop b{color:var(--accent);font-size:19px;font-family:var(--sans)}
+
+nav{display:flex;flex-wrap:wrap;gap:5px;margin:15px 0 0}
+nav button{font-family:var(--sans);font-size:13.5px;color:var(--ink2);background:var(--card);
+  border:1px solid var(--rule);border-radius:9px;padding:6px 14px;cursor:pointer;box-shadow:0 1px 1px rgba(18,33,26,.04)}
+nav button:hover{color:var(--ink);border-color:var(--accent2)}
+nav button[aria-selected=true]{color:#fff;font-weight:600;border-color:transparent;
+  background:linear-gradient(180deg,var(--icbf-verde) 0%,var(--icbf-verde-med) 100%);box-shadow:var(--shadow)}
+
+section[hidden]{display:none}
+section{padding-top:20px}
+h2{font-size:16px;font-weight:600;margin:28px 0 3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2:first-child{margin-top:2px}
+.note{font-size:13.5px;color:var(--ink2);margin:0 0 11px;max-width:92ch}
+
+/* boton de ficha tecnica */
+.btn{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink2);
+  background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:7px 14px;cursor:pointer}
+.btn:hover{border-color:var(--icbf-verde);color:var(--icbf-verde-osc)}
+.tile .info{font-size:9.5px;padding:0 7px;height:19px;letter-spacing:.03em}
+.tile .info::before{width:12px;height:12px;font-size:8.5px}
+.info{flex:none;height:21px;border-radius:11px;border:1px solid var(--icbf-verde);
+  background:rgba(114,191,68,.14);color:var(--icbf-verde-osc);font-family:var(--sans);
+  font-size:10.5px;font-weight:700;letter-spacing:.05em;cursor:pointer;line-height:1;
+  display:inline-flex;align-items:center;gap:4px;padding:0 9px}
+.info::before{content:"i";display:grid;place-items:center;width:13px;height:13px;border-radius:50%;
+  background:var(--icbf-verde-osc);color:#fff;font-size:9px;font-style:italic}
+.info:hover{background:var(--icbf-verde-osc);color:#fff;border-color:transparent}
+.info:hover::before{background:#fff;color:var(--icbf-verde-osc)}
+
+/* ---------- tarjetas ---------- */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:14px 0}
+@media(max-width:900px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--glass);border:1px solid var(--rule);border-radius:13px;padding:14px 17px 13px 19px;
+  display:flex;flex-direction:column;gap:3px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.tile::before{content:"";position:absolute;inset:0 0 auto 0;height:42%;background:var(--gloss);pointer-events:none}
+.tile .t{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink2);display:flex;align-items:flex-start;
+  justify-content:space-between;gap:10px;min-height:30px}
+.tile .t>span:first-child{flex:1;min-width:0}
+/* cifra a la izquierda, subtitulo y microgafico a la derecha: asi la cifra
+   se queda con toda la altura de la tarjeta */
+.tile .cuerpo{display:flex;align-items:center;gap:14px;margin-top:3px;flex:1;min-width:0}
+.tile .v{font-size:33px;font-weight:700;line-height:1.05;letter-spacing:-.022em;
+  flex:none;white-space:nowrap}
+/* la linea separa el valor de lo que lo acompana: sin ella los dos numeros
+   se leen como una sola frase */
+.tile .lado{display:flex;flex-direction:column;justify-content:center;gap:2px;
+  flex:1;min-width:0;align-self:stretch;border-left:1px solid var(--rule);padding-left:14px}
+/* el subtitulo es un dato, no un pie: al doble de tamano y con tinta normal */
+.tile .d{font-size:25px;font-weight:600;color:var(--ink);line-height:1.2;
+  letter-spacing:-.015em;overflow-wrap:anywhere}
+@media(max-width:1240px){ .tile .d{font-size:21px} }
+@media(max-width:1100px){
+  .tile .cuerpo{flex-direction:column;align-items:flex-start;gap:6px}
+  .tile .lado{align-self:auto;flex:none;width:100%;
+    border-left:none;border-top:1px solid var(--rule);padding-left:0;padding-top:7px}
+  .tile .d{font-size:19px}
+}
+.tile .rail{position:absolute;left:0;top:0;bottom:0;width:5px}
+.tile.crit .rail{background:var(--d3)} .tile.warn .rail{background:var(--e2)}
+.tile.good .rail{background:var(--ok)} .tile.neut .rail{background:var(--accent2)}
+
+/* ---------- barras apiladas ---------- */
+.panel{background:var(--glass);border:1px solid var(--rule);border-radius:13px;padding:14px 16px;box-shadow:var(--shadow);margin:11px 0}
+.rows{display:flex;flex-direction:column;gap:7px}
+.row{display:grid;grid-template-columns:minmax(92px,172px) 1fr minmax(50px,auto);gap:11px;align-items:center}
+.row .lb{font-size:13px;line-height:1.3;overflow-wrap:anywhere}
+.row .nn{font-family:var(--mono);font-size:11.5px;color:var(--ink2);text-align:right;font-variant-numeric:tabular-nums}
+.stack{display:flex;height:23px;background:var(--sunk);gap:2px;border-radius:5px;overflow:hidden}
+.seg{min-width:0;position:relative;cursor:default}
+.seg::after{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+
+/* ---------- barras simples ---------- */
+.bars{display:flex;flex-direction:column;gap:6px}
+.brow{display:grid;grid-template-columns:minmax(92px,196px) 1fr minmax(58px,auto);gap:11px;align-items:center}
+/* la cuarta columna solo cuando las filas traen su tabla de registros */
+.bars.contab .brow{grid-template-columns:minmax(92px,196px) 1fr minmax(58px,auto) auto}
+.btrack{background:var(--sunk);height:20px;border-radius:5px;position:relative;overflow:hidden}
+.bfill{height:100%;border-radius:5px;background:linear-gradient(180deg,var(--icbf-verde),var(--icbf-verde-med));transition:width .3s ease}
+.bfill::after{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+.brow .vv{font-family:var(--mono);font-size:11.5px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.ref{position:absolute;top:0;bottom:0;border-left:2px dashed var(--ink3);opacity:.65}
+
+/* ---------- leyenda ---------- */
+.leg{display:flex;flex-wrap:wrap;gap:5px 15px;font-size:12.5px;color:var(--ink2);margin:9px 0 3px}
+.leg span{display:flex;align-items:center;gap:6px}
+.leg i{width:11px;height:11px;border-radius:3px;flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+
+/* ---------- tabla ---------- */
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:13px;background:var(--card);margin:11px 0;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 11px;text-align:left;border-bottom:1px solid var(--rule2);white-space:nowrap}
+thead th{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);
+  font-weight:600;background:var(--card);position:sticky;top:0;border-bottom:1px solid var(--rule);cursor:pointer;user-select:none}
+thead th:hover{color:var(--accent)}
+thead th.sorted::after{content:" \25BE";color:var(--accent2)}
+thead th.asc::after{content:" \25B4";color:var(--accent2)}
+td.n,th.n{text-align:right}
+tbody tr:hover{background:var(--sunk)}
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:9px;color:#fff}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;background:var(--sunk);color:var(--ink2);
+  padding:1px 6px;border-radius:7px;margin-right:3px;border:1px solid var(--rule2);cursor:pointer}
+.tag:hover{border-color:var(--accent2);color:var(--accent)}
+
+/* ---------- ficha tecnica ---------- */
+#modal{position:fixed;inset:0;z-index:80;display:none;place-items:center;padding:18px;
+  background:rgba(10,24,17,.42);backdrop-filter:blur(3px)}
+#modal.on{display:grid}
+.fx{background:var(--card);border:1px solid var(--rule);border-radius:16px;max-width:640px;width:100%;
+  max-height:86vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.fx .hd{position:relative;padding:15px 18px 13px;color:#fff;overflow:hidden;
+  background:linear-gradient(135deg,var(--icbf-verde-osc),var(--icbf-verde))}
+.fx .hd::before{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+.fx .hd h3{margin:0;font-size:17px;font-weight:600;position:relative}
+.fx .hd .k{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;opacity:.85;position:relative}
+.fx .bd{padding:16px 18px 18px;display:flex;flex-direction:column;gap:13px}
+.fx dl{margin:0;display:flex;flex-direction:column;gap:12px}
+.fx dt{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.fx dd{margin:0;font-size:14px;color:var(--ink);line-height:1.6}
+.fx dd b{color:var(--ink)}
+.fx code{font-family:var(--mono);font-size:12px;background:var(--sunk);border:1px solid var(--rule2);
+  padding:1px 5px;border-radius:5px;color:var(--ink)}
+.fx .close{position:absolute;right:12px;top:12px;width:26px;height:26px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.24);color:#fff;font-size:15px;cursor:pointer;line-height:1;z-index:2}
+.fx .close:hover{background:rgba(255,255,255,.4)}
+.fml{background:var(--sunk);border:1px solid var(--rule2);border-radius:9px;padding:10px 12px;
+  font-family:var(--mono);font-size:12px;color:var(--ink);white-space:pre-wrap;line-height:1.6}
+.norm{display:inline-block;font-size:11.5px;background:var(--halo);color:var(--accent);border-radius:7px;padding:2px 8px}
+
+/* ---------- tooltip ---------- */
+#tt{position:fixed;pointer-events:none;z-index:60;background:var(--card);
+  border:1px solid var(--icbf-verde-osc);border-radius:12px;overflow:hidden;
+  box-shadow:0 10px 30px rgba(13,26,20,.22),0 2px 6px rgba(13,26,20,.12);
+  font-size:13px;max-width:310px;opacity:0;transition:opacity .12s}
+#tt::before{content:"DETALLE";display:block;background:linear-gradient(135deg,var(--icbf-verde-osc),var(--icbf-verde-med));
+  color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.14em;padding:4px 13px}
+#tt b{display:block;margin:9px 13px 6px;font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.3}
+#tt .r{display:flex;justify-content:space-between;gap:16px;color:var(--ink2);
+  padding:3px 13px;border-top:1px solid var(--rule2)}
+#tt .r:last-child{padding-bottom:9px}
+#tt .r span:last-child{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+#tt .r i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:7px}
+
+.gloss-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:11px;margin:12px 0}
+.gcard{background:var(--glass);border:1px solid var(--rule);border-radius:13px;padding:13px 15px;
+  box-shadow:var(--shadow);cursor:pointer;position:relative;overflow:hidden;text-align:left;font:inherit;color:inherit}
+.gcard::before{content:"";position:absolute;inset:0 0 auto 0;height:40%;background:var(--gloss);pointer-events:none}
+.gcard:hover{border-color:var(--accent2)}
+.gcard h4{margin:0 0 3px;font-size:14px;font-weight:600}
+.gcard p{margin:0;font-size:13px;color:var(--ink2)}
+.gcard .kk{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+
+.empty{padding:26px;text-align:center;color:var(--ink3);font-size:13.5px;border:1px dashed var(--rule);border-radius:12px;margin:11px 0}
+footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-size:11.5px;color:var(--ink3);line-height:1.6}
+
+/* ---------- lectura interpretativa ---------- */
+.lectura{display:flex;gap:11px;align-items:flex-start;margin:10px 0 2px;padding:12px 15px;
+  border-radius:11px;background:linear-gradient(135deg,rgba(114,191,68,.16),rgba(92,130,188,.12));
+  border:1px solid var(--rule);font-size:14px;color:var(--ink);line-height:1.55}
+.lectura .q{flex:none;width:20px;height:20px;border-radius:50%;background:var(--icbf-verde-osc);color:#fff;
+  display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:1px}
+.lectura b{color:var(--ink)}
+.lectura .up{color:var(--icbf-rojo);font-weight:600}
+.lectura .dn{color:var(--icbf-verde-osc);font-weight:600}
+
+/* ---------- delta contra la media ---------- */
+.dlt{font-family:var(--mono);font-size:10.5px;padding:1px 6px;border-radius:7px;margin-left:7px;white-space:nowrap}
+.dlt.pos{background:#FBE7E6;color:var(--icbf-rojo)}
+.dlt.neg{background:#E6F3DE;color:#3D6B33}
+.dlt.eq{background:var(--sunk);color:var(--ink3)}
+
+/* ---------- graficos svg ---------- */
+.fig{background:var(--glass);border:1px solid var(--rule);border-radius:13px;padding:14px 16px 10px;
+  box-shadow:var(--shadow);margin:11px 0}
+.fig{overflow:hidden}
+.fig svg{display:block;width:100%;height:auto}
+.fig .ttl{font-size:13px;font-weight:600;margin-bottom:2px}
+.fig .sub{font-size:12.5px;color:var(--ink2);margin-bottom:9px}
+.ax{stroke:var(--rule);stroke-width:1}
+.gl{stroke:var(--grid);stroke-width:1}
+.axt{font-size:11px;font-weight:600;fill:var(--ink2);font-family:var(--mono)}
+.pt{stroke:#fff;stroke-width:1.5}
+.ln{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.qlab{font-size:10.5px;font-weight:700;fill:var(--ink2);font-family:var(--mono);letter-spacing:.06em}
+
+/* ---------- flujo ---------- */
+.flow{display:flex;flex-direction:column;gap:9px;margin:4px 0}
+.fl{display:grid;grid-template-columns:1fr 78px 1fr;align-items:center;gap:9px}
+.fl .lft{text-align:right;font-size:12.5px}
+.fl .rgt{font-size:12.5px}
+.fl .mid{position:relative;height:26px}
+.fl .arw{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:#fff;border-radius:6px}
+.neto{font-family:var(--mono);font-size:11.5px;text-align:center;padding:7px;border-radius:9px;
+  background:var(--sunk);border:1px solid var(--rule2);margin-top:4px}
+
+
+/* ---------- mapa ---------- */
+.mapwrap{position:relative;background:var(--glass);border:1px solid var(--rule);border-radius:13px;
+  padding:12px 14px 8px;box-shadow:var(--shadow);margin:11px 0}
+.mapwrap svg{display:block;width:100%;height:auto}
+.mp{stroke:#FDFEFD;stroke-width:.55;stroke-linejoin:round;cursor:pointer;transition:opacity .15s}
+.mp:hover{stroke:var(--icbf-verde-osc);stroke-width:1.6}
+.mp.off{opacity:.16}
+.mp.sel{stroke:var(--ink);stroke-width:2}
+.up2{stroke:#FDFEFD;stroke-width:.7;cursor:default;opacity:.88}
+.up2{cursor:pointer}
+.up2:hover{stroke:var(--ink);stroke-width:1.5}
+.up2:hover{stroke:var(--ink);stroke-width:1.6;opacity:1}
+.mapleg{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px;margin-top:11px;font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--ink2)}
+.mapleg .sw{display:flex;flex-direction:column;align-items:center;gap:2px}
+.mapleg .sw i{width:46px;height:13px;border-radius:3px;border:1px solid rgba(18,33,26,.10)}
+.mapsel{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-bottom:6px}
+.nomatch{font-size:12.5px;color:var(--ink2);margin-top:8px}
+
+
+/* ---------- grafico de puntos ---------- */
+.dots{display:flex;flex-direction:column;gap:2px}
+.drow{display:grid;grid-template-columns:minmax(96px,190px) 1fr minmax(74px,auto);
+  gap:12px;align-items:center;padding:3px 0;border-radius:6px}
+.drow:hover{background:var(--sunk)}
+.drow .lb{font-size:13px;line-height:1.3;overflow-wrap:anywhere}
+.dtrack{position:relative;height:20px}
+.dtrack::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--rule2)}
+.dstem{position:absolute;top:50%;height:2px;border-radius:1px;transform:translateY(-50%)}
+.ddot{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;
+  transform:translate(-50%,-50%);border:2px solid var(--card);box-shadow:0 1px 3px rgba(13,26,20,.25)}
+.dmed{position:absolute;top:1px;bottom:1px;width:0;border-left:2px dashed var(--ink3);opacity:.7}
+.drow .vv{font-family:var(--mono);font-size:12px;text-align:right;color:var(--ink);
+  font-variant-numeric:tabular-nums;font-weight:600}
+.drow .vv small{color:var(--ink3);font-weight:400;margin-left:5px}
+
+/* ---------- multiplos pequenos ---------- */
+.mult{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px;align-items:start}
+.mcard{border:1px solid var(--rule);border-radius:11px;padding:11px 13px 10px;background:var(--card)}
+.mcard .mh{display:flex;align-items:flex-start;gap:7px;margin-bottom:3px;min-height:34px}
+.mcard .mh i{width:11px;height:11px;border-radius:3px;flex:none;margin-top:4px}
+.mcard .mh b{font-size:12.5px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.mcard .mn{font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.mcard .ms{font-size:11.5px;color:var(--ink2);margin-bottom:8px}
+.mbars{display:flex;flex-direction:column;gap:3px}
+.mb{display:grid;grid-template-columns:1fr 44px;gap:7px;align-items:center;font-size:11px;min-height:19px}
+.mb .t{color:var(--ink2);line-height:1.35;overflow-wrap:anywhere}
+.mb .g{height:9px;border-radius:4px;background:var(--sunk);position:relative;overflow:hidden}
+.mb .g i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.mb .v{font-family:var(--mono);font-size:10.5px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ---------- selector de tipo de grafico ---------- */
+.vistas{display:inline-flex;gap:2px;background:var(--sunk);border:1px solid var(--rule);
+  border-radius:9px;padding:2px;margin-left:auto}
+.vistas button{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink2);
+  background:none;border:none;border-radius:7px;padding:5px 11px;cursor:pointer}
+.vistas button:hover{color:var(--ink)}
+.vistas button[aria-pressed=true]{background:var(--card);color:var(--icbf-verde-osc);
+  box-shadow:0 1px 2px rgba(13,26,20,.10)}
+
+/* ---------- tarjetas de hallazgo ---------- */
+.hall{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:11px;margin:12px 0}
+.hcard{background:var(--card);border:1px solid var(--rule);border-radius:13px;padding:13px 15px;
+  position:relative;overflow:hidden}
+.hcard .hh{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.chip2{font-size:9.5px;font-weight:700;letter-spacing:.09em;padding:2px 8px;border-radius:9px;color:#fff}
+.chip2.alta{background:var(--icbf-rojo)} .chip2.media{background:var(--icbf-naranja)}
+.chip2.baja{background:var(--icbf-verde-osc)}
+.hcard .hp{margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink)}
+.hcard h4{margin:0 0 4px;font-size:14px;font-weight:700;line-height:1.3}
+.hcard p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.5}
+.hcard .hf{display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:8px;
+  border-top:1px solid var(--rule2);font-size:11px;color:var(--ink3)}
+.hcard .hf b{color:var(--ink2);font-weight:600}
+
+/* ---------- microgafico en la tarjeta ---------- */
+.spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:11px;
+  padding-top:9px;border-top:1px solid var(--rule2)}
+.tile .lado .spark{margin-top:7px;padding-top:7px;height:22px}
+.spark i{flex:1;border-radius:1.5px 1.5px 0 0;min-height:2px}
+
+
+/* ---------- estructura de dos columnas ---------- */
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);gap:0;min-height:100vh;
+  max-width:1500px;margin:0 auto}
+.side{position:sticky;top:0;align-self:start;height:100vh;display:flex;flex-direction:column;
+  background:var(--card);border-right:1px solid var(--rule);padding:0 0 14px}
+.marca{position:relative;overflow:hidden;padding:16px 16px 15px;color:#fff;
+  background:linear-gradient(150deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 55%,var(--icbf-verde) 100%)}
+.marca::before{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+.marca::after{content:"";position:absolute;right:-56px;top:-72px;width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle at 36% 36%,rgba(255,255,255,.16),rgba(255,255,255,0) 64%);pointer-events:none}
+.marca .k{position:relative;font-size:9.5px;font-weight:700;letter-spacing:.13em;opacity:.86;margin-bottom:5px;
+  text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.marca h1{position:relative;font-size:16px;font-weight:700;line-height:1.24;margin:0;letter-spacing:-.005em;
+  text-shadow:0 1px 4px rgba(0,0,0,.4)}
+.marca .r{position:relative;font-size:11.5px;opacity:.9;margin-top:4px;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+
+.side nav{display:flex;flex-direction:column;gap:1px;padding:10px 9px;
+  overflow-y:auto;overflow-x:hidden;flex:1;min-height:0}
+.side nav button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink2);
+  background:none;border:none;border-radius:9px;padding:8px 10px;cursor:pointer;
+  line-height:1.25;white-space:nowrap}
+.side nav button svg{flex:none;width:17px;height:17px;stroke:currentColor;fill:none;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.side nav button:hover{background:var(--sunk);color:var(--ink)}
+.side nav button[aria-selected=true]{background:linear-gradient(180deg,var(--icbf-verde),var(--icbf-verde-med));
+  color:#fff;box-shadow:0 1px 3px rgba(13,26,20,.18)}
+.side nav button[aria-selected=true] svg{opacity:1}
+
+.side .pie{margin:0 12px;padding:12px 13px;border-radius:11px;background:var(--sunk);
+  border:1px solid var(--rule2)}
+.side .pie .t{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink3);margin-bottom:6px}
+.side .pie .n{display:flex;align-items:baseline;gap:6px;margin-bottom:2px}
+.side .pie .n b{font-size:19px;font-weight:700;color:var(--icbf-verde-osc);letter-spacing:-.01em}
+.side .pie .n span{font-size:11.5px;color:var(--ink2)}
+.side .pie .v2{margin-top:8px;padding-top:7px;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--ink3);
+  display:flex;align-items:center;gap:6px}
+.side .pie .v2 i{width:6px;height:6px;border-radius:50%;background:var(--icbf-verde);flex:none}
+.vsn{}
+.side .pie .c{margin-top:9px;padding-top:8px;border-top:1px solid var(--rule);
+  font-size:11px;color:var(--ink2);line-height:1.45}
+
+/* ---------- columna de trabajo ---------- */
+.main{min-width:0;padding:0 clamp(14px,2.2vw,26px) 70px}
+.topbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;
+  padding:16px 0 13px;border-bottom:1px solid var(--rule);margin-bottom:0}
+.topbar h2.tt{font-size:20px;font-weight:700;letter-spacing:-.012em;margin:0;line-height:1.2}
+.topbar .sb{font-size:12.5px;color:var(--ink2);margin-top:2px}
+
+@media(max-width:1000px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;border-right:none;border-bottom:1px solid var(--rule)}
+  .side nav{flex-direction:row;flex-wrap:wrap;overflow:visible;flex:none}
+  .side nav button{width:auto}
+  .side .pie{display:none}
+}
+
+
+/* ---------- panel de evidencia ---------- */
+.hcard{cursor:pointer}
+.hcard:hover,.hcard:focus-within{border-color:var(--icbf-verde)}
+.hcard .ver{display:inline-flex;align-items:center;gap:5px;margin-left:auto;
+  font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--icbf-verde-osc);
+  background:rgba(114,191,68,.14);border:1px solid var(--icbf-verde);border-radius:9px;padding:2px 8px}
+.hcard .ver.act{background:var(--icbf-verde-osc);color:#fff;border-color:transparent}
+.hcard .ver svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+
+#evid{position:fixed;z-index:70;width:min(390px,calc(100vw - 24px));background:var(--card);
+  border:1px solid var(--icbf-verde-osc);border-radius:13px;overflow:hidden;
+  box-shadow:0 14px 40px rgba(12,25,18,.26),0 3px 8px rgba(12,25,18,.14);
+  opacity:0;visibility:hidden;transition:opacity .13s}
+#evid.on{opacity:1;visibility:visible}
+#evid .eh{background:linear-gradient(135deg,var(--icbf-verde-osc),var(--icbf-verde-med));
+  color:#fff;padding:9px 14px;position:relative}
+#evid .eh::before{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+#evid .eh .k{position:relative;font-size:9.5px;font-weight:700;letter-spacing:.13em;opacity:.85}
+#evid .eh b{position:relative;display:block;font-size:13.5px;font-weight:700;line-height:1.3;margin-top:1px}
+#evid .eb{padding:12px 14px 13px}
+#evid .eb .lead{font-size:12.5px;color:var(--ink2);line-height:1.5;margin:0 0 10px}
+#evid .eb .lead b{color:var(--ink)}
+#evid .ef{border-top:1px solid var(--rule2);padding:8px 14px 10px;font-size:11.5px;color:var(--ink3);line-height:1.45}
+#evid .ef b{color:var(--ink2)}
+
+/* grafico de puntos compacto dentro del panel */
+.dmini{display:flex;flex-direction:column;gap:1px}
+.dmini .r2{display:grid;grid-template-columns:minmax(70px,104px) 1fr 62px;gap:8px;align-items:center;
+  padding:2px 0;font-size:11.5px}
+.dmini .r2 .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink2)}
+.dmini .r2 .t2{position:relative;height:15px}
+.dmini .r2 .t2::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--rule2)}
+.dmini .r2 .s2{position:absolute;top:50%;height:2px;transform:translateY(-50%);border-radius:1px;opacity:.4}
+.dmini .r2 .d2{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;
+  transform:translate(-50%,-50%);border:1.6px solid var(--card)}
+.dmini .r2 .m2{position:absolute;top:0;bottom:0;border-left:1.6px dashed var(--ink3);opacity:.65}
+.dmini .r2 .v2{font-family:var(--mono);font-size:10.5px;text-align:right;color:var(--ink);
+  font-variant-numeric:tabular-nums;font-weight:600}
+.dmini .r2 .v2 small{color:var(--ink3);font-weight:400;margin-left:4px}
+.dmini .r2.hi .l{color:var(--ink);font-weight:700}
+
+
+.mapwrap .volver{position:absolute;right:16px;top:14px;z-index:2;font-family:var(--sans);
+  font-size:11.5px;font-weight:600;color:var(--ink2);background:var(--card);
+  border:1px solid var(--rule);border-radius:8px;padding:5px 11px;cursor:pointer;
+  box-shadow:0 1px 3px rgba(12,25,18,.12)}
+.mapwrap .volver:hover{border-color:var(--icbf-verde);color:var(--icbf-verde-osc)}
+.mp.ctx{fill:#EDF3EC;stroke:#DDE8DB;cursor:default}
+.mp.ctx:hover{stroke:#DDE8DB;stroke-width:.55}
+
+
+/* ---------- anatomia del dato ---------- */
+.medidas{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:13px;margin:14px 0}
+.med{background:var(--card);border:1px solid var(--rule);border-radius:14px;overflow:hidden;
+  box-shadow:var(--shadow);display:flex;flex-direction:column}
+.med .mt{display:flex;align-items:center;gap:10px;padding:13px 16px 11px;border-bottom:1px solid var(--rule2)}
+.med .mt .ic{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:rgba(114,191,68,.15)}
+.med .mt .ic svg{width:19px;height:19px;stroke:var(--icbf-verde-osc);fill:none;stroke-width:1.85;
+  stroke-linecap:round;stroke-linejoin:round}
+.med .mt h4{margin:0;font-size:15px;font-weight:700;line-height:1.24}
+.med .mt .u{font-size:11.5px;color:var(--ink3)}
+.med .mt .tag2{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.07em;
+  padding:3px 9px;border-radius:9px;white-space:nowrap}
+.tag2.mide{background:rgba(114,191,68,.18);color:var(--icbf-verde-osc)}
+.tag2.calc{background:rgba(92,130,188,.18);color:var(--icbf-azul)}
+.med .mb2{padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.med dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12.5px}
+.med dt{color:var(--ink3);font-weight:600;white-space:nowrap}
+.med dd{margin:0;color:var(--ink2)}
+.med dd b{color:var(--ink)}
+.med .cob{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink2);
+  padding-top:9px;border-top:1px solid var(--rule2)}
+.med .cob .bar2{flex:1;height:7px;border-radius:4px;background:var(--sunk);overflow:hidden}
+.med .cob .bar2 i{display:block;height:100%;border-radius:4px}
+.med .cob b{font-variant-numeric:tabular-nums}
+
+/* ---------- histograma ---------- */
+.hist{display:flex;align-items:flex-end;gap:1px;height:92px;margin:2px 0 0}
+.hist i{flex:1;min-height:1px;border-radius:2px 2px 0 0;position:relative;cursor:default}
+.hist i:hover{filter:brightness(.86)}
+.hejes{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;
+  color:var(--ink3);margin-top:5px}
+.hstat{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:11.5px;color:var(--ink2);margin-top:7px}
+.hstat b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ---------- preferencia de digito ---------- */
+.dig{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;align-items:end;height:120px;margin-top:4px}
+.dig .col{display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
+.dig .col i{border-radius:3px 3px 0 0;min-height:2px;cursor:default}
+.dig .col span{font-family:var(--mono);font-size:10.5px;text-align:center;color:var(--ink2);margin-top:4px}
+.dig .col.alto i{background:var(--icbf-rojo)}
+.digref{position:relative;height:0;border-top:2px dashed var(--ink3);opacity:.7;margin-top:-1px}
+.digref span{position:absolute;right:0;top:-16px;font-family:var(--mono);font-size:10px;color:var(--ink3);background:var(--card);padding:0 4px}
+
+
+/* ---------- tornado: dos sentidos enfrentados ---------- */
+.torn{display:flex;flex-direction:column;gap:9px;margin:4px 0 2px}
+.trow{display:grid;grid-template-columns:1fr 20px 1fr;align-items:center;gap:0;min-width:0}
+.trow .lado{display:grid;align-items:center;gap:9px;min-width:0}
+.trow .lado.izq{grid-template-columns:auto minmax(0,1fr)}
+.trow .lado.der{grid-template-columns:minmax(0,1fr) auto}
+.trow .pista{position:relative;height:24px;min-width:0}
+.trow .bar3{position:absolute;top:0;bottom:0;border-radius:5px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;transition:width .25s}
+.trow .lado.izq .bar3{right:0;border-radius:5px 3px 3px 5px}
+.trow .lado.der .bar3{left:0;border-radius:3px 5px 5px 3px}
+.trow .bar3::after{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+.trow .cif{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.trow .eje{height:32px;border-left:2px solid var(--rule);justify-self:center}
+.tcab{display:grid;grid-template-columns:1fr 20px 1fr;gap:0;margin-bottom:8px;
+  font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}
+.tcab span:first-child{text-align:right;padding-right:12px}
+.tcab span:last-child{padding-left:12px}
+.tpar{font-size:12.5px;color:var(--ink2);text-align:center;margin:2px 0 8px}
+.tpar b{color:var(--ink)}
+.tneto{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;
+  padding:9px 14px;border-radius:10px;background:var(--sunk);border:1px solid var(--rule2);
+  font-size:12.5px;color:var(--ink2);text-align:center;flex-wrap:wrap}
+.tneto b{color:var(--ink)}
+.tneto .fl2{font-family:var(--mono);font-weight:700;font-size:14px}
+
+/* ---------- categoria del dato encima de cada bloque ---------- */
+.catdato{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
+.catdato i{width:8px;height:8px;border-radius:50%;background:var(--icbf-verde);flex:none}
+.leg{margin:9px 0 0;padding-top:9px;border-top:1px solid var(--rule2)}
+.panel .leg:first-child{margin-top:0;padding-top:0;border-top:none}
+
+
+/* ---------- filas navegables ---------- */
+.row.nav,.drow.nav{cursor:pointer;border-radius:7px;transition:background .12s}
+.row.nav:hover,.drow.nav:hover{background:var(--sunk)}
+.row.nav .lb::after,.drow.nav .lb::after{content:"›";margin-left:7px;color:var(--icbf-verde-osc);
+  font-weight:700;opacity:0;transition:opacity .12s}
+.row.nav:hover .lb::after,.drow.nav:hover .lb::after{opacity:1}
+
+/* ---------- mapa de calor ---------- */
+.heat{overflow-x:auto;margin:2px 0}
+.heat table{border-collapse:separate;border-spacing:2px;width:100%;background:none;border:none;box-shadow:none}
+.heat th{background:none;position:static;border:none;padding:0 6px 6px;vertical-align:bottom;
+  font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:none;color:var(--ink2);
+  line-height:1.2;text-align:center;white-space:normal;min-width:64px}
+.heat th.terr{text-align:left;min-width:150px;padding-left:2px}
+.heat td{border:none;padding:0;text-align:center}
+.heat td.terr{text-align:left;font-size:12.5px;padding:4px 10px 4px 2px;
+  line-height:1.3;overflow-wrap:anywhere;max-width:200px}
+.heat .cel{border-radius:6px;padding:7px 4px;font-family:var(--mono);font-size:11.5px;
+  font-weight:700;cursor:default;position:relative;min-height:30px;
+  display:flex;align-items:center;justify-content:center}
+.heat .cel:hover{outline:2px solid var(--ink);outline-offset:-2px}
+.heat tr.nav{cursor:pointer}
+.heat tr.nav:hover td.terr{color:var(--icbf-verde-osc);font-weight:700}
+.heat td.tot{font-family:var(--mono);font-size:11px;color:var(--ink3);padding-left:8px;white-space:nowrap}
+
+/* ---------- curvas de densidad ---------- */
+.dens{display:flex;flex-direction:column;gap:0;margin:4px 0}
+.drow2{display:grid;grid-template-columns:minmax(96px,168px) 1fr 62px;gap:11px;align-items:center;
+  padding:1px 0;border-radius:7px}
+.drow2:hover{background:var(--sunk)}
+.drow2 .lb2{font-size:12.5px;line-height:1.3;overflow-wrap:anywhere}
+.drow2 svg{display:block;width:100%;height:38px;overflow:visible}
+.drow2 .med2{font-family:var(--mono);font-size:11px;text-align:right;color:var(--ink);
+  font-variant-numeric:tabular-nums;font-weight:600}
+.densejes{display:grid;grid-template-columns:minmax(96px,168px) 1fr 62px;gap:11px;
+  font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:5px}
+.densejes .ee{display:flex;justify-content:space-between}
+
+/* ---------- curva de crecimiento ---------- */
+.crec{background:var(--glass);border:1px solid var(--rule);border-radius:13px;
+  padding:14px 16px 12px;box-shadow:var(--shadow);margin:11px 0}
+.crec svg{display:block;width:100%;height:auto;overflow:visible}
+.banda{opacity:.5}
+.blin{fill:none;stroke-width:1.4;stroke-dasharray:5 4}
+.blin.cero{stroke-dasharray:none;stroke-width:2}
+.pt2{opacity:.5}
+.crecsel{display:flex;flex-wrap:wrap;gap:9px 14px;align-items:flex-end;margin-bottom:9px}
+
+
+/* ---------- embudo ---------- */
+.emb{display:flex;flex-direction:column;gap:0;margin:6px 0 2px}
+.epaso{display:grid;grid-template-columns:minmax(120px,190px) 1fr;gap:14px;align-items:center}
+.epaso .el{text-align:right}
+.epaso .el b{display:block;font-size:13.5px;font-weight:700;line-height:1.25}
+.epaso .el span{font-size:11.5px;color:var(--ink2)}
+.epaso .eb{position:relative;height:46px;display:flex;align-items:center;justify-content:center}
+.epaso .ef2{height:100%;border-radius:7px;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;transition:width .3s}
+.epaso .ef2::after{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+.epaso .ef2 b{position:relative;color:#fff;font-family:var(--mono);font-size:15px;font-weight:700;
+  text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.ecaida{display:grid;grid-template-columns:minmax(120px,190px) 1fr;gap:14px;align-items:center;
+  padding:2px 0}
+.ecaida .ec{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink2)}
+.ecaida .ec i{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
+  border-top:8px solid var(--d2);flex:none}
+.ecaida .ec b{color:var(--d2);font-family:var(--mono);font-weight:700}
+
+/* ---------- mosaico de 100 casillas ---------- */
+.waf{display:grid;grid-template-columns:repeat(20,1fr);gap:5px 4px;max-width:470px;margin:9px 0 2px}
+/* la forma la da la mascara y el color el fondo: asi cada categoria conserva
+   su color exacto y la silueta se ve igual en cualquier equipo */
+.waf i{aspect-ratio:.75;transition:transform .1s;
+  -webkit-mask:var(--fig-persona) center/contain no-repeat;
+  mask:var(--fig-persona) center/contain no-repeat}
+.waf i:hover{transform:scale(1.45)}
+.wafleg{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:11px;font-size:12.5px;color:var(--ink2)}
+.wafleg span{display:flex;align-items:center;gap:7px}
+.wafleg i{width:13px;height:17.3px;flex:none;
+  -webkit-mask:var(--fig-persona) center/contain no-repeat;
+  mask:var(--fig-persona) center/contain no-repeat}
+.wafleg b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ---------- puntos agrupados por bloque ---------- */
+.bloq{margin-bottom:13px}
+.bloq .bt{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.bloq .bt i{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;background:var(--icbf-verde-osc);flex:none}
+.bloq .bt b{font-size:12.5px;font-weight:700}
+.bloq .bt span{font-size:11.5px;color:var(--ink3)}
+.regs{display:flex;flex-direction:column;gap:1px}
+.reg{display:grid;grid-template-columns:34px 1fr minmax(112px,auto);gap:10px;align-items:center;
+  padding:2px 0;border-radius:6px}
+.reg:hover{background:var(--sunk)}
+.reg .cod{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ink2)}
+.reg .tr2{position:relative;height:17px}
+.reg .tr2::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--rule2)}
+.reg .pt3{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);
+  border:2px solid var(--card);box-shadow:0 1px 2px rgba(13,26,20,.2)}
+.reg .dsc{font-size:11.5px;color:var(--ink2);position:absolute;left:0;top:50%;transform:translateY(-50%);
+  white-space:nowrap;pointer-events:none;padding-left:2px}
+.reg .val{font-family:var(--mono);font-size:11px;text-align:right;color:var(--ink);
+  font-variant-numeric:tabular-nums;font-weight:600}
+.reg .val small{color:var(--ink3);font-weight:400;margin-left:5px}
+.regejes{display:grid;grid-template-columns:34px 1fr minmax(112px,auto);gap:10px;
+  font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:6px}
+.regejes .ee2{display:flex;justify-content:space-between}
+
+/* ---------- bullet ---------- */
+.bul{position:relative;height:19px;border-radius:4px;overflow:hidden;background:var(--sunk)}
+.bul .rango{position:absolute;top:0;bottom:0}
+.bul .valor{position:absolute;top:5px;bottom:5px;left:0;border-radius:3px;background:var(--ink)}
+.bul .marca{position:absolute;top:1px;bottom:1px;width:2px;background:var(--ink);opacity:.85}
+
+
+/* ---------- multiplos con barras separadas ---------- */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px;margin:6px 0 2px}
+.ccard{background:var(--card);border:1px solid var(--rule);border-radius:12px;
+  padding:12px 13px 10px;display:flex;flex-direction:column;gap:9px;position:relative}
+.ccard.nav{cursor:pointer;transition:border-color .13s,transform .13s}
+.ccard.nav:hover{border-color:var(--icbf-verde);transform:translateY(-1px)}
+.ccard .ch{min-height:46px;display:flex;flex-direction:column;justify-content:flex-start;gap:2px}
+.ccard .ch b{display:block;font-size:12.5px;font-weight:700;line-height:1.3;
+  overflow-wrap:anywhere;hyphens:auto}
+.ccard .ch span{font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+.cgrid{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;height:96px;
+  align-items:end;padding-bottom:1px;border-bottom:1.5px solid var(--rule)}
+.cbar{position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.cbar i{display:block;border-radius:3px 3px 0 0;min-height:3px;position:relative}
+.cbar i::after{content:"";position:absolute;inset:0;background:var(--gloss);
+  border-radius:3px 3px 0 0;pointer-events:none}
+.cbar:hover i{outline:2px solid var(--ink);outline-offset:1px}
+.ccard .cf{display:flex;align-items:baseline;gap:5px;padding-top:8px;border-top:1px solid var(--rule2)}
+.ccard .cf b{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.ccard .cf span{font-size:11px;color:var(--ink2);line-height:1.25}
+.colsesc{display:flex;align-items:center;gap:9px;margin-top:11px;padding-top:9px;
+  border-top:1px solid var(--rule2);font-size:11.5px;color:var(--ink3)}
+
+/* ---------- guia de lectura ---------- */
+
+
+.guia{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1px;
+  background:var(--rule2);border:1px solid var(--rule);border-radius:12px;overflow:hidden;margin:10px 0 14px}
+.guia .gc{background:var(--card);padding:11px 14px 12px}
+.guia .gt{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.guia .gt i{width:15px;height:15px;border-radius:5px;flex:none;display:grid;place-items:center}
+.guia .gt i svg{width:10px;height:10px;stroke:#fff;fill:none;stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round}
+.guia p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.5}
+.guia p b{color:var(--ink)}
+
+
+/* ---------- perfil con figura y llamadas ---------- */
+.perf{position:relative;background:var(--glass);border:1px solid var(--rule);border-radius:14px;
+  padding:20px 18px 16px;box-shadow:var(--shadow);margin:12px 0;overflow:hidden}
+.perf::before{content:"";position:absolute;left:50%;top:8%;width:340px;height:340px;
+  transform:translateX(-50%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(114,191,68,.13),rgba(114,191,68,0) 68%)}
+.pfig{position:relative;width:100%;min-height:640px;min-width:0}
+.pfig img{position:absolute;left:50%;top:0;height:620px;width:auto;transform:translateX(-50%);
+  pointer-events:none;user-select:none}
+.pfig svg.guias{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.guias path{fill:none;stroke-width:1.6}
+.guias circle{stroke:var(--card);stroke-width:1.6}
+
+.llam{position:absolute;width:196px;background:var(--card);border:1px solid var(--rule);
+  border-radius:11px;padding:9px 11px 10px;box-shadow:0 2px 8px rgba(12,25,18,.10);
+  transition:transform .13s,box-shadow .13s}
+.llam:hover{transform:translateY(-2px);box-shadow:0 5px 16px rgba(12,25,18,.16);z-index:3}
+.llam.izq{left:0;text-align:right}
+.llam.der{right:0}
+.llam .lt{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink3);line-height:1.3;margin-bottom:3px}
+.llam .lv{font-size:21px;font-weight:700;letter-spacing:-.015em;line-height:1.15}
+.llam .lu{font-size:11px;font-weight:600;color:var(--ink2);margin-left:3px}
+.llam .ld{font-size:11.5px;color:var(--ink2);line-height:1.4;margin-top:3px}
+.llam .lb2{margin-top:7px;height:5px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.llam .lb2 i{display:block;height:100%;border-radius:3px}
+.llam .chip3{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.06em;
+  padding:1px 6px;border-radius:7px;color:#fff;margin-bottom:4px}
+
+.perfsel{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-bottom:6px}
+.perfleg{display:flex;flex-wrap:wrap;justify-content:center;gap:7px 22px;margin-top:6px;
+  padding-top:12px;border-top:1px solid var(--rule2);font-size:12px;color:var(--ink2)}
+.perfleg span{display:flex;align-items:center;gap:7px}
+.perfleg i{width:11px;height:11px;border-radius:3px;flex:none}
+@media(max-width:900px){
+  .pfig{height:auto;display:flex;flex-direction:column;gap:9px}
+  .pfig img{position:static;transform:none;height:280px;margin:0 auto 6px}
+  .pfig svg.guias{display:none}
+  .llam{position:static!important;width:100%;text-align:left!important}
+}
+
+
+/* ---------- lectura y evidencia en las llamadas del perfil ---------- */
+#tt p{margin:0 13px 9px;font-size:12px;line-height:1.45;color:var(--ink2)}
+#tt p b{display:inline;margin:0;font-size:inherit}
+.llam.ev{cursor:pointer}
+/* .llam es bloque con text-align, no flex: el chip se alinea solo */
+.llam .verd{display:inline-flex;align-items:center;gap:4px;margin-top:8px;
+  font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--icbf-verde-osc);
+  background:rgba(114,191,68,.13);border:1px solid var(--icbf-verde);border-radius:8px;padding:2px 7px}
+.llam .verd svg{width:9px;height:9px;stroke:currentColor;fill:none;stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round}
+.llam .verd.act{background:var(--icbf-verde-osc);color:#fff;border-color:transparent}
+.evsub{margin:13px 0 6px;font-size:10.5px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink3)}
+
+
+/* ---------- ventana con los registros del reporte ---------- */
+.fx.ancha{max-width:1180px}
+.dtools{display:flex;flex-wrap:wrap;align-items:center;gap:9px 12px;
+  padding-bottom:11px;border-bottom:1px solid var(--rule2)}
+.dtools .cuenta{font-size:13px;color:var(--ink2)}
+.dtools .cuenta b{color:var(--ink);font-variant-numeric:tabular-nums}
+.dbaja{margin-left:auto;display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+  font-family:var(--sans);font-size:11.5px;font-weight:700;letter-spacing:.03em;
+  color:#fff;background:var(--icbf-verde-osc);border:none;border-radius:9px;padding:7px 13px}
+.dbaja:hover{background:var(--icbf-verde-med)}
+.dbaja svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+.dwrap{overflow:auto;max-height:52vh;border:1px solid var(--rule);border-radius:10px;
+  background:var(--card)}
+.dtab{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
+.dtab th{position:sticky;top:0;z-index:2;background:var(--sunk);text-align:left;
+  font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink2);padding:8px 10px;white-space:nowrap;
+  border-bottom:1px solid var(--rule);cursor:pointer;user-select:none}
+.dtab th:hover{color:var(--accent)}
+.dtab th .ord{opacity:.35;margin-left:4px}
+.dtab th.act{color:var(--accent)} .dtab th.act .ord{opacity:1}
+.dtab td{padding:7px 10px;border-bottom:1px solid var(--rule2);white-space:nowrap;color:var(--ink)}
+.dtab td.num{text-align:right;font-variant-numeric:tabular-nums}
+.dtab tr:last-child td{border-bottom:none}
+.dtab tbody tr:hover td{background:var(--halo)}
+.dtab td.mal{color:var(--d3);font-weight:600}
+.dtab td.bien{color:var(--icbf-verde-osc)}
+.dnota{font-size:11.5px;color:var(--ink3);line-height:1.5}
+.dpriv{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;line-height:1.5;
+  background:var(--halo);border:1px solid var(--rule2);border-radius:9px;padding:9px 11px;color:var(--ink2)}
+.dpriv b{color:var(--ink)}
+/* el icono que abre la tabla */
+.btabla{display:inline-flex;align-items:center;gap:4px;cursor:pointer;flex:none;
+  font-family:var(--sans);font-size:9.5px;font-weight:700;letter-spacing:.04em;
+  color:var(--accent);background:var(--halo);border:1px solid var(--rule2);
+  border-radius:8px;padding:2px 6px;line-height:1.5}
+.btabla:hover{border-color:var(--accent2);background:var(--card)}
+.btabla svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.2}
+.hh .btabla{margin-left:4px}
+
+
+/* ---------- cuadricula de mil ---------- */
+.waffle{display:grid;grid-template-columns:repeat(auto-fill,minmax(14px,1fr));
+  gap:3px 2px;margin:10px 0 2px}
+.waffle i{aspect-ratio:.75;display:block;transition:transform .1s;
+  -webkit-mask:var(--fig-persona) center/contain no-repeat;
+  mask:var(--fig-persona) center/contain no-repeat}
+.waffle i:hover{transform:scale(1.9);z-index:2;position:relative}
+.wleg{display:flex;flex-wrap:wrap;gap:9px 20px;margin-top:13px;padding-top:11px;
+  border-top:1px solid var(--rule2)}
+.wit{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2)}
+.wit>i{width:13px;height:17.3px;flex:none;
+  -webkit-mask:var(--fig-persona) center/contain no-repeat;
+  mask:var(--fig-persona) center/contain no-repeat}
+.wit b{color:var(--ink);font-variant-numeric:tabular-nums}
+.wit small{color:var(--ink3);font-variant-numeric:tabular-nums}
+@media(max-width:520px){ .waffle{grid-template-columns:repeat(auto-fill,minmax(11px,1fr))} }
+
+
+/* ---------- aviso de regla que interviene el calculo ---------- */
+.aviso{display:flex;flex-wrap:wrap;align-items:center;gap:11px 14px;margin:11px 0 2px;
+  padding:12px 15px;background:var(--halo);border:1px solid var(--rule2);
+  border-left:3px solid var(--icbf-azul);border-radius:11px;
+  font-size:12.5px;line-height:1.5;color:var(--ink2)}
+.aviso>div{flex:1;min-width:230px}
+.aviso b{color:var(--ink)}
+
+
+/* ---------- prevalencia con y sin registros no plausibles ---------- */
+.plaus{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;margin-top:4px}
+.plaus th{text-align:right;font-family:var(--sans);font-size:9.5px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);padding:0 10px 7px;
+  border-bottom:1px solid var(--rule);white-space:nowrap}
+.plaus th:first-child{text-align:left}
+.plaus td{padding:9px 10px;border-bottom:1px solid var(--rule2);text-align:right;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.plaus td:first-child{text-align:left;font-weight:600;white-space:normal}
+.plaus tr:last-child td{border-bottom:none}
+.plaus .dif{font-weight:700}
+.plaus .dif.sube{color:var(--d3)} .plaus .dif.baja{color:var(--icbf-verde-osc)}
+.plaus .dif.igual{color:var(--ink3);font-weight:400}
+.plaus .quitados{color:var(--ink3);font-size:12px}
+.mkchip{display:inline-block;font-family:var(--mono);font-size:9.5px;background:var(--halo);
+  border:1px solid var(--rule2);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:3px}
+.dtab td.mks{white-space:normal;min-width:96px}
+
+@media(max-width:640px){.row,.brow{grid-template-columns:1fr;gap:3px}.row .nn,.brow .vv{text-align:left}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+<aside class="side">
+  <div class="marca">
+    <div class="k">ICBF · REGIONAL ANTIOQUIA</div>
+    <h1>Vigilancia nutricional</h1>
+    <div class="r" id="meta"></div>
+  </div>
+  <nav role="tablist" id="nav"></nav>
+  <div class="pie" id="lateral"></div>
+</aside>
+
+<main class="main">
+<div class="topbar">
+  <div>
+    <h2 class="tt" id="tsec"></h2>
+    <div class="sb" id="tsub"></div>
+  </div>
+</div>
+<div class="alert" id="warn"></div>
+
+<div class="bar">
+  <label class="f">Centro zonal<select id="fcz"></select></label>
+  <label class="f">Municipio de la UDS<select id="fmun"></select></label>
+  <label class="f">Entidad contratista<select id="feas"></select></label>
+  <button type="button" id="reset" class="btn">Limpiar filtros</button>
+</div>
+
+<section id="v-semaforo"></section>
+<section id="v-mapa" hidden></section>
+<section id="v-anatomia" hidden></section>
+<section id="v-perfil" hidden></section>
+<section id="v-estado" hidden></section>
+<section id="v-critica" hidden></section>
+<section id="v-gestantes" hidden></section>
+<section id="v-operadores" hidden></section>
+<section id="v-calidad" hidden></section>
+<section id="v-historico" hidden></section>
+<section id="v-glosario" hidden></section>
+
+<footer id="foot"></footer>
+</main>
+</div>
+
+<div id="tt" role="status" aria-live="polite"></div>
+<div id="evid" role="dialog" aria-label="Evidencia del hallazgo"></div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="fxtit"><div class="fx" id="fx"></div></div>
+
+<script>
+const D = __DATOS__;
+/* busca una de las 27 reglas de depuracion por codigo (A1..G2); nunca
+   falla: si no la encuentra devuelve ceros, para no romper una ficha */
+const regla = cod => D.reglas.find(r => r.cod === cod) || { n: 0, pct: 0, desc: "" };
+
+/* =====================================================================
+   FICHAS TECNICAS — cada indicador con su definicion, los campos exactos
+   del reporte descargado y su metodo de calculo. Nada aqui es inventado:
+   todo se apoya en columnas que existen en ICBFCUEGeneralPorToma (71) y
+   GestanteLactantePorToma (44).
+   ===================================================================== */
+const FICHAS = {
+
+beneficiario:{t:"Beneficiario único",k:"Unidad de conteo",
+ q:"Una niña o un niño distinto, contado una sola vez sin importar cuántas valoraciones tenga en el periodo.",
+ c:"<code>Numero Documento Beneficiario</code> (columna 11)",
+ m:()=>`NUMERADOR     valores distintos del documento
+DENOMINADOR   no aplica: es un conteo, no una proporción
+CÁLCULO       contar documentos sin repetir
+
+ESTE CORTE    ${mil(D.meta.filas_nn)} filas de toma
+              ÷ ${mil(D.meta.benef_nn)} documentos distintos
+              = ${(D.meta.filas_nn/D.meta.benef_nn).toFixed(2).replace(".",",")} filas por niño`,
+ v:()=>`<b>Este es el error más frecuente al leer el reporte.</b> Cada fila es una toma, no una persona. Contar filas infla la población un ${Math.round((D.meta.filas_nn/D.meta.benef_nn-1)*100)} %.`},
+
+ultima_toma:{t:"Última toma",k:"Regla de deduplicación",
+ q:"De todas las valoraciones de un mismo beneficiario, la más reciente del periodo. Es la que describe su estado actual.",
+ c:"<code>Numero Documento Beneficiario</code> (11) + <code>Toma Mensual</code> (32)",
+ m:()=>`PASO 1        agrupar todas las filas por documento
+PASO 2        dentro de cada grupo, quedarse con la fila
+              de mayor valor en Toma Mensual
+PASO 3        si hay empate, la última leída
+
+RESULTADO     ${mil(D.meta.benef_nn)} filas, una por beneficiario`,
+ v:"Toda prevalencia de este tablero se calcula sobre la última toma. Las trayectorias y la cobertura sí recorren el histórico completo."},
+
+toma:{t:"Toma mensual",k:"Dimensión de tiempo",
+ q:"El número de la valoración dentro de la vigencia. Resultó ser, literalmente, el mes calendario.",
+ c:"<code>Toma Mensual</code> (32) y <code>Fecha Valoración Nuricional</code> (20)",
+ m:()=>`VERIFICACIÓN  se cruzó el número de toma contra el mes
+              de la fecha de valoración, en las ${mil(D.meta.filas_nn)} filas
+
+${D.historico.nn.meses.map((t,i)=>"              toma "+t+" → todas con fecha de "+D.historico.nn.etiquetas[i].toLowerCase()).join("\n")}
+
+              sin una sola excepción`,
+ v:"Los ciclos masivos son <b>febrero y mayo</b>. Comparar mes contra mes muestra caídas que no existen: la comparación válida es ciclo contra ciclo."},
+
+vinculado:{t:"Estado del beneficiario",k:"Filtro de denominador",
+ q:"Si la niña o el niño sigue activo en el servicio o ya salió.",
+ c:"<code>Estado</code> (66). Valores: VINCULADO / DESVINCULADO",
+ m:(a)=>`FILTRO        se conservan solo las filas con
+              Estado = 'VINCULADO'
+
+              se aplica ANTES de cualquier otro cálculo,
+              porque cambia el denominador de todo
+
+ESTE CORTE    ${mil(a.n)} beneficiarios vinculados
+              en el conjunto filtrado`,
+ v:()=>{
+   const en = D.calidad_extra.estado_nn, eg = D.calidad_extra.estado_gs;
+   const tn = Object.values(en).reduce((s,x)=>s+x,0), tg = Object.values(eg).reduce((s,x)=>s+x,0);
+   const dn = pct(tn-(en.VINCULADO||0), tn), dg = pct(tg-(eg.VINCULADO||0), tg);
+   return `En niñas y niños los desvinculados son el ${p1(dn)}; en gestantes el ${p1(dg)}. Sin este filtro la prevalencia se calcularía sobre población que ya salió del programa.`;
+ }},
+
+zscore:{t:"Puntaje Z",k:"Base de toda clasificación",
+ q:"Cuántas desviaciones estándar separa al niño de la mediana de referencia de la OMS para su edad y sexo. Ver «Desviación estándar» y «Mediana» en este glosario para el concepto general.",
+ c:"<code>ZScore Talla Edad</code> (50), <code>ZScore Peso Edad</code> (51), <code>ZScore Peso Talla</code> (52), <code>ZScore IMC</code> (53)",
+ m:()=>{
+   const z=D.calidad_extra.z, nom={z_te:"Talla/Edad",z_pe:"Peso/Edad",z_pt:"Peso/Talla",z_imc:"IMC"};
+   const filas=["z_te","z_pe","z_pt","z_imc"].map(k=>{const r=z[k];
+     return "  "+nom[k].padEnd(12)+(r.media==null?"sin dato":r.media.toFixed(2).replace(".",",").padEnd(8)+" media   "+r.mediana.toFixed(2).replace(".",",")+" mediana");}).join("\n");
+   return `ENTRA         la medida cruda (peso o talla), la edad
+              en meses y el sexo
+SALE DE       las tablas LMS de los Patrones de
+              Crecimiento Infantil de la OMS 2006
+LO CALCULA    el sistema, no este tablero
+
+ESTE CORTE, TODAS LAS TOMAS (${mil(D.meta.filas_nn)} filas)
+${filas}
+
+              Media y mediana casi iguales = distribución
+              simétrica; si se separan, hay valores extremos
+              jalando la media hacia un lado.`;
+ },
+ n:"Patrones de Crecimiento Infantil OMS 2006",
+ v:"<b>Nunca se debe imputar un puntaje Z que falte.</b> Recalcularlo exige miles de valores de referencia por edad y sexo. Si falta, el registro queda como <i>no evaluable</i>."},
+
+pt:{t:"Peso para la talla",k:"Indicador antropométrico",
+ q:"Relaciona el peso con la talla alcanzada. Detecta la desnutrición aguda y el exceso de peso. Es el indicador de emergencia.",
+ c:"<code>Estado Peso Talla</code> (57), derivado de <code>ZScore Peso Talla</code> (52)",
+ m:()=>`PUNTOS DE CORTE de la Resolución 2465 de 2016
+
+  Z < −3          Desnutrición aguda severa
+  −3 ≤ Z < −2     Desnutrición aguda moderada
+  −2 ≤ Z < −1     Riesgo de desnutrición aguda
+  −1 ≤ Z ≤ +1     Peso adecuado para la talla
+  +1 < Z ≤ +2     Riesgo de sobrepeso
+  +2 < Z ≤ +3     Sobrepeso
+  Z > +3          Obesidad
+
+NOTA          «adecuado» es el intervalo CERRADO en
+              los dos extremos: incluye −1 y +1`,
+ n:"Resolución 2465 de 2016 · Ministerio de Salud",
+ v:()=>{const d1=regla("D1");
+   return `<b>Verificado:</b> se contrastó la clasificación del sistema contra el puntaje Z en las ${mil(D.meta.filas_nn)} filas. `
+     +(d1.n===0?`<b>Cero discrepancias.</b> El sistema clasifica exactamente según la norma.`
+               :`<b>${mil(d1.n)} discrepancias</b> (${p2(d1.pct)}). El sistema no siempre clasifica según la norma en este corte — revisar la regla D1 en Calidad del dato.`);
+ }},
+
+te:{t:"Talla para la edad",k:"Indicador antropométrico",
+ q:"Compara la talla con la esperada para la edad. Detecta la desnutrición crónica, que refleja privación sostenida y no un episodio reciente.",
+ c:"<code>Estado Talla Edad</code> (55), derivado de <code>ZScore Talla Edad</code> (50)",
+ m:()=>`PUNTOS DE CORTE de la Resolución 2465 de 2016
+
+  Z < −2          Retraso en talla
+  −2 ≤ Z < −1     Riesgo de talla baja
+  Z ≥ −1          Talla adecuada para la edad
+
+LA NORMA      distingue además retraso severo (Z < −3).
+DISTINGUE     El sistema no lo separa, pero el tablero
+              lo recalcula desde el puntaje Z para el
+              componente antropométrico del índice.`,
+ n:"Resolución 2465 de 2016",
+ v:"Ojo con la medida de origen: en menores de dos años es <b>longitud</b> tomada acostado con infantómetro, y desde los dos años es <b>talla</b> tomada de pie con tallímetro. Son técnicas distintas y eso se nota en el dato."},
+
+pe:{t:"Peso para la edad",k:"Indicador antropométrico",
+ q:"Indicador combinado: un niño puede tener peso bajo para la edad por delgadez, por talla baja o por ambas.",
+ c:"<code>Estado Peso Edad</code> (56), derivado de <code>ZScore Peso Edad</code> (51)",
+ m:()=>`PUNTOS DE CORTE de la Resolución 2465 de 2016
+
+  Z < −2          Desnutrición global
+  −2 ≤ Z < −1     Riesgo de peso bajo para la edad
+  Z ≥ −1          Peso adecuado para la edad
+  Z > +1          No Aplica`,
+ n:"Resolución 2465 de 2016",
+ v:"El valor <b>«No Aplica»</b> no es un error: la norma no define categorías de exceso para peso/edad en menores de cinco años, porque el exceso se valora con peso/talla e IMC. Graficarlo como si fuera un estado nutricional es un error de lectura."},
+
+dnt_aguda:{t:"Desnutrición aguda moderada o severa",k:"Indicador de emergencia",
+ q:"Niñas y niños con déficit agudo de peso frente a su talla. Requieren atención inmediata del sector salud.",
+ c:"<code>Estado Peso Talla</code> (57)",
+ m:(a)=>`NUMERADOR     beneficiarios únicos cuya última toma
+              clasifica como 'Desnutricion Aguda Moderada'
+              o 'Desnutricion aguda severa'
+DENOMINADOR   beneficiarios únicos vinculados del
+              conjunto filtrado
+CÁLCULO       numerador ÷ denominador × 100
+
+ESTE CORTE    ${mil(a.dnt)} ÷ ${mil(a.n)}
+              = ${p2f(pct(a.dnt,a.n))}
+              de los cuales ${mil(a.pt[1])} son severos`,
+ n:"Resolución 2465 de 2016 · Resolución 3280 de 2018",
+ v:"Es una lista corta, nominal y verificable uno por uno. Está en la pestaña <b>Ruta crítica</b>."},
+
+retraso:{t:"Retraso en talla",k:"Desnutrición crónica",
+ q:"Talla por debajo de dos desviaciones estándar de la esperada para su edad y sexo.",
+ c:"<code>Estado Talla Edad</code> (55) — equivale a <code>ZScore Talla Edad</code> &lt; −2",
+ m:(a)=>`NUMERADOR     beneficiarios únicos cuya última toma
+              clasifica como 'Retraso en talla'
+DENOMINADOR   beneficiarios únicos vinculados del
+              conjunto filtrado, con clasificación válida
+              de talla para la edad
+CÁLCULO       numerador ÷ denominador × 100
+
+ESTE CORTE    ${mil(a.retraso)} ÷ ${mil(a.n)}
+              = ${p2f(pct(a.retraso,a.n))}
+
+NO SE INCLUYE 'Riesgo de talla baja' (Z entre −2 y −1),
+              que es la categoría anterior y agrupa a
+              ${mil(a.te[2])} beneficiarios más`,
+ n:"Resolución 2465 de 2016",
+ v:"Es el problema de mayor magnitud de la regional. No genera alarma operativa porque no exige canalización inmediata, pero es el que describe el territorio."},
+
+exceso:{t:"Sobrepeso y obesidad",k:"Malnutrición por exceso",
+ q:"Peso por encima de dos desviaciones estándar frente a la talla alcanzada.",
+ c:"<code>Estado Peso Talla</code> (57)",
+ m:(a)=>`NUMERADOR     beneficiarios únicos clasificados como
+              'Sobrepeso' (Z entre +2 y +3)
+              u 'Obesidad' (Z mayor que +3)
+DENOMINADOR   beneficiarios únicos vinculados
+CÁLCULO       numerador ÷ denominador × 100
+
+ESTE CORTE    ${mil(a.pt[6])} sobrepeso + ${mil(a.pt[7])} obesidad
+              = ${mil(a.exceso)} ÷ ${mil(a.n)}
+              = ${p2f(pct(a.exceso,a.n))}
+
+NO SE INCLUYE 'Riesgo de sobrepeso' (Z entre +1 y +2),
+              que suma ${mil(a.pt[5])} beneficiarios más`,
+ n:"Resolución 2465 de 2016",
+ v:"El flujo entre tomas se mueve hacia este lado: más beneficiarios pasan de adecuado a riesgo de sobrepeso que al revés."},
+
+cobertura:{t:"Cobertura de la toma",k:"Indicador de gestión",
+ q:"Qué proporción de los beneficiarios activos tiene una valoración reciente. Mide si el operador está haciendo el seguimiento.",
+ c:"<code>Toma Mensual</code> (32) y <code>Estado</code> (66)",
+ m:(a)=>`NUMERADOR     beneficiarios vinculados cuya última toma
+              es la ${D.meta.tmax} o la ${D.meta.tmax-1}
+              (los dos últimos meses del corte comparable)
+DENOMINADOR   total de beneficiarios vinculados
+CÁLCULO       numerador ÷ denominador × 100
+
+ESTE CORTE    ${mil(a.reciente)} ÷ ${mil(a.n)}
+              = ${p2f(pct(a.reciente,a.n))}
+
+POR QUÉ LA    porque un centro zonal descargado en otra
+TOMA ${D.meta.tmax}      fecha trae más tomas que el resto. Se usa
+              la última que TODOS alcanzan.`,
+ v:"Solo se puede calcular deduplicando: contando filas el indicador desaparece."},
+
+criterio:{t:"Criterio de cumplimiento de nutrición",k:"Indicador del sistema",
+ q:"Marca del propio sistema sobre si el registro nutricional del beneficiario cumple lo exigido.",
+ c:"<code>Criterio de cumplimiento de nutrición</code> (71). Valores: CUMPLE / NO CUMPLE",
+ m:(a)=>`ORIGEN        lo calcula el sistema Cuéntame.
+              Este tablero NO lo recalcula: lo lee
+              tal como viene en la columna 71.
+
+NUMERADOR     beneficiarios con valor 'NO CUMPLE'
+DENOMINADOR   beneficiarios vinculados
+CÁLCULO       numerador ÷ denominador × 100
+
+ESTE CORTE    ${mil(a.nc)} ÷ ${mil(a.n)}
+              = ${p2f(pct(a.nc,a.n))}`,
+ v:()=>{
+   const g=porDim(idxNN(),"cz",DIC.cz,300).map(x=>pct(x.r.nc,x.r.n)).filter(v=>v>0);
+   const veces=g.length>1?(Math.max(...g)/Math.min(...g)):1;
+   return `<b>Mide gestión, no nutrición.</b> Su dispersión entre centros zonales de la misma regional llega a ser de ${veces.toFixed(1).replace(".",",")} veces (mínimo 300 beneficiarios por centro zonal), y ninguna diferencia nutricional real explica eso. Lo que mide es disciplina de registro.`;
+ }},
+
+canalizacion:{t:"Canalización a salud",k:"Respuesta institucional",
+ q:"Si el caso de desnutrición aguda fue remitido a la entidad territorial de salud o a la EAPB.",
+ c:"Columna 69: «Si el niño o niña presenta desnutrición aguda moderada o severa, ¿fue canalizado…?»",
+ m:(a)=>`APLICA A      SOLO los beneficiarios cuyo Estado Peso
+              Talla indica desnutrición aguda moderada
+              o severa. En los demás el valor esperado
+              es 'No Tiene Desnutrición Aguda'.
+
+NUMERADOR     de esos casos, los que tienen valor 'SI'
+DENOMINADOR   total de casos de desnutrición aguda
+CÁLCULO       numerador ÷ denominador × 100
+
+ESTE CORTE    ${mil(a.canal)} ÷ ${mil(a.dnt)}
+              = ${a.dnt?p2f(pct(a.canal,a.dnt)):"—"}`,
+ n:"Resolución 3280 de 2018 · Rutas Integrales de Atención en Salud",
+ v:"<b>Cuidado al construir este indicador.</b> Decenas de miles de filas traen 'NO' en niños que NO tienen desnutrición aguda: el diligenciamiento correcto era 'No Tiene Desnutrición Aguda'. Sin condicionar la regla al diagnóstico, el tablero reporta falsos «sin canalizar»."},
+
+ftlc:{t:"Fórmula Terapéutica Lista para el Consumo",k:"Tratamiento",
+ q:"Si el niño con desnutrición aguda está recibiendo FTLC por el sector salud.",
+ c:"Columna 70",
+ m:(a)=>`APLICA A      solo los casos de desnutrición aguda
+              moderada o severa
+
+NUMERADOR     de esos casos, los que tienen valor 'SI'
+DENOMINADOR   total de casos de desnutrición aguda
+CÁLCULO       numerador ÷ denominador × 100
+
+ESTE CORTE    ${mil(a.ftlcSi)} ÷ ${mil(a.dnt)}
+              = ${a.dnt?p2f(pct(a.ftlcSi,a.dnt)):"—"}`,
+ v:()=>{
+   let sinDato=0, dnt=0;
+   for (const i of idxNN()) if (N.pt[i]===1||N.pt[i]===2) { dnt++; if (N.ftlc[i]===0) sinDato++; }
+   return `Es el campo peor diligenciado del reporte: solo el ${p1(100-pct(sinDato,dnt))} de los casos de desnutrición aguda trae algún valor (SI o NO).`;
+ }},
+
+flag:{t:"Flag de plausibilidad OMS",k:"Control de calidad",
+ q:"Marca que el propio sistema pone cuando una medición cae fuera de los límites biológicamente posibles.",
+ c:"<code>Flag</code> (54). Cero = sin problema; distinto de cero = medición implausible",
+ m:()=>{const f=D.calidad_extra.flag, okD=f.ok_dentro||0, okF=f.ok_fuera||0, malD=f.mal_dentro||0, malF=f.mal_fuera||0;
+   return `VERIFICACIÓN  se contrastó el Flag contra los límites
+              OMS de los 4 puntajes Z, en las ${mil(D.meta.filas_nn)} filas
+
+              Flag = 0  → ${p1(pct(okD,okD+okF))} dentro de los límites
+              Flag ≠ 0  → ${p1(pct(malF,malD+malF))} fuera de los límites
+
+USO EN ESTE   los registros con Flag distinto de cero
+TABLERO       se excluyen del índice de riesgo y quedan
+              marcados como NO EVALUABLE, en vez de
+              contaminar el promedio de su operador`;
+ },
+ n:"Límites de plausibilidad de la OMS",
+ v:"<b>Es un control que ya existe y nadie usa.</b> Un puntaje Z fuera de estos límites es biológicamente imposible: sin filtrar, ese registro puede entrar como obesidad severa o desnutrición severa cuando en realidad es un error de digitación."},
+
+talla_inf:{t:"Talla inferior a la última toma",k:"Control de calidad",
+ q:"Marca del sistema cuando la talla medida es menor que la de la valoración anterior. Un niño no encoge.",
+ c:"<code>Talla inferior última toma</code> (68). Valores: SI / NO",
+ m:()=>{const c8=regla("C8"), c6=regla("C6");
+   return `ORIGEN        lo marca el sistema comparando contra
+              su propio histórico, que va más atrás
+              que el periodo descargado
+
+EN EL CORTE   ${mil(c8.n)} registros marcados con 'SI'
+              = ${p2(c8.pct)} de las filas
+
+REGLA PROPIA  el tablero además calcula su versión
+DEL TABLERO   dentro del periodo (regla C6) y encuentra
+              ${mil(c6.n)}: no coincide exactamente con lo
+              anterior porque el sistema compara contra
+              todo el histórico y el tablero solo contra
+              las tomas de este corte (${D.meta.periodo})`;
+ },
+ v:"Otro control que el sistema ya calcula y que no se está aprovechando. Es el mejor indicador disponible de calidad de la medición por unidad de servicio."},
+
+evolucion:{t:"Evolución entre tomas",k:"Tendencia",
+ q:"Si el beneficiario se acercó o se alejó de la adecuación entre su primera y su última valoración del periodo.",
+ c:"<code>Estado Peso Talla</code> (57) de la toma de menor número contra la de mayor número, por documento",
+ m:(a)=>`ESCALA        distancia a la adecuación. Los dos
+              extremos son malos, así que no sirve
+              una escala lineal de bueno a malo:
+
+  0  Peso adecuado para la talla
+  1  Riesgo de desnutrición · Riesgo de sobrepeso
+  2  Desnutrición aguda moderada · Sobrepeso
+  3  Desnutrición aguda severa · Obesidad
+
+CÁLCULO       distancia(última) − distancia(primera)
+              menor que cero → MEJORA
+              igual a cero   → SE MANTIENE
+              mayor que cero → EMPEORA
+
+ESTE CORTE    ${mil(a.mej)} mejoran · ${mil(a.ig)} se mantienen
+              · ${mil(a.emp)} empeoran`,
+ v:"Requiere al menos dos tomas, así que no aplica a todos. Los que tienen una sola quedan fuera de este indicador y se penalizan en Oportunidad."},
+
+irn:{t:"Índice de Riesgo Nutricional (IRN)",k:"Índice compuesto · 0 a 100",
+ q:"Un solo número por beneficiario que combina su estado, su tendencia, la oportunidad del seguimiento y los factores asociados. Sirve para priorizar a quién atender primero.",
+ c:"Estado Peso Talla (57) · Estado Talla Edad (55) · Estado Peso Edad (56) · ZScore (50–52) · Toma Mensual (32) · Criterio (71) · controles de crecimiento (65) · vacunación al día (63) · canalización (69) · FTLC (70)",
+ m:(a)=>`FÓRMULA
+  IRN = 0,50·Antropométrico + 0,20·Tendencia
+      + 0,15·Oportunidad   + 0,15·Factores
+
+ANTROPOMÉTRICO  el PEOR de los tres indicadores, no
+                el promedio: un solo hallazgo grave
+                no se diluye con dos normales
+TENDENCIA       la evolución entre tomas, en escala 0–100.
+                «Sin cambio» no penaliza a quien ya está
+                en estado adecuado: no hay qué mejorar
+OPORTUNIDAD     rezago de la toma + número de tomas
+                + criterio de cumplimiento
+FACTORES        controles de crecimiento, vacunación
+                al día y, si aplica, canalización y FTLC
+
+SI HAY UNA      Tendencia no se evalúa y su 20 % se
+SOLA TOMA       reparte entre los otros tres componentes
+
+PISO CLÍNICO — solo SUBE la clase, nunca la baja
+  desnutrición aguda severa            → CRÍTICO
+  aguda moderada sin canalizar         → CRÍTICO
+  aguda moderada canalizada            → ALTO RIESGO
+  retraso en talla                     → ALTO RIESGO
+  retraso en talla con Z < −3          → CRÍTICO
+  desnutrición global                  → ALTO RIESGO
+  desnutrición global con Z < −3       → CRÍTICO
+  obesidad                             → ALTO RIESGO
+
+  Hace falta porque el componente antropométrico
+  pesa 50 % y su techo son 90 puntos: 45, por debajo
+  del umbral de 50. Sin piso, ninguna condición
+  antropométrica alcanzaba su clase por sí sola.
+
+TRAMOS    0–24 Adecuado    50–74 Alto riesgo
+         25–49 Preventivo  75–100 Crítico
+
+ESTE CORTE  ${mil(a.irc[1])} adecuado · ${mil(a.irc[2])} preventivo
+            · ${mil(a.irc[3])} alto riesgo · ${mil(a.irc[4])} crítico`,
+ v:"Se excluyen antes los registros con Flag distinto de cero o puntaje Z fuera de los límites OMS: quedan como <b>no evaluables</b>. La vacunación se dejó fuera del peso porque el 99,7 % tiene carnet y no discrimina."},
+
+ido:{t:"Índice de Desempeño del Operador (IDO)",k:"Índice compuesto · 0 a 100",
+ q:"Mide al operador, no al niño. Cero es el mejor resultado.",
+ c:"<code>Nombre Entidad Contratista</code> (5), agregando los indicadores de sus beneficiarios",
+ m:()=>`FÓRMULA
+  IDO = 0,30·Cobertura   + 0,20·Seguimiento
+      + 0,20·Cumplimiento+ 0,15·Calidad
+      + 0,15·Respuesta clínica
+
+COBERTURA     % de sus beneficiarios SIN toma reciente
+SEGUIMIENTO   % con una sola toma en el periodo
+CUMPLIMIENTO  % con criterio en NO CUMPLE
+CALIDAD       % con marcas de plausibilidad o coherencia
+RESPUESTA     % de sus casos agudos sin canalizar
+              (si no tiene casos agudos, no puntúa)
+
+MÍNIMO        40 beneficiarios para entrar al ranking
+
+SE RECALCULA  sobre el conjunto filtrado: al elegir un
+              centro zonal, el ranking pasa a ser el
+              de ese territorio`,
+ v:"Va SEPARADO del IRN a propósito: un niño con retraso en talla en un operador impecable no debe puntuar igual que uno con seguimiento pésimo. Cruzados en una matriz responden «¿a quién visito primero?»."},
+
+gest:{t:"Estado nutricional de la gestante",k:"Indicador antropométrico",
+ q:"Clasifica el índice de masa corporal de la gestante según sus semanas de gestación.",
+ c:"<code>Est.nutr. gestante</code> (35), derivado de <code>IMC gestante</code> (33) y <code>Semanas de gestación</code> (30)",
+ m:(a,g)=>`ORIGEN        lo clasifica el sistema. El punto de
+              corte del IMC cambia con la semana de
+              gestación, porque el aumento de peso
+              esperado no es el mismo en cada trimestre.
+
+CATEGORÍAS    Bajo peso para la edad gestacional
+              IMC adecuado para la edad gestacional
+              Sobrepeso para la edad gestacional
+              Obesidad para la edad gestacional
+
+DENOMINADOR   gestantes vinculadas con clasificación
+
+ESTE CORTE    ${mil(g.bajo)} bajo peso · ${mil(g.adec)} adecuado
+              · ${mil(g.sobre)} sobrepeso · ${mil(g.obes)} obesidad
+              sobre ${mil(g.n)} gestantes`,
+ n:"Resolución 2465 de 2016 · capítulo de gestantes",
+ v:"<b>Advertencias del reporte:</b> pese a llamarse GestanteLactantePorToma, el 100 % de las filas es PERSONA GESTANTE — no hay lactantes. Y los campos «El embarazo es de alto Riesgo?», «Tipo de Complemento Alimentario», «IMC lactante» y «Est.nutr. lactante» están vacíos en el 100 % de los registros."},
+
+controles:{t:"Controles prenatales",k:"Factor asociado",
+ q:"Número de controles prenatales realizados a la fecha de la valoración.",
+ c:"<code>Número de controles prenatales realizados a la fecha</code> (42)",
+ m:()=>`AGRUPACIÓN    0 a 2 controles
+              3 a 5 controles
+              6 o más
+
+Se cruza cada tramo contra la distribución del
+estado nutricional de la gestante.`,
+ n:"Resolución 3280 de 2018",
+ v:"<b>No se observó relación con el estado nutricional:</b> con 0–2 controles el 39,0 % tiene IMC adecuado; con 6 o más, el 39,3 %. Prácticamente idéntico. Significa que el control prenatal, tal como está registrado, no está moviendo el estado nutricional — y eso vale reportarlo."},
+
+calidad:{t:"Reglas de depuración",k:"Control de calidad",
+ q:"Veintisiete reglas que se aplican a cada descarga para saber qué tan confiable es antes de graficar nada.",
+ c:"Se apoyan en las 71 columnas de niñas y niños y las 44 de gestantes",
+ m:()=>`SEIS BLOQUES
+
+  A  INTEGRIDAD     archivos y centros zonales esperados
+  B  DOMINIO        categorías fuera del catálogo 2465
+  C  PLAUSIBILIDAD  límites OMS, Flag, rangos físicos
+                    y trayectoria del beneficiario
+  D  COHERENCIA     clasificación contra puntaje Z,
+                    canalización condicionada
+  E  COMPLETITUD    campos obligatorios vacíos
+  F  DUPLICIDAD     documento repetido, niño en varias UDS
+  G  SEGUIMIENTO    cobertura y rezago de la toma
+
+SE EVALÚAN    sobre las ${mil(D.meta.filas_nn)} filas de toma, ANTES
+              de deduplicar. Por eso son cifras regionales
+              y no responden a los filtros del tablero.`,
+ v:"<b>Ninguna regla borra datos.</b> Cada una marca y deja constancia en un log trazable hasta el archivo, la unidad de servicio y el documento. La decisión de excluir se toma en el tablero, con la marca a la vista."},
+
+lactancia:{t:"Lactancia materna",k:"Campo no utilizable",
+ q:"Meses de lactancia materna exclusiva y total.",
+ c:"<code>Meses Lactancia Materna Exclusiva</code> (25) y <code>Meses Lactancia Materna Total</code> (26)",
+ m:()=>{const e3=regla("E3");
+   return `DISTRIBUCIÓN de lactancia materna exclusiva
+
+  valor 6  →  ${mil(e3.n)} registros   ${p2(e3.pct)}
+  resto    →  ${mil(D.meta.filas_nn-e3.n)} registros   ${p2(100-e3.pct)}
+
+Un campo lleno al 100 % en el que ocho de cada
+diez registros traen exactamente el mismo valor
+no es una medición: es un valor por defecto.`;
+ },
+ v:"<b>No se usa en este tablero.</b> Cualquier indicador de lactancia construido sobre él publicaría un dato inventado. Se reactivará cuando la captura mejore."},
+
+medicion:{t:"Cómo se toma cada medida",k:"Técnica de campo",
+ q:"El instrumento, la técnica y la tolerancia de repetición de las cuatro medidas que alguien toma físicamente.",
+ c:"<code>Peso</code> (44), <code>Talla</code> (45), <code>Perimetro Braquial</code> (38), <code>Perímetro Cefálico</code> (42)",
+ m:()=>`PESO          pesabebés en menores de 2 años,
+              báscula de piso en mayores.
+              Precisión de 50 a 100 g.
+              Repetir si la segunda medida varía más
+              de DOS VECES la sensibilidad del equipo.
+
+TALLA         menores de 2 años: LONGITUD, acostado,
+              con infantómetro y dos personas.
+              Desde los 2 años: TALLA, de pie,
+              con tallímetro.
+              Repetir si varía más de 0,5 cm.
+
+PERÍMETRO     de 6 a 59 meses. Brazo no dominante,
+DE BRAZO      punto medio entre acromion y olécranon.
+              Repetir si varía más de 0,3 cm.
+
+PERÍMETRO     menores de 5 años. Por glabela y la
+CEFÁLICO      parte más saliente del occipital.
+              Repetir si varía más de 0,3 cm.`,
+ n:"ICBF · Anexo 1, Orientaciones para la toma de medidas antropométricas, A14.G4.PP v1 del 15/05/2026",
+ v:"La sección <b>Anatomía del dato</b> muestra la distribución real de cada una y su cobertura. El perímetro cefálico prácticamente no se está tomando."},
+
+/* =====================================================================
+   CONCEPTOS ESTADISTICOS — el tablero usa media, mediana, percentiles,
+   desviacion estandar e indices ponderados en varias partes (Perfil,
+   curva de crecimiento, IRN/IRG/IDO). Estas cinco fichas explican el
+   concepto una sola vez, para no repetirlo en cada indicador que lo usa.
+   ===================================================================== */
+media:{t:"Media (promedio)",k:"Concepto estadístico",
+ q:"La suma de todos los valores dividida entre cuántos son. Es sensible a los valores extremos: uno solo muy alto o muy bajo puede desplazarla.",
+ c:"Se usa como línea de referencia en los gráficos de puntos y de bala (Operadores, Estado nutricional por tramo de edad).",
+ m:()=>`CÁLCULO       (x1 + x2 + ... + xn) ÷ n
+
+DÓNDE APARECE la línea punteada de "media del conjunto"
+              en los gráficos de puntos, y el punto medio
+              de los gráficos de bala (Operadores)
+
+CUIDADO       un solo territorio con un dato extremo puede
+              mover la media sin que el resto haya cambiado.
+              Por eso el tablero también reporta la mediana
+              donde importa (Perfil, curva de crecimiento)`,
+ v:"En este tablero la media casi siempre se calcula PONDERADA por la población de cada grupo, no como el promedio simple de los porcentajes de cada territorio: un centro zonal de 200 niños no pesa lo mismo que uno de 20.000."},
+
+mediana:{t:"Mediana",k:"Concepto estadístico",
+ q:"El valor que queda exactamente en la mitad cuando se ordenan todos los datos de menor a mayor: la mitad de las personas están por debajo, la mitad por encima.",
+ c:"Aparece en Perfil (peso, talla, edad, semanas de gestación) y en la curva de crecimiento (mediana del puntaje Z por territorio).",
+ m:()=>{const z=D.calidad_extra.z.z_pt, f=v=>v==null?"—":v.toFixed(2).replace(".",",");
+   return `CÁLCULO       ordenar todos los valores y tomar el
+              del medio (o el promedio de los dos del medio,
+              si son una cantidad par)
+
+VENTAJA       a diferencia de la media, no la mueve un valor
+              extremo: si un peso quedara mal digitado como
+              80 kg, la mediana casi ni se movería; la media sí
+
+ESTE CORTE    puntaje Z peso/talla — media ${f(z.media)}
+              frente a mediana ${f(z.mediana)}
+              (ver la ficha «Puntaje Z» para las otras tres)`;
+ },
+ v:"Si la media y la mediana de un mismo indicador se parecen, la distribución es simétrica. Si se alejan, hay valores extremos jalando la media hacia un lado — con las medidas antropométricas, casi siempre hacia arriba, porque un error de digitación tiende a inflar el valor, no a reducirlo."},
+
+percentil_iqr:{t:"Percentil y rango intercuartílico",k:"Concepto estadístico",
+ q:"Un percentil divide los datos ordenados en 100 partes iguales. El percentil 25 (P25) deja el 25 % de los datos por debajo; el 50 (P50) es la mediana; el 75 (P75) deja el 75 % por debajo.",
+ c:"Aparece en Perfil, en el bloque de cada medida cruda: mediana y rango intercuartílico.",
+ m:()=>`RANGO             P75 − P25: el ancho del intervalo donde
+INTERCUARTÍLICO   cae el 50 % central de los datos, quitando
+                  el 25 % más bajo y el 25 % más alto
+
+POR QUÉ IMPORTA   es un rango que no se deja arrastrar por
+                  los valores extremos, a diferencia del
+                  rango completo (máximo − mínimo)
+
+EN ESTE TABLERO   "mediana 32,1 · rango intercuartil 28,4 – 36,2"
+                  significa: la mitad central de la población
+                  pesa entre 28,4 y 36,2 kg`,
+ v:"No confundir con el puntaje Z: el reporte también trae percentiles de crecimiento de uso clínico (columnas 45 a 48), pero casi no se usan en este tablero porque el puntaje Z es más preciso en los extremos de la distribución — que es justo donde está el riesgo."},
+
+desviacion_estandar:{t:"Desviación estándar",k:"Concepto estadístico",
+ q:"Qué tan dispersos están los datos alrededor de la media. Una desviación estándar pequeña significa que casi todos los valores están cerca de la media; una grande, que están repartidos.",
+ c:"Es la unidad del puntaje Z (ver esa ficha): un puntaje Z de −2 significa «dos desviaciones estándar por debajo de la mediana de referencia».",
+ m:()=>`INTUICIÓN     en una distribución normal (de campana), el
+              68 % de los datos cae dentro de ±1 desviación
+              estándar de la media, el 95 % dentro de ±2, y
+              el 99,7 % dentro de ±3
+
+POR ESO       la Resolución 2465 usa ±2 DE como punto de
+              corte para «riesgo» y ±3 DE para los casos
+              «severos»: son los umbrales donde deja de ser
+              variación normal y empieza a ser estadística-
+              mente infrecuente
+
+EN EL REPORTE los límites de plausibilidad de la OMS (ver
+              ficha Flag) están puestos varias DE más allá
+              de esos cortes clínicos, porque a esa distancia
+              ya no es un niño atípico: es un error de
+              medición o de digitación`,
+ v:"Puntaje Z y desviación estándar son la misma unidad. «Z = −2,3» y «2,3 desviaciones estándar por debajo de la mediana» dicen exactamente lo mismo."},
+
+indice_ponderado:{t:"Índice compuesto ponderado",k:"Concepto estadístico",
+ q:"Un solo número de 0 a 100 que combina varios componentes, cada uno con un peso (%) fijo que refleja cuánto debería importar frente a los demás.",
+ c:"Es el método detrás del IRN, el IRG y el IDO (ver sus fichas): cada uno pondera componentes distintos con la misma lógica.",
+ m:()=>`FÓRMULA GENERAL
+  índice = peso1·componente1 + peso2·componente2 + ...
+  con los pesos sumando 100 %
+
+SI UN COMPONENTE   su peso se reparte proporcionalmente
+NO APLICA          entre los demás, para que el índice
+                   siga sumando 100 % de peso disponible
+                   (ver ficha IRN, caso "una sola toma")
+
+PISO CLÍNICO       en el IRN y el IRG, algunos hallazgos
+(no es parte       (desnutrición aguda severa, por ejemplo)
+de la fórmula)     fijan una clase mínima SIN IMPORTAR el
+                   puntaje. El puntaje ordena por prioridad
+                   dentro de cada clase; el piso clínico
+                   decide la clase cuando la norma no admite
+                   ambigüedad`,
+ v:"Ponderar no es promediar: el componente antropométrico del IRN pesa 50 % porque es lo que de verdad importa clínicamente. Los demás (tendencia, oportunidad, factores asociados) ayudan a ordenar prioridades dentro de un mismo nivel de riesgo, pero no lo definen."},
+};
+
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const el = (t, c, h) => { const n = document.createElement(t); if (c) n.className = c; if (h != null) n.innerHTML = h; return n; };
+const mil = n => (n == null ? "–" : Math.round(n).toLocaleString("es-CO"));
+const pct = (a, b) => b ? (100 * a / b) : 0;
+const p1 = v => v.toFixed(1).replace(".", ",") + " %";
+const p2 = v => v.toFixed(2).replace(".", ",") + " %";
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const BANDAS = [
+  { k: "DESNUTRICION AGUDA SEVERA", lb: "Desnutrición aguda severa", c: "var(--d3)" },
+  { k: "DESNUTRICION AGUDA MODERADA", lb: "Desnutrición aguda moderada", c: "var(--d2)" },
+  { k: "RIESGO DE DESNUTRICION AGUDA", lb: "Riesgo de desnutrición aguda", c: "var(--d1)" },
+  { k: "PESO ADECUADO PARA LA TALLA", lb: "Peso adecuado para la talla", c: "var(--ok)" },
+  { k: "RIESGO DE SOBREPESO", lb: "Riesgo de sobrepeso", c: "var(--e1)" },
+  { k: "SOBREPESO", lb: "Sobrepeso", c: "var(--e2)" },
+  { k: "OBESIDAD", lb: "Obesidad", c: "var(--e3)" },
+];
+const IRNC = [
+  { k: "ADECUADO", lb: "Adecuado", c: "var(--ok)" },
+  { k: "PREVENTIVO", lb: "Preventivo", c: "var(--d1)" },
+  { k: "ALTO RIESGO", lb: "Alto riesgo", c: "var(--d2)" },
+  { k: "CRITICO", lb: "Crítico", c: "var(--d3)" },
+];
+
+/* ---------- ficha tecnica ---------- */
+const modal = $("#modal");
+function ficha(key) {
+  const f = FICHAS[key]; if (!f) return;
+  const b = el("div", "fx-inner");
+  const hd = el("div", "hd");
+  hd.innerHTML = `<div class="k">${esc(f.k)}</div><h3 id="fxtit">${esc(f.t)}</h3>`;
+  const x = el("button", "close", "&times;"); x.setAttribute("aria-label", "Cerrar"); x.onclick = cerrar;
+  hd.append(x);
+  const bd = el("div", "bd");
+  const dl = el("dl");
+  const put = (t, h) => { dl.append(el("dt", null, t), el("dd", null, h)); };
+  put("Qué mide", esc(f.q));
+  put("Campos del reporte", f.c);
+  const met = typeof f.m === "function" ? f.m(resumen(idxNN()), resumenGS(idxGS())) : f.m;
+  dl.append(el("dt", null, "Método de cálculo"), (() => { const d = el("dd"); d.append(el("div", "fml", esc(met))); return d; })());
+  if (f.n) put("Referencia normativa", `<span class="norm">${esc(f.n)}</span>`);
+  const nota = typeof f.v === "function" ? f.v(resumen(idxNN()), resumenGS(idxGS())) : f.v;
+  if (nota) put("Nota de lectura", nota.replace(/\n/g, "<br>"));
+  bd.append(dl);
+  $("#fx").textContent = ""; $("#fx").classList.remove("ancha");
+  $("#fx").append(hd, bd);
+  modal.classList.add("on");
+  x.focus();
+}
+function cerrar() { modal.classList.remove("on"); }
+modal.onclick = e => { if (e.target === modal) cerrar(); };
+addEventListener("keydown", e => { if (e.key === "Escape") cerrar(); });
+
+function btnInfo(key) {
+  const b = el("button", "info", "cómo se calcula");
+  b.type = "button";
+  b.setAttribute("aria-label", "Ficha técnica: " + (FICHAS[key] ? FICHAS[key].t : key));
+  b.onclick = () => ficha(key);
+  return b;
+}
+function h2(txt, key) { const h = el("h2", null, esc(txt)); if (key) h.append(btnInfo(key)); return h; }
+
+/* ---------- tooltip ---------- */
+const tt = $("#tt");
+function showTT(e, html) {
+  tt.innerHTML = html; tt.style.opacity = "1";
+  const r = tt.getBoundingClientRect();
+  let x = e.clientX + 15, y = e.clientY + 15;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 12;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 12;
+  tt.style.left = x + "px"; tt.style.top = y + "px";
+}
+const hideTT = () => { tt.style.opacity = "0"; };
+addEventListener("scroll", hideTT, true);

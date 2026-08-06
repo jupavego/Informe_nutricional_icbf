@@ -1,0 +1,34 @@
+# ============================================================
+#  Se versiona el CODIGO, no los datos ni lo que el codigo genera.
+#
+#  Los reportes del sistema y todo lo derivado de ellos traen
+#  DATOS PERSONALES DE MENORES: documento, nombres, apellidos y
+#  fecha de nacimiento. No pueden salir a un repositorio.
+#  El tablero, aunque no lleva nombres, embebe ~82.000 numeros
+#  de documento, asi que tampoco se versiona.
+# ============================================================
+
+# --- reportes descargados del sistema ---
+NN/
+GS/
+_reportes_anteriores_18-06/
+*.xlsx
+*.xlsm
+
+# --- todo lo que produce el ETL ---
+_procesado/
+
+# --- el tablero generado (embebe documentos) ---
+*.html
+!codigo/plantilla/*.html
+
+# --- versiones anteriores y respaldos ---
+_archivo/
+*.bak
+
+# --- imagenes fuente, pesadas y binarias ---
+recursos/figuras_fuente/
+
+# --- python ---
+__pycache__/
+*.pyc
