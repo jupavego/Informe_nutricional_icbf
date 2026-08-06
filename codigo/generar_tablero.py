@@ -326,8 +326,13 @@ print("dic  cz:", len(dcz.a), "mun:", len(dmun.a), "eas:", len(deas.a),
       "serv:", len(dserv.a), "uds:", len(duds.a))
 
 # ---------------- inyecta el dataset en la plantilla -> tablero.html ----------
-plantilla = os.path.join(D, "tablero_plantilla.html")
-cuerpo = io.open(plantilla, encoding="utf-8").read()
+# La plantilla se arma de sus dos piezas versionadas. Antes se leia una copia
+# suelta en _procesado/, que git ignora: existian dos plantillas y nada impedia
+# que se separaran. Ahora hay una sola fuente y es la que esta bajo control.
+PLA = os.path.join(os.path.dirname(OUT), "codigo", "plantilla")
+plantilla = PLA
+cuerpo = (io.open(os.path.join(PLA, "tpl_head.html"), encoding="utf-8").read()
+          + io.open(os.path.join(PLA, "tpl_tail.js"), encoding="utf-8").read())
 marcador = "const D = __DATOS__;"
 if marcador not in cuerpo:
     raise SystemExit("No se encontro el marcador __DATOS__ en " + plantilla)
