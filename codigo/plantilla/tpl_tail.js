@@ -1946,6 +1946,10 @@ function vCritica() {
   inp.oninput = () => { cQ = inp.value; vCritica(); const n = $("#v-critica input[type=search]"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); };
   l.append(inp);
   box.append(lf, l);
+  const bajaCritica = el("button", "dbaja");
+  bajaCritica.type = "button";
+  bajaCritica.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>descargar Excel (CSV)';
+  box.append(bajaCritica);
   s.append(box);
 
   let ix = idxNN().filter(i => {
@@ -1962,7 +1966,7 @@ function vCritica() {
     ix = ix.filter(i => (DIC.mun[N.mun[i]] + " " + DIC.uds[N.uds[i]] + " " + DIC.eas[N.eas[i]] + " " + N.doc[i]).toUpperCase().includes(q));
   }
   box.append(el("div", "pop", `<b>${mil(ix.length)}</b><br>beneficiarios`));
-  if (!ix.length) { s.append(vacio("Ningún beneficiario con estos criterios.")); return; }
+  if (!ix.length) { bajaCritica.disabled = true; s.append(vacio("Ningún beneficiario con estos criterios.")); return; }
 
   const cols = [{ lb: "Documento" }, { lb: "Centro zonal" }, { lb: "Municipio UDS" }, { lb: "Unidad de servicio" },
     { lb: "Entidad contratista" }, { lb: "Sexo" }, { lb: "Edad (m)", n: 1 }, { lb: "Peso/talla" },
@@ -1971,11 +1975,33 @@ function vCritica() {
     i => DIC.eas[N.eas[i]], i => N.sx[i], i => N.em[i], i => N.pt[i], i => N.te[i],
     i => N.can[i], i => N.ftlc[i], i => N.irn[i], i => N.nt[i], i => N.mk[i]];
   const total = ix.length;
-  ix = ix.slice().sort((p, q) => {
+  const ordCritica = ix.slice().sort((p, q) => {
     const x = key[cS](p), y = key[cS](q);
     const r = typeof x === "number" ? (x || 0) - (y || 0) : String(x || "").localeCompare(String(y || ""));
     return cA ? r : -r;
-  }).slice(0, 500);
+  });
+  ix = ordCritica.slice(0, 500);
+
+  /* la descarga lleva TODO el conjunto filtrado, no solo los 500 que se
+     pintan en pantalla; los valores van en texto plano, sin pastillas ni HTML */
+  bajaCritica.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>'
+    + "descargar Excel (" + mil(total) + ")";
+  bajaCritica.onclick = () => descargarCSV("Ruta critica", [
+    { lb: "Documento", v: i => N.doc[i] },
+    { lb: "Centro zonal", v: i => DIC.cz[N.cz[i]] },
+    { lb: "Municipio UDS", v: i => DIC.mun[N.mun[i]] },
+    { lb: "Unidad de servicio", v: i => DIC.uds[N.uds[i]] },
+    { lb: "Entidad contratista", v: i => DIC.eas[N.eas[i]] },
+    { lb: "Sexo", v: i => N.sx[i] === 1 ? "Hombre" : N.sx[i] === 2 ? "Mujer" : "" },
+    { lb: "Edad (meses)", v: i => N.em[i] < 0 ? "" : N.em[i] },
+    { lb: "Peso/talla", v: i => CAT.pt[N.pt[i]] || "" },
+    { lb: "Talla/edad", v: i => CAT.te[N.te[i]] || "" },
+    { lb: "Canalizado", v: i => N.can[i] === 1 ? "SI" : N.can[i] === 2 ? "NO" : "" },
+    { lb: "FTLC", v: i => N.ftlc[i] === 1 ? "SI" : N.ftlc[i] === 2 ? "NO" : "" },
+    { lb: "IRN", v: i => N.irn[i] < 0 ? "" : N.irn[i] },
+    { lb: "Tomas", v: i => N.nt[i] },
+    { lb: "Marcas de calidad", v: i => N.mk[i] || "" },
+  ], ordCritica);
   const sn = v => v === 1 ? `<span style="color:var(--ok)">Sí</span>` : v === 2 ? `<span style="color:var(--d2)">No</span>` : `<span style="color:var(--ink3)">Sin dato</span>`;
   s.append(tabla(cols, ix.map(i => {
     const p = N.pt[i];
