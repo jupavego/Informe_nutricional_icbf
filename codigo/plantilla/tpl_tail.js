@@ -3352,7 +3352,7 @@ function render() {
 }
 
 (function init() {
-  $("#meta").textContent = `Corte ${D.meta.corte} · tomas de ${D.meta.periodo} · ${mil(D.meta.filas_nn)} valoraciones de niñas y niños y ${mil(D.meta.filas_gs)} de gestantes`;
+  $("#meta").textContent = `Corte ${D.meta.corte} · tomas de ${D.meta.periodo} · ${mil(D.meta.filas_nn)} registros de toma en niñas y niños y ${mil(D.meta.filas_gs)} en gestantes`;
   const falt = D.meta.faltantes || [];
   const wn = $("#warn");
   if (falt.length) {
