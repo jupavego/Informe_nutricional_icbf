@@ -10,7 +10,7 @@ navegador, sin volver a leer los archivos.
 MUNICIPIO = el de la UNIDAD DE SERVICIO (columna 4 'Municipio' en NN y
 'Municipio UDS' en GS), no el de residencia del beneficiario.
 """
-import csv, json, os, io, statistics
+import csv, json, os, io, statistics, datetime
 from collections import Counter, defaultdict
 
 D = r"E:\REGIONAL ANTIOQUIA\GESTION SUPERVISION REGIONAL\VIDEOCONFERENCIAS\7. 2026\6. JUNIO\18-06-2026 SEGUIMIENTO NUTRICIONAL\REPS\_procesado"
@@ -281,7 +281,13 @@ for _i, _t in enumerate(C["tm"]):
 TCOM = min(_mx.values()) if _mx else TMAX
 REZAG = sorted(dcz.a[c] for c, v in _mx.items() if v > TCOM)
 PERIODO = "%s a %s" % (MESES[min(tmin, 12)], MESES[min(TCOM, 12)])
-CORTE = os.environ.get("CORTE", "18-06-2026")
+# La fecha de corte es la de la ULTIMA EXTRACCION REAL de los .xlsx, no la
+# de hoy: nn_completo.csv solo se reescribe cuando procesar_reportes.py lee
+# los reportes de verdad (con --solo-analisis no se toca). Un string fijo
+# aqui es exactamente el error que dejo "Corte 18-06-2026" pegado en la
+# cabecera meses despues de que los datos ya eran de otro corte.
+CORTE = os.environ.get("CORTE") or datetime.datetime.fromtimestamp(
+    os.path.getmtime(os.path.join(D, "nn_completo.csv"))).strftime("%d-%m-%Y")
 CZ_ESPERADOS = [
     "CZ ABURRA NORTE", "CZ ABURRA SUR", "CZ BAJO CAUCA", "CZ INTEGRAL NOROCCIDENTAL",
     "CZ INTEGRAL NORORIENTAL", "CZ LA MESETA", "CZ MAGDALENA MEDIO", "CZ OCCIDENTE",
