@@ -1735,12 +1735,21 @@ function vSemaforo() {
     : el("p", "note", "Sin casos agudos en el conjunto filtrado."));
 
   if (g.n) {
+    const gix = idxGS();
     s.append(h2("Personas gestantes", "gest"));
     s.append(tiles([
-      { t: "Gestantes vinculadas", v: mil(g.n), d: "última toma del periodo", cls: "neut" },
-      { t: "Exceso de peso", v: p1(pct(g.sobre + g.obes, g.n)), d: mil(g.sobre + g.obes) + " gestantes", cls: "warn" },
-      { t: "Bajo peso", v: p1(pct(g.bajo, g.n)), d: mil(g.bajo) + " gestantes", cls: "crit" },
-      { t: "IMC adecuado", v: p1(pct(g.adec, g.n)), d: mil(g.adec) + " gestantes", cls: "good" },
+      { t: "Gestantes vinculadas", v: mil(g.n), d: "última toma del periodo", cls: "neut",
+        tabla: { t: "Gestantes vinculadas", idx: () => gix, cols: COLS_GS, ordenar: 12, asc: true,
+          lead: "Las <b>" + mil(g.n) + "</b> gestantes vinculadas del conjunto filtrado, en su última toma." } },
+      { t: "Exceso de peso", v: p1(pct(g.sobre + g.obes, g.n)), d: mil(g.sobre + g.obes) + " gestantes", cls: "warn",
+        tabla: { t: "Sobrepeso u obesidad gestacional", idx: () => gix.filter(i => G.st[i] === 3 || G.st[i] === 4), cols: COLS_GS, ordenar: 9,
+          lead: "Las <b>" + mil(g.sobre + g.obes) + "</b> gestantes con sobrepeso u obesidad para su semana de gestación." } },
+      { t: "Bajo peso", v: p1(pct(g.bajo, g.n)), d: mil(g.bajo) + " gestantes", cls: "crit",
+        tabla: { t: "Bajo peso gestacional", idx: () => gix.filter(i => G.st[i] === 1), cols: COLS_GS, ordenar: 9, asc: true,
+          lead: "Las <b>" + mil(g.bajo) + "</b> gestantes con IMC por debajo de lo esperado para su semana de gestación." } },
+      { t: "IMC adecuado", v: p1(pct(g.adec, g.n)), d: mil(g.adec) + " gestantes", cls: "good",
+        tabla: { t: "IMC adecuado para la edad gestacional", idx: () => gix.filter(i => G.st[i] === 2), cols: COLS_GS,
+          lead: "Las <b>" + mil(g.adec) + "</b> gestantes con IMC adecuado para su semana de gestación." } },
     ]));
   }
 }
@@ -2025,10 +2034,18 @@ function vGestantes() {
   const ix = idxGS(); const g = resumenGS(ix);
   if (!g.n) { s.append(vacio("Sin gestantes con la combinación de filtros seleccionada.")); return; }
   s.append(tiles([
-    { t: "Gestantes vinculadas", f: "gest", v: mil(g.n), d: "última toma del periodo", cls: "neut" },
-    { t: "Bajo peso gestacional", v: p1(pct(g.bajo, g.n)), d: mil(g.bajo) + " gestantes", cls: "crit" },
-    { t: "IMC adecuado", v: p1(pct(g.adec, g.n)), d: mil(g.adec) + " gestantes", cls: "good" },
-    { t: "Exceso de peso", v: p1(pct(g.sobre + g.obes, g.n)), d: `${mil(g.sobre + g.obes)} gestantes · ${mil(g.sobre)} con sobrepeso y ${mil(g.obes)} con obesidad`, cls: "warn" },
+    { t: "Gestantes vinculadas", f: "gest", v: mil(g.n), d: "última toma del periodo", cls: "neut",
+      tabla: { t: "Gestantes vinculadas", idx: () => ix, cols: COLS_GS, ordenar: 12, asc: true,
+        lead: "Las <b>" + mil(g.n) + "</b> gestantes vinculadas del conjunto filtrado, en su última toma." } },
+    { t: "Bajo peso gestacional", v: p1(pct(g.bajo, g.n)), d: mil(g.bajo) + " gestantes", cls: "crit",
+      tabla: { t: "Bajo peso gestacional", idx: () => ix.filter(i => G.st[i] === 1), cols: COLS_GS, ordenar: 9, asc: true,
+        lead: "Las <b>" + mil(g.bajo) + "</b> gestantes con IMC por debajo de lo esperado para su semana de gestación, ordenadas de menor a mayor IMC." } },
+    { t: "IMC adecuado", v: p1(pct(g.adec, g.n)), d: mil(g.adec) + " gestantes", cls: "good",
+      tabla: { t: "IMC adecuado para la edad gestacional", idx: () => ix.filter(i => G.st[i] === 2), cols: COLS_GS,
+        lead: "Las <b>" + mil(g.adec) + "</b> gestantes con IMC adecuado para su semana de gestación." } },
+    { t: "Exceso de peso", v: p1(pct(g.sobre + g.obes, g.n)), d: `${mil(g.sobre + g.obes)} gestantes · ${mil(g.sobre)} con sobrepeso y ${mil(g.obes)} con obesidad`, cls: "warn",
+      tabla: { t: "Sobrepeso u obesidad gestacional", idx: () => ix.filter(i => G.st[i] === 3 || G.st[i] === 4), cols: COLS_GS, ordenar: 9,
+        lead: "Las <b>" + mil(g.sobre + g.obes) + "</b> gestantes con sobrepeso u obesidad para su semana de gestación, ordenadas de mayor a menor IMC." } },
   ]));
   const agrupar = (col, dic, min) => {
     const m = new Map();
