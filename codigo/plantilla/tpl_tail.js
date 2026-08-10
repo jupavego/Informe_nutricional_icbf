@@ -1124,13 +1124,15 @@ function tablaRegistros(cfg) {
   pintar();
 
   if (cfg.pie) { const p = el("p", "dnota"); p.innerHTML = cfg.pie; bd.append(p); }
-  if (!D.meta.publico) {
-    const priv = el("div", "dpriv");
-    priv.innerHTML = "<b>Uso interno.</b> La tabla trae el número de documento para poder ubicar el caso "
+  const priv = el("div", "dpriv");
+  priv.innerHTML = D.meta.publico
+    ? "El identificador de esta tabla es <b>anónimo</b> (no es el número de documento real). Aun así, "
+      + "en una unidad con pocos beneficiarios, la combinación de unidad de servicio, sexo y edad puede "
+      + "acotar a una sola niña, niño o gestante: evite cruzar esta tabla con otras fuentes."
+    : "<b>Uso interno.</b> La tabla trae el número de documento para poder ubicar el caso "
       + "en el sistema, y no trae nombres. Aun así, en una unidad pequeña la combinación de unidad, sexo "
       + "y edad en meses puede señalar a una sola niña o niño: trátela como información reservada.";
-    bd.append(priv);
-  }
+  bd.append(priv);
 
   $("#fx").textContent = "";
   $("#fx").classList.add("ancha");
@@ -1443,16 +1445,9 @@ const SUBS = {
   glosario: "Qué mide cada indicador y cómo se calcula",
 };
 
-/* "Ruta crítica" es un listado NOMINAL para ubicar casos puntuales en el
-   sistema (seguimiento de campo): no tiene sentido en la version publica,
-   ademas de que la propia vista advierte que una unidad pequeña puede
-   señalar a una sola niña o niño solo con sexo+edad+UDS, sin necesitar
-   el documento -- por eso se quita de la navegacion, no solo se le
-   anonimiza el documento. */
 const VIEWS = [["semaforo", "Semáforo"], ["perfil", "Perfil"], ["mapa", "Mapa"], ["anatomia", "Anatomía del dato"], ["estado", "Estado nutricional"],
   ["critica", "Ruta crítica"], ["gestantes", "Gestantes"], ["operadores", "Operadores"],
-  ["calidad", "Calidad del dato"], ["historico", "Histórico"], ["glosario", "Glosario"]]
-  .filter(([id]) => !D.meta.publico || id !== "critica");
+  ["calidad", "Calidad del dato"], ["historico", "Histórico"], ["glosario", "Glosario"]];
 
 /* indices de niñas y niños que pasan el filtro */
 function idxNN() {
