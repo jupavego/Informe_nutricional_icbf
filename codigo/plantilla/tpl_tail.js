@@ -951,12 +951,17 @@ function selVista(actual, onChange) {
 
 /* tarjeta de hallazgo con chip de severidad */
 function hallazgo(h) {
-  const c = el("div", "hcard");
+  /* la severidad viaja tambien en la tarjeta, no solo en la pastilla:
+     asi se ve de un vistazo sin tener que leer el texto del chip */
+  const c = el("div", "hcard sev-" + h.sev);
   const hh = el("div", "hh");
   hh.append(el("span", "chip2 " + h.sev, h.sev.toUpperCase()));
   if (h.pct != null) hh.append(el("span", "hp", h.pct));
   c.append(hh, el("h4", null, esc(h.t)), el("p", null, h.d));
   if (h.f) { const f = el("div", "hf"); f.innerHTML = h.f; c.append(f); }
+  /* fila de acciones aparte: "ver registros" y "ver por que" no compiten
+     con la pastilla de severidad ni con la cifra por el mismo renglon */
+  c.append(el("div", "hact"));
   return c;
 }
 
@@ -1358,7 +1363,7 @@ addEventListener("keydown", e => { if (e.key === "Escape") cerrarEvid(); });
 
 /* engancha una tarjeta de hallazgo con su evidencia */
 function conEvidencia(card, cfg) {
-  const hh = card.querySelector(".hh");
+  const hh = card.querySelector(".hact");
   const v = el("span", "ver");
   v.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 20V10m5 10V4m5 16v-7m5 7V8"/></svg>ver por qué';
   hh.append(v);
@@ -1567,7 +1572,7 @@ function vSemaforo() {
        : "<b>" + mil(mod) + "</b> casos en grado moderado y ninguno severo en este conjunto.",
     f: "<b>" + mil(a.dnt - a.canal) + "</b> sin canalización registrada &nbsp;·&nbsp; Res. 2465 de 2016",
   }));
-  hall.lastChild.querySelector(".hh").append(btnTabla({ t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9, asc: true, lead: "Los <b>" + mil(a.dnt) + "</b> casos que sustentan la tarjeta, con el detalle de cada uno.", pie: "De estos, <b>" + mil(a.dnt - a.canal) + "</b> no tienen canalización registrada." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9, asc: true, lead: "Los <b>" + mil(a.dnt) + "</b> casos que sustentan la tarjeta, con el detalle de cada uno.", pie: "De estos, <b>" + mil(a.dnt - a.canal) + "</b> no tienen canalización registrada." }));
   conEvidencia(hall.lastChild, () => {
     const d = evidDe(r => ({ v: pct(r.dnt, r.n), n: r.dnt }), pct(a.dnt, a.n), "var(--d2)", 9)();
     return {
@@ -1584,7 +1589,7 @@ function vSemaforo() {
     d: "<b>" + mil(a.retraso) + "</b> niñas y niños con talla baja para su edad. Refleja privación sostenida, no un episodio reciente, y no dispara ninguna alerta operativa automática.",
     f: "Desnutrición crónica &nbsp;·&nbsp; " + (a.dnt ? Math.round(a.retraso / a.dnt) + " veces más frecuente que la aguda" : "sin casos agudos para comparar"),
   }));
-  hall.lastChild.querySelector(".hh").append(btnTabla({ t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11, asc: true, lead: "Los <b>" + mil(a.retraso) + "</b> casos con talla baja para su edad." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11, asc: true, lead: "Los <b>" + mil(a.retraso) + "</b> casos con talla baja para su edad." }));
   conEvidencia(hall.lastChild, () => {
     const media = pct(a.retraso, a.n);
     const d = evidDe(r => ({ v: pct(r.retraso, r.n), n: r.retraso }), media, "var(--d2)", 9)();
@@ -1613,7 +1618,7 @@ function vSemaforo() {
     d: "<b>" + mil(a.exceso) + "</b> con sobrepeso u obesidad, y <b>" + mil(a.pt[5]) + "</b> más en riesgo de sobrepeso. El flujo entre tomas se mueve hacia este lado.",
     f: "Peso para la talla por encima de +2 DE",
   }));
-  hall.lastChild.querySelector(".hh").append(btnTabla({ t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9, lead: "Los <b>" + mil(a.exceso) + "</b> casos con peso para la talla por encima de +2 DE." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9, lead: "Los <b>" + mil(a.exceso) + "</b> casos con peso para la talla por encima de +2 DE." }));
   conEvidencia(hall.lastChild, () => {
     const cont = el("div");
     const media = pct(a.exceso, a.n);
@@ -1643,7 +1648,7 @@ function vSemaforo() {
     d: "<b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma en los dos últimos meses del corte comparable, y <b>" + mil(a.una) + "</b> con una sola toma en todo el periodo.",
     f: "Mide gestión del operador, no estado nutricional",
   }));
-  hall.lastChild.querySelector(".hh").append(btnTabla({ t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < D.meta.tmax - 1), ordenar: 16, asc: true, lead: "Los <b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma en el corte comparable." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < D.meta.tmax - 1), ordenar: 16, asc: true, lead: "Los <b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma en el corte comparable." }));
   conEvidencia(hall.lastChild, () => {
     const media = 100 - pct(a.reciente, a.n);
     const filas = grupos.map(x => ({ lb: corto(x.lb), v: 100 - pct(x.r.reciente, x.r.n), n: x.r.n - x.r.reciente }))
@@ -3389,8 +3394,10 @@ function render() {
   VIEWS.forEach(([id]) => { $("#v-" + id).hidden = id !== TAB; });
   /* La alerta del corte se repetia en las diez vistas. Un aviso que aparece
      en cada pantalla se vuelve decorado y deja de leerse: se muestra solo en
-     la vista de entrada, que es donde alguien llega por primera vez. */
-  $("#warn").hidden = TAB !== VIEWS[0][0];
+     la vista de entrada, que es donde alguien llega por primera vez -- y
+     solo si de verdad hay algo que anunciar (init() la deja vacia cuando
+     el corte desigual es una decision del equipo, no un hallazgo). */
+  $("#warn").hidden = TAB !== VIEWS[0][0] || !$("#warn").innerHTML.trim();
   ({ semaforo: vSemaforo, perfil: vPerfil, mapa: vMapa, anatomia: vAnatomia, estado: vEstado, critica: vCritica, gestantes: vGestantes,
      operadores: vOperadores, calidad: vCalidad, historico: vHistorico, glosario: vGlosario })[TAB]();
   [...$("#nav").children].forEach(b => b.setAttribute("aria-selected", b.dataset.id === TAB));
@@ -3403,15 +3410,11 @@ function render() {
   if (falt.length) {
     wn.innerHTML = `<span class="ic">!</span><span>Faltan los archivos de <b>${falt.map(esc).join(", ")}</b> en la carpeta de niñas y niños: esa población no está incluida en ninguna cifra.</span>`;
   } else if ((D.meta.rezagados || []).length) {
-    wn.innerHTML = `<span class="ic">!</span><span>Los <b>17 centros zonales</b> llegaron, pero no todos con el mismo corte. Las cifras de cobertura ya se ajustaron para que sigan siendo comparables entre territorios. <button type="button" class="info" id="wninfo">por qué</button></span>`;
-    const detalle = `<b>${mil(D.meta.rezagados.length)} centros zonales se descargaron en otra fecha</b>`
-      + `<div class="r"><span>${esc(D.meta.rezagados.join(", "))}</span></div>`
-      + `<div class="r"><span>Traen tomas hasta la ${D.meta.tmax_real}; el resto llega hasta la ${D.meta.tmax}.</span></div>`
-      + `<div class="r"><span>Por eso toda cifra de cobertura de este tablero usa como referencia la <b>toma ${D.meta.tmax}</b>: la última que TODOS los centros zonales alcanzan.</span></div>`;
-    const bi = $("#wninfo");
-    bi.onmousemove = e => showTT(e, detalle);
-    bi.onmouseleave = hideTT;
-    bi.onclick = e => showTT(e, detalle);
+    /* Decision del equipo: todos los centros zonales se evalúan hasta la
+       toma comparable (julio), por diseño y no por accidente de descarga.
+       Ya no se anuncia como un hallazgo -- el detalle sigue disponible en
+       la ficha "Cobertura de la toma" del glosario para quien lo busque. */
+    wn.innerHTML = "";
   } else {
     wn.innerHTML = `<span class="ic" style="background:var(--icbf-verde);color:#fff">&#10003;</span><span>Descarga completa: llegaron los <b>17 centros zonales</b> en las dos poblaciones, con el mismo corte. Las cifras cubren toda la regional.</span>`;
   }

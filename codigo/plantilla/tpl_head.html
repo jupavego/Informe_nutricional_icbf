@@ -353,18 +353,27 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
    con contenido largo, y a tres o mas por fila el texto queda muy apretado */
 .hall{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:12px 0}
 @media(max-width:900px){.hall{grid-template-columns:1fr}}
-.hcard{background:var(--card);border:1px solid var(--rule);border-radius:13px;padding:13px 15px;
-  position:relative;overflow:hidden}
-.hcard .hh{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.chip2{font-size:9.5px;font-weight:700;letter-spacing:.09em;padding:2px 8px;border-radius:9px;color:#fff}
+.hcard{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:15px 17px 14px;
+  position:relative;overflow:hidden;box-shadow:var(--shadow);border-top:3px solid var(--rule)}
+.hcard.sev-alta{border-top-color:var(--icbf-rojo)}
+.hcard.sev-media{border-top-color:var(--icbf-naranja)}
+.hcard.sev-baja{border-top-color:var(--icbf-verde-osc)}
+.hcard .hh{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px}
+.chip2{font-size:9.5px;font-weight:700;letter-spacing:.09em;padding:3px 9px;border-radius:20px;color:#fff;
+  flex:none;margin-top:2px}
 .chip2.alta{background:var(--icbf-rojo)} .chip2.media{background:var(--icbf-naranja)}
 .chip2.baja{background:var(--icbf-verde-osc)}
-.hcard .hp{margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink)}
-.hcard h4{margin:0 0 4px;font-size:14px;font-weight:700;line-height:1.3}
-.hcard p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.5}
-.hcard .hf{display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:8px;
+/* la cifra con el mismo serif que ya lleva el resto de las tarjetas */
+.hcard .hp{margin-left:auto;font-family:var(--display);font-size:24px;font-weight:600;color:var(--ink);
+  line-height:1;font-variant-numeric:tabular-nums}
+.hcard h4{margin:0 0 5px;font-size:14.5px;font-weight:700;line-height:1.3;letter-spacing:-.005em}
+.hcard p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.55}
+.hcard .hf{display:flex;align-items:center;gap:7px;margin-top:10px;padding-top:9px;
   border-top:1px solid var(--rule2);font-size:11px;color:var(--ink3)}
 .hcard .hf b{color:var(--ink2);font-weight:600}
+/* acciones al pie, separadas del contenido: no compiten con el chip ni la cifra */
+.hcard .hact{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hcard .hact:empty{margin-top:0}
 
 /* ---------- microgafico en la tarjeta ---------- */
 .spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:11px;
