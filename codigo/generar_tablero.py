@@ -13,6 +13,14 @@ MUNICIPIO = el de la UNIDAD DE SERVICIO (columna 4 'Municipio' en NN y
 import csv, json, os, io, statistics, datetime
 from collections import Counter, defaultdict
 
+# PUBLICO=1 genera una version para publicar en internet: el numero de
+# documento real de cada beneficiario (que si no, queda embebido en el
+# HTML tal cual) se reemplaza por un identificador anonimo antes de
+# escribir el JSON. Todos los conteos, cruces y ordenamientos que usan
+# "doc" ya se calcularon con el valor real ANTES de este reemplazo, asi
+# que ningun numero cambia -- solo deja de ser rastreable a una persona.
+PUBLICO = os.environ.get("PUBLICO", "0") == "1"
+
 D = r"E:\REGIONAL ANTIOQUIA\GESTION SUPERVISION REGIONAL\VIDEOCONFERENCIAS\7. 2026\6. JUNIO\18-06-2026 SEGUIMIENTO NUTRICIONAL\REPS\_procesado"
 OUT = os.path.dirname(os.path.abspath(__file__))
 # OUT es la carpeta del script; los recursos ya procesados estan un nivel
@@ -299,12 +307,21 @@ print("periodo:", PERIODO, "| corte comparable toma", TCOM, "de", TMAX,
       "| beneficiarios NN:", BENEF_NN, "| faltan:", FALTAN or "ninguno",
       "| rezagados:", REZAG or "ninguno")
 
+# reemplazo del documento por un identificador anonimo, SOLO para la
+# version publica y SOLO despues de que ntomas/evol/hist ya usaron el
+# valor real -- nada de lo que se calcula con "doc" cambia, solo deja
+# de ser un numero de cedula real en el HTML final
+if PUBLICO:
+    C["doc"] = ["A%06d" % i for i in range(len(C["doc"]))]
+    G["doc"] = ["A%06d" % i for i in range(len(G["doc"]))]
+    print(f"PUBLICO=1: documento anonimizado ({len(C['doc'])} NN, {len(G['doc'])} GS)")
+
 data = {
     "meta": {"corte": CORTE, "periodo": PERIODO,
              "filas_nn": FILAS_NN, "filas_gs": FILAS_GS,
              "benef_nn": BENEF_NN, "benef_gs": BENEF_GS,
              "tmax": TCOM, "tmax_real": TMAX, "rezagados": REZAG,
-             "gtmax": GTMAX, "faltantes": FALTAN,
+             "gtmax": GTMAX, "faltantes": FALTAN, "publico": PUBLICO,
              "uds_trimestre": json.load(io.open(os.path.join(REC, "uds_trimestre.json"), encoding="utf-8"))
              if os.path.exists(os.path.join(REC, "uds_trimestre.json")) else None},
     "dic": {"cz": dcz.a, "mun": dmun.a, "eas": deas.a, "serv": dserv.a, "uds": duds.a, "cu": dcu.a},

@@ -989,9 +989,12 @@ const nz = v => v == null || v <= -90 ? "—" : v.toFixed(2).replace(".", ",");
 const oz = v => v == null || v <= -90 ? null : v;   /* centinela -99 */
 const op = v => v == null || v < 0 ? null : v;      /* centinela -1  */
 
-/* columnas de niñas y niños; 'v' devuelve el texto y 'o' el valor para ordenar */
+/* columnas de niñas y niños; 'v' devuelve el texto y 'o' el valor para ordenar.
+   La version publica (D.meta.publico) no trae columna de documento: aunque el
+   dato ya viene anonimizado desde Python, en esta version tampoco tiene
+   sentido mostrar un identificador de fila que nadie afuera va a usar. */
 const COLS_NN = [
-  { lb: "Documento", v: i => N.doc[i] },
+  ...(D.meta.publico ? [] : [{ lb: "Documento", v: i => N.doc[i] }]),
   { lb: "Sexo", v: i => LB_SX[N.sx[i]] || "—" },
   { lb: "Edad (meses)", num: 1, v: i => N.em[i] >= 0 ? String(N.em[i]) : "—", o: i => op(N.em[i]) },
   { lb: "Centro zonal", v: i => DIC.cz[N.cz[i]] || "—" },
@@ -1022,7 +1025,7 @@ const COLS_NN = [
 
 /* columnas de gestantes */
 const COLS_GS = [
-  { lb: "Documento", v: i => G.doc[i] },
+  ...(D.meta.publico ? [] : [{ lb: "Documento", v: i => G.doc[i] }]),
   { lb: "Edad (años)", num: 1, v: i => G.ed[i] >= 0 ? String(G.ed[i]) : "—", o: i => op(G.ed[i]) },
   { lb: "Centro zonal", v: i => GDIC.cz[G.cz[i]] || "—" },
   { lb: "Municipio", v: i => GDIC.mun[G.mun[i]] || "—" },
@@ -1121,11 +1124,13 @@ function tablaRegistros(cfg) {
   pintar();
 
   if (cfg.pie) { const p = el("p", "dnota"); p.innerHTML = cfg.pie; bd.append(p); }
-  const priv = el("div", "dpriv");
-  priv.innerHTML = "<b>Uso interno.</b> La tabla trae el número de documento para poder ubicar el caso "
-    + "en el sistema, y no trae nombres. Aun así, en una unidad pequeña la combinación de unidad, sexo "
-    + "y edad en meses puede señalar a una sola niña o niño: trátela como información reservada.";
-  bd.append(priv);
+  if (!D.meta.publico) {
+    const priv = el("div", "dpriv");
+    priv.innerHTML = "<b>Uso interno.</b> La tabla trae el número de documento para poder ubicar el caso "
+      + "en el sistema, y no trae nombres. Aun así, en una unidad pequeña la combinación de unidad, sexo "
+      + "y edad en meses puede señalar a una sola niña o niño: trátela como información reservada.";
+    bd.append(priv);
+  }
 
   $("#fx").textContent = "";
   $("#fx").classList.add("ancha");
@@ -1438,9 +1443,16 @@ const SUBS = {
   glosario: "Qué mide cada indicador y cómo se calcula",
 };
 
+/* "Ruta crítica" es un listado NOMINAL para ubicar casos puntuales en el
+   sistema (seguimiento de campo): no tiene sentido en la version publica,
+   ademas de que la propia vista advierte que una unidad pequeña puede
+   señalar a una sola niña o niño solo con sexo+edad+UDS, sin necesitar
+   el documento -- por eso se quita de la navegacion, no solo se le
+   anonimiza el documento. */
 const VIEWS = [["semaforo", "Semáforo"], ["perfil", "Perfil"], ["mapa", "Mapa"], ["anatomia", "Anatomía del dato"], ["estado", "Estado nutricional"],
   ["critica", "Ruta crítica"], ["gestantes", "Gestantes"], ["operadores", "Operadores"],
-  ["calidad", "Calidad del dato"], ["historico", "Histórico"], ["glosario", "Glosario"]];
+  ["calidad", "Calidad del dato"], ["historico", "Histórico"], ["glosario", "Glosario"]]
+  .filter(([id]) => !D.meta.publico || id !== "critica");
 
 /* indices de niñas y niños que pasan el filtro */
 function idxNN() {
