@@ -2835,14 +2835,15 @@ function vPerfil() {
   const gx = idxGS(), g = resumenGS(gx);
 
   const sel = el("div", "perfsel");
-  const l = el("label", "f", "Población");
-  const ss = el("select");
+  const l = el("span", "poplab", "Población a mostrar");
+  const tog = el("div", "poptog"); tog.setAttribute("role", "group"); tog.setAttribute("aria-label", "Población a mostrar");
   [["nn", "Niñas y niños"], ["gs", "Personas gestantes"]].forEach(x => {
-    const o = el("option"); o.value = x[0]; o.textContent = x[1];
-    if (x[0] === PPOB) o.selected = true; ss.append(o);
+    const b = el("button", "popbtn", esc(x[1])); b.type = "button";
+    b.setAttribute("aria-pressed", String(x[0] === PPOB));
+    b.onclick = () => { PPOB = x[0]; vPerfil(); };
+    tog.append(b);
   });
-  ss.onchange = () => { PPOB = ss.value; vPerfil(); };
-  l.append(ss); sel.append(l);
+  sel.append(l, tog);
   const nota = el("div", "note");
   nota.style.margin = "0 0 0 auto";
   nota.innerHTML = "Pase el cursor para saber <b>cómo se lee</b> cada tarjeta, o haga clic en «ver detalle» para el gráfico que la sustenta.";
