@@ -2432,9 +2432,13 @@ function vMapa() {
     const dentro = !hayFiltro || enFiltro(ft);
     const sel = FMUN >= 0 && muCode === FMUN;
     const fillIn = CAPA === "uds" ? "#F2F7F2" : (v == null ? "#E9EFEA" : RAMPA[paso(v)]);
+    /* opacidad baja a proposito: con el fondo de calles debajo, un relleno
+       casi solido tapa el mapa y todo se ve igual de "ruidoso". Con menos
+       opacidad el color sigue identificando el nivel, pero se nota que
+       hay un mapa real debajo, no un bloque de color */
     const estilo = dentro
-      ? { fillColor: fillIn, fillOpacity: .82, color: sel ? "#0C1912" : "#FDFEFD", weight: sel ? 2.2 : .8 }
-      : { fillColor: "#EDF3EC", fillOpacity: .8, color: "#DDE8DB", weight: .6 };
+      ? { fillColor: fillIn, fillOpacity: .45, color: sel ? "#0C1912" : "#FDFEFD", weight: sel ? 2.2 : .8 }
+      : { fillColor: "#EDF3EC", fillOpacity: .3, color: "#DDE8DB", weight: .6 };
     const latlngs = ft.g.map(ring => ring.map(c => [c[1], c[0]]));
     const poly = L.polygon(latlngs, { ...estilo, stroke: true });
     const html = v == null
