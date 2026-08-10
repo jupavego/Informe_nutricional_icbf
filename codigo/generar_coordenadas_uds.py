@@ -126,8 +126,52 @@ with io.open(os.path.join(PROC, "nn_ultima_toma.csv"), encoding="utf-8-sig") as 
         if k not in coord:
             sin[r["cz"]] += 1
 
-for v in uds.values():
-    v["cobertura"] = round(100.0 * v["n"] / v["cupos"], 1) if v["cupos"] else None
+# --- cobertura POR TRIMESTRE: el lineamiento exige una toma por trimestre
+# por beneficiario, no una ventana fija de meses sobre un corte que ademas
+# varia segun que zonal vaya mas atrasado. Se toma el ultimo trimestre
+# (ene-mar / abr-jun / jul-sep / oct-dic) que ya quedo COMPLETO en el
+# corte actual, y se cuentan beneficiarios UNICOS con una toma ahi, por
+# UDS, frente al cupo autorizado de esa UDS. ----------------------------
+MESES_LARGO = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+               "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def trimestre_completo(mes_max):
+    q = (mes_max - 1) // 3 + 1
+    if mes_max % 3 != 0:
+        q -= 1
+    return None if q < 1 else [3 * q - 2, 3 * q - 1, 3 * q]
+
+
+print("calculando cobertura del ultimo trimestre completo ...", flush=True)
+NN_COMPLETO = os.path.join(PROC, "nn_completo.csv")
+tmax_nn = 0
+with io.open(NN_COMPLETO, encoding="utf-8-sig") as fh:
+    for r in csv.DictReader(fh):
+        try:
+            tmax_nn = max(tmax_nn, int(r["toma"]))
+        except (TypeError, ValueError):
+            pass
+TRIM = trimestre_completo(tmax_nn)
+tri_docs = defaultdict(set)
+if TRIM:
+    TRIM_LBL = MESES_LARGO[TRIM[0]] + "-" + MESES_LARGO[TRIM[-1]]
+    with io.open(NN_COMPLETO, encoding="utf-8-sig") as fh:
+        for r in csv.DictReader(fh):
+            try:
+                t = int(r["toma"])
+            except (TypeError, ValueError):
+                continue
+            if t in TRIM and r["estado"] == "VINCULADO":
+                tri_docs[clave(r["cod_uds"])].add(r["doc"])
+    print(f"  trimestre completo mas reciente: {TRIM_LBL} (meses {TRIM}, toma maxima {tmax_nn})", flush=True)
+else:
+    TRIM_LBL = None
+    print(f"  aun no hay un trimestre completo (toma maxima {tmax_nn}); cobertura queda sin dato", flush=True)
+
+for k, v in uds.items():
+    v["n_trim"] = len(tri_docs.get(k, ()))
+    v["cobertura"] = round(100.0 * v["n_trim"] / v["cupos"], 1) if v["cupos"] else None
 
 con = sum(1 for v in uds.values() if v["xy"])
 benef_con = sum(v["n"] for v in uds.values() if v["xy"])
@@ -141,31 +185,39 @@ if sin:
     for k, v in sorted(sin.items(), key=lambda x: -x[1]):
         print(f"   {k:<28}{v:>7,}".replace(",", "."))
 
-# --- cobertura por cupos: beneficiarios unicos con toma / cupo autorizado ---
+# --- cobertura por cupos: beneficiarios unicos del trimestre / cupo autorizado ---
 con_cupo = [v for v in uds.values() if v["cupos"]]
 sin_cupo = len(uds) - len(con_cupo)
-if con_cupo:
+if con_cupo and TRIM:
     prom = sum(v["cobertura"] for v in con_cupo) / len(con_cupo)
     sobre = sum(1 for v in con_cupo if v["cobertura"] > 100)
-    print(f"\nCobertura por cupo UDS  ({len(con_cupo)} unidades con cupo, {sin_cupo} sin cupo o sin cruce):")
+    print(f"\nCobertura por cupo UDS, trimestre {TRIM_LBL}  "
+          f"({len(con_cupo)} unidades con cupo, {sin_cupo} sin cupo o sin cruce):")
     print(f"  cobertura promedio: {prom:.1f} %  ·  unidades por encima del cupo: {sobre}")
 
 cupos_csv = os.path.join(PROC, "cobertura_uds.csv")
 with io.open(cupos_csv, "w", newline="", encoding="utf-8-sig") as fh:
     w = csv.writer(fh)
-    w.writerow(["cod_uds", "uds", "cz", "municipio", "eas", "servicio",
-                "cupos", "beneficiarios_con_toma", "cobertura_pct"])
+    w.writerow(["cod_uds", "uds", "cz", "municipio", "eas", "servicio", "cupos",
+                "beneficiarios_con_toma_historico", "beneficiarios_con_toma_trimestre",
+                "cobertura_trimestre_pct"])
     filas = sorted(uds.items(), key=lambda kv: (kv[1]["cobertura"] is None, kv[1]["cobertura"] or 0))
     for k, v in filas:
         w.writerow([k, v["nom"], v["cz"], v["mun"], v["eas"], v["serv"],
-                    v["cupos"] or "", v["n"], v["cobertura"] if v["cobertura"] is not None else ""])
+                    v["cupos"] or "", v["n"], v["n_trim"],
+                    v["cobertura"] if v["cobertura"] is not None else ""])
 print(f"escrito {cupos_csv}  ·  {len(uds)} unidades")
 
 salida = [{"c": k, "n": v["nom"][:44], "cz": v["cz"], "mu": v["mun"],
            "e": v["eas"][:46], "s": v["serv"][:44], "b": v["n"],
            "y": v["xy"][0], "x": v["xy"][1], "z": v["z"],
-           "cu": v["cupos"], "cb": v["cobertura"]}
+           "cu": v["cupos"], "bt": v["n_trim"], "cb": v["cobertura"]}
           for k, v in uds.items() if v["xy"]]
 p = os.path.join(OUT, "uds.json")
 json.dump(salida, io.open(p, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 print(f"\nescrito {p}  {os.path.getsize(p)//1024} KB  ·  {len(salida)} unidades")
+
+meta_p = os.path.join(OUT, "uds_trimestre.json")
+json.dump({"tmax": tmax_nn, "meses": TRIM, "lbl": TRIM_LBL},
+          io.open(meta_p, "w", encoding="utf-8"), ensure_ascii=False)
+print(f"escrito {meta_p}")

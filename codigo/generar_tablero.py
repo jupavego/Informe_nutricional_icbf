@@ -304,7 +304,9 @@ data = {
              "filas_nn": FILAS_NN, "filas_gs": FILAS_GS,
              "benef_nn": BENEF_NN, "benef_gs": BENEF_GS,
              "tmax": TCOM, "tmax_real": TMAX, "rezagados": REZAG,
-             "gtmax": GTMAX, "faltantes": FALTAN},
+             "gtmax": GTMAX, "faltantes": FALTAN,
+             "uds_trimestre": json.load(io.open(os.path.join(REC, "uds_trimestre.json"), encoding="utf-8"))
+             if os.path.exists(os.path.join(REC, "uds_trimestre.json")) else None},
     "dic": {"cz": dcz.a, "mun": dmun.a, "eas": deas.a, "serv": dserv.a, "uds": duds.a, "cu": dcu.a},
     "cat": {"pt": PT, "te": TE, "pe": PE, "irc": IRC, "gst": GST},
     "nn": C,

@@ -1168,22 +1168,32 @@ NO SE INCLUYE 'Riesgo de sobrepeso' (Z entre +1 y +2),
  n:"Resolución 2465 de 2016",
  v:"El flujo entre tomas se mueve hacia este lado: más beneficiarios pasan de adecuado a riesgo de sobrepeso que al revés."},
 
-cobertura:{t:"Cobertura de la toma",k:"Indicador de gestión",
- q:"Qué proporción de los beneficiarios activos tiene una valoración reciente. Mide si el operador está haciendo el seguimiento.",
- c:"<code>Toma Mensual</code> (32) y <code>Estado</code> (66)",
- m:(a)=>`NUMERADOR     beneficiarios vinculados cuya última toma
-              es la ${D.meta.tmax} o la ${D.meta.tmax-1}
-              (los dos últimos meses del corte comparable)
-DENOMINADOR   total de beneficiarios vinculados
-CÁLCULO       numerador ÷ denominador × 100
+cobertura:{t:"Cobertura de toma (cupos UDS)",k:"Indicador de gestión",
+ q:"Qué proporción del cupo autorizado de cada unidad de servicio (UDS) tuvo beneficiarios únicos con una toma nutricional durante el último trimestre completo. Mide si la oferta contratada se está usando, no la salud del beneficiario.",
+ c:"<code>Cupos UDS</code> y <code>Estado de la UDS</code> (reporte de Unidades de Servicio, solo unidades ACTIVAS), cruzados por <code>Código UDS</code> con <code>Toma Mensual</code> (32) y <code>Estado</code> (66) del reporte nutricional",
+ m:()=>{
+   const t=D.meta.uds_trimestre, con=(D.uds||[]).filter(u=>u.cu!=null);
+   const cu=con.reduce((s,u)=>s+u.cu,0), bt=con.reduce((s,u)=>s+(u.bt||0),0);
+   return `NUMERADOR     beneficiarios vinculados ÚNICOS con una
+              toma registrada en el trimestre
+              ${t?t.lbl:"más reciente completo"}
+DENOMINADOR   cupos autorizados de esa UDS (reporte de
+              Unidades de Servicio, solo unidades ACTIVAS)
+CÁLCULO       numerador ÷ denominador × 100 por UDS; el
+              mapa suma numerador y denominador por
+              municipio o centro zonal antes de dividir
 
-ESTE CORTE    ${mil(a.reciente)} ÷ ${mil(a.n)}
-              = ${p2f(pct(a.reciente,a.n))}
+ESTE CORTE    ${mil(bt)} ÷ ${mil(cu)} = ${p2f(pct(bt,cu))}
+              (${con.length} de ${(D.uds||[]).length} UDS
+              con cupo conocido)
 
-POR QUÉ LA    porque un centro zonal descargado en otra
-TOMA ${D.meta.tmax}      fecha trae más tomas que el resto. Se usa
-              la última que TODOS alcanzan.`,
- v:"Solo se puede calcular deduplicando: contando filas el indicador desaparece."},
+POR QUÉ POR   una toma por trimestre es lo que exige el
+TRIMESTRE     lineamiento. Medir mes a mes penaliza a quien
+              sí cumple, solo que en otro mes del mismo
+              trimestre; y usar el historial completo
+              premiaría para siempre a quien tomó una vez.`;
+ },
+ v:"Las UDS sin cupo conocido en el reporte de Unidades de Servicio quedan afuera del cálculo: ni suman beneficiarios ni cupos, para no inflar ni desinflar el porcentaje del territorio."},
 
 criterio:{t:"Criterio de cumplimiento de nutrición",k:"Indicador del sistema",
  q:"Marca del propio sistema sobre si el registro nutricional del beneficiario cumple lo exigido.",

@@ -2300,7 +2300,13 @@ const INDIC = [
   { k: "exceso", lb: "Sobrepeso u obesidad", f: "exceso", v: r => pct(r.exceso, r.n), inv: 0 },
   { k: "glob", lb: "Desnutricion global", f: "pe", v: r => pct(r.glob, r.n), inv: 0 },
   { k: "nc", lb: "No cumple criterio", f: "criterio", v: r => pct(r.nc, r.n), inv: 0 },
-  { k: "cob", lb: "Cobertura de toma", f: "cobertura", v: r => pct(r.reciente, r.n), inv: 1 },
+  /* "v" no se usa para esta: es una metrica de OFERTA (cupos UDS del
+     ultimo trimestre completo), no de la mezcla de beneficiarios filtrada
+     -- vMapa() la calcula aparte, a partir de D.uds. Se deja v de relleno
+     por si algo mas la llegara a invocar. */
+  { k: "cob", lb: "Cobertura de toma" + (D.meta.uds_trimestre && D.meta.uds_trimestre.lbl
+      ? " · trim. " + D.meta.uds_trimestre.lbl : ""),
+    f: "cobertura", v: r => pct(r.reciente, r.n), inv: 1 },
   { k: "irn", lb: "Riesgo nutricional promedio", f: "irn", v: r => r.irnN ? r.irn / r.irnN : 0, inv: 0 },
 ];
 let MIND = "retraso", MCAPA = "auto", MZOOM = 1;
@@ -2349,12 +2355,34 @@ function vMapa() {
     }
   }
   const alias = D.alias || {};
+  const esCob = ind.k === "cob";
+  /* Cobertura de toma por cupos UDS: suma de beneficiarios unicos con
+     toma en el trimestre / suma de cupos, por UDS agregada a municipio o
+     centro zonal. Es una metrica de OFERTA fija por corte -- no cambia
+     con el filtro de poblacion/edad, solo con el geografico del propio
+     mapa -- y las UDS sin cupo conocido en el reporte de Unidades de
+     Servicio quedan afuera de la cuenta para no distorsionarla. */
+  let cobPorMu = null, cobPorCz = null, cobTot = null;
+  if (esCob && D.uds) {
+    cobPorMu = new Map(); cobPorCz = new Map(); cobTot = { cu: 0, bt: 0 };
+    D.uds.forEach(u => {
+      if (u.cu == null) return;
+      cobTot.cu += u.cu; cobTot.bt += (u.bt || 0);
+      const nomMu = alias[u.mu] || u.mu;
+      const eMu = cobPorMu.get(nomMu) || cobPorMu.set(nomMu, { cu: 0, bt: 0 }).get(nomMu);
+      eMu.cu += u.cu; eMu.bt += (u.bt || 0);
+      const eCz = cobPorCz.get(u.cz) || cobPorCz.set(u.cz, { cu: 0, bt: 0 }).get(u.cz);
+      eCz.cu += u.cu; eCz.bt += (u.bt || 0);
+    });
+  }
+  const cobPct = grp => grp && grp.cu > 0 ? 100 * grp.bt / grp.cu : null;
+
   const resDe = new Map(), valorMun = new Map();
   for (const [m, v] of porMun) {
     const nom = alias[DIC.mun[m]] || DIC.mun[m];
     const r = resumen(v);
     resDe.set(nom, { r: r, code: m });
-    valorMun.set(nom, ind.v(r));
+    valorMun.set(nom, esCob ? cobPct(cobPorMu.get(nom)) : ind.v(r));
   }
   const resMed = new Map();
   for (const [c, v] of porMed) resMed.set(c, resumen(v));
@@ -2420,16 +2448,17 @@ function vMapa() {
   const sinDato = [];
   const capaPolis = L.layerGroup().addTo(map);
   D.mapa.f.forEach(ft => {
-    let r = null, etiqueta = ft.nom, muCode = null;
+    let r = null, etiqueta = ft.nom, muCode = null, v;
     if (!ft.cod) {
       r = resMed.get(ft.cz) || null;
       etiqueta = "Medellin - " + ft.nom;
       const md = resDe.get("MEDELLIN"); if (md) muCode = md.code;
+      v = esCob ? cobPct(cobPorCz.get(ft.cz)) : (r ? ind.v(r) : null);
     } else {
       const e = resDe.get(ft.nom);
       if (e) { r = e.r; muCode = e.code; }
+      v = valorMun.has(ft.nom) ? valorMun.get(ft.nom) : null;
     }
-    const v = r ? ind.v(r) : null;
     const dentro = !hayFiltro || enFiltro(ft);
     const sel = FMUN >= 0 && muCode === FMUN;
     const fillIn = CAPA === "uds" ? "#F2F7F2" : (v == null ? "#E9EFEA" : RAMPA[paso(v)]);
@@ -2443,9 +2472,10 @@ function vMapa() {
     const latlngs = ft.g.map(ring => ring.map(c => [c[1], c[0]]));
     const poly = L.polygon(latlngs, { ...estilo, stroke: true });
     const html = v == null
-      ? "<b>" + esc(etiqueta) + "</b><div class='r'><span>Sin beneficiarios en el filtro actual</span></div>"
+      ? "<b>" + esc(etiqueta) + "</b><div class='r'><span>"
+        + (esCob ? "Sin UDS con cupo conocido aqui" : "Sin beneficiarios en el filtro actual") + "</span></div>"
       : "<b>" + esc(etiqueta) + "</b><div class='r'><span>" + esc(ind.lb) + "</span><span>" + fnum(v, ind.k) + "</span></div>"
-        + "<div class='r'><span>Beneficiarios</span><span>" + mil(r.n) + "</span></div>"
+        + (r ? "<div class='r'><span>Beneficiarios</span><span>" + mil(r.n) + "</span></div>" : "")
         + "<div class='r'><span>Centro zonal</span><span>" + esc(ft.cz) + "</span></div>";
     poly.on("mousemove", e => showTT(e.originalEvent, html));
     poly.on("mouseout", hideTT);
@@ -2465,34 +2495,43 @@ function vMapa() {
     for (const i of ix) { const k = N.cu[i]; (porUds.get(k) || porUds.set(k, []).get(k)).push(i); }
     D.uds.forEach(u => {
       const code = CU_IDX.has(u.c) ? CU_IDX.get(u.c) : -1;
-      const lista = code >= 0 ? porUds.get(code) : null;
-      if (!lista || !lista.length) return;
-      const r = resumen(lista);
-      /* 'lista' se guarda: es la que abre la tabla al hacer clic */
-      pts.push({ u: u, r: r, v: ind.v(r), ix: lista });
+      const lista = (code >= 0 ? porUds.get(code) : null) || [];
+      if (esCob) {
+        if (u.cu == null) return;   // sin cupo conocido: no participa de este indicador
+        pts.push({ u: u, r: lista.length ? resumen(lista) : { n: 0 }, v: u.cb, ix: lista });
+      } else {
+        if (!lista.length) return;
+        const r = resumen(lista);
+        /* 'lista' se guarda: es la que abre la tabla al hacer clic */
+        pts.push({ u: u, r: r, v: ind.v(r), ix: lista });
+      }
     });
-    const mb = Math.max(1, ...pts.map(p => p.r.n));
-    pts.sort((a, b) => b.r.n - a.r.n);
+    const tamPor = p => esCob ? (p.u.cu || 0) : p.r.n;
+    const mb = Math.max(1, ...pts.map(tamPor));
+    pts.sort((a, b) => tamPor(b) - tamPor(a));
     const capaPts = L.layerGroup().addTo(map);
     pts.forEach(p => {
-      const radio = (hayFiltro && MZOOM ? 4 : 2.5) + (hayFiltro && MZOOM ? 13 : 8) * Math.sqrt(p.r.n / mb);
+      const radio = (hayFiltro && MZOOM ? 4 : 2.5) + (hayFiltro && MZOOM ? 13 : 8) * Math.sqrt(tamPor(p) / mb);
       const c = L.circleMarker([p.u.y, p.u.x], {
         radius: radio, fillColor: RAMPA[paso(p.v)], fillOpacity: .88,
         color: "#FDFEFD", weight: .8,
       });
       const html = "<b>" + esc(p.u.n) + "</b>"
         + "<div class='r'><span>" + esc(ind.lb) + "</span><span>" + fnum(p.v, ind.k) + "</span></div>"
-        + "<div class='r'><span>Beneficiarios</span><span>" + mil(p.r.n) + "</span></div>"
+        + (esCob
+          ? "<div class='r'><span>Cupos UDS</span><span>" + mil(p.u.cu) + "</span></div>"
+            + "<div class='r'><span>Con toma en el trimestre</span><span>" + mil(p.u.bt || 0) + "</span></div>"
+          : "<div class='r'><span>Beneficiarios</span><span>" + mil(p.r.n) + "</span></div>")
         + "<div class='r'><span>Municipio</span><span>" + esc(p.u.mu) + "</span></div>"
         + "<div class='r'><span>Operador</span><span>" + esc(p.u.e) + "</span></div>"
         + "<div class='r'><span>Modalidad</span><span>" + esc(p.u.s) + "</span></div>"
         + (p.u.z ? "<div class='r'><span>Zona</span><span>" + (p.u.z === "R" ? "Rural" : p.u.z === "C" ? "Cabecera" : esc(p.u.z)) + "</span></div>" : "");
       c.on("mousemove", e => showTT(e.originalEvent, html
-        + "<div class='r'><span>Clic</span><span>ver los registros</span></div>"));
+        + (p.ix.length ? "<div class='r'><span>Clic</span><span>ver los registros</span></div>" : "")));
       c.on("mouseout", hideTT);
       c.on("mouseover", () => c.setStyle({ color: "#0C1912", weight: 1.6 }));
       c.on("mouseout", () => c.setStyle({ color: "#FDFEFD", weight: .8 }));
-      c.on("click", () => {
+      if (p.ix.length) c.on("click", () => {
         hideTT();
         tablaRegistros({
           t: p.u.n,
@@ -2542,9 +2581,11 @@ function vMapa() {
   nd.append(nb, el("span", null, "sin dato")); leg.append(nd);
   wrap.append(leg);
   if (CAPA !== "cor" && s.dataset.pts) wrap.append(el("div", "nomatch",
-    s.dataset.pts + " unidades de servicio ubicadas. El tamaño del círculo es la población atendida; el color, el indicador elegido."));
+    s.dataset.pts + " unidades de servicio ubicadas. El tamaño del círculo es "
+    + (esCob ? "el cupo autorizado" : "la población atendida") + "; el color, el indicador elegido."));
   if (sinDato.length && !hayFiltro) wrap.append(el("div", "nomatch",
-    "Sin beneficiarios en el filtro actual: " + sinDato.slice(0, 8).join(", ")
+    (esCob ? "Sin UDS con cupo conocido: " : "Sin beneficiarios en el filtro actual: ")
+    + sinDato.slice(0, 8).join(", ")
     + (sinDato.length > 8 ? " y " + (sinDato.length - 8) + " mas" : "")));
   /* wrap ya esta en el documento desde antes de inicializar Leaflet */
 
@@ -2552,7 +2593,7 @@ function vMapa() {
     .filter(k => resDe.has(k[0]) && resDe.get(k[0]).r.n >= 60)
     .map(k => ({ lb: k[0], v: k[1], n: resDe.get(k[0]).r.n }))
     .sort((a, b) => b.v - a.v);
-  const media = ind.v(resumen(ix));
+  const media = esCob ? cobPct(cobTot) : ind.v(resumen(ix));
   if (rank.length < 3 && CAPA !== "cor") {
     s.append(lectura("Con este filtro queda " + (rank.length === 1 ? "un solo territorio" : mil(rank.length) + " territorios")
       + ", así que la comparación entre municipios no aplica. El mapa muestra las <b>unidades de servicio</b>: el tamaño del círculo es la población atendida y el color, el indicador elegido."));
