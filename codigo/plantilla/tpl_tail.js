@@ -1179,9 +1179,12 @@ function waffle(partes, cfg) {
     .slice(0, Math.max(0, falta)).forEach(([, i]) => cel[i]++);
 
   const g = el("div", "waffle");
-  /* cuadricula explicita de 10 por fila (10x10): mas cuadrada y predecible
-     que dejar que el auto-fill de la grilla decida cuantas caben */
-  g.style.gridTemplateColumns = "repeat(" + POR_FILA + ", 1fr)";
+  /* cuadricula explicita de 10 por fila (10x10). Columnas de ancho FIJO
+     (no 1fr): con 1fr las 10 columnas se estiraban para llenar todo el
+     ancho del panel y cada figura terminaba enorme. Con un ancho fijo
+     el grafico queda del mismo tamano compacto sin importar que tan
+     ancho sea el contenedor. */
+  g.style.gridTemplateColumns = "repeat(" + POR_FILA + ", 24px)";
   cel.forEach((n, i) => {
     for (let k = 0; k < n; k++) {
       const c = el("i");
@@ -1220,8 +1223,8 @@ function waffle(partes, cfg) {
   p.append(leg);
 
   const nota = el("p", "note");
-  nota.innerHTML = "Cada figura es <b>una milésima</b> del conjunto (" + mil(tot)
-    + " beneficiarios), y cada fila es el <b>5 %</b>. Se usa esta forma y no una barra apilada "
+  nota.innerHTML = "Cada figura es <b>una centésima</b> del conjunto (" + mil(tot)
+    + " beneficiarios), y cada fila es el <b>10 %</b>. Se usa esta forma y no una barra apilada "
     + "porque la categoría crítica pesa menos del 1 %: en una barra no alcanzaría a verse, y aquí "
     + "se puede contar.";
   p.append(nota);
