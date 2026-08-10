@@ -1,3 +1,12 @@
+<!-- Mapa real (calles + relieve) via Leaflet + teselas de OpenStreetMap.
+     Unica dependencia de internet de todo el tablero: sin conexion, el
+     resto de las pestañas sigue funcionando igual; el Mapa pierde el
+     fondo de calles pero los poligonos, los puntos y los clics siguen
+     funcionando (ver la ficha "Mapa" del glosario). -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
 :root{
   /* silueta de persona para los pictogramas. Va incrustada porque el CSP
@@ -292,15 +301,14 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 /* ---------- mapa ---------- */
 .mapwrap{position:relative;background:var(--glass);border:1px solid var(--rule);border-radius:13px;
   padding:12px 14px 8px;box-shadow:var(--shadow);margin:11px 0}
-.mapwrap svg{display:block;width:100%;height:auto}
-.mp{stroke:#FDFEFD;stroke-width:.55;stroke-linejoin:round;cursor:pointer;transition:opacity .15s}
-.mp:hover{stroke:var(--icbf-verde-osc);stroke-width:1.6}
-.mp.off{opacity:.16}
-.mp.sel{stroke:var(--ink);stroke-width:2}
-.up2{stroke:#FDFEFD;stroke-width:.7;cursor:default;opacity:.88}
-.up2{cursor:pointer}
-.up2:hover{stroke:var(--ink);stroke-width:1.5}
-.up2:hover{stroke:var(--ink);stroke-width:1.6;opacity:1}
+/* Leaflet exige una altura explicita en el contenedor; sin ella el mapa
+   mide 0px y no se ve nada */
+.leafmap{height:min(72vh,560px);min-height:320px;border-radius:9px;overflow:hidden;
+  background:var(--sunk);cursor:grab}
+.leafmap:active{cursor:grabbing}
+.leaflet-container{font-family:var(--sans);background:var(--sunk)}
+.leaflet-control-attribution{font-size:10px;background:rgba(253,254,253,.82)}
+.leaflet-popup,.leaflet-tooltip{display:none}   /* usamos el tooltip propio del tablero (showTT), no el de Leaflet */
 .mapleg{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px;margin-top:11px;font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--ink2)}
 .mapleg .sw{display:flex;flex-direction:column;align-items:center;gap:2px}
 .mapleg .sw i{width:46px;height:13px;border-radius:3px;border:1px solid rgba(18,33,26,.10)}
@@ -511,13 +519,12 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .dmini .r2.hi .l{color:var(--ink);font-weight:700}
 
 
-.mapwrap .volver{position:absolute;right:16px;top:14px;z-index:2;font-family:var(--sans);
+.mapwrap .volver{position:absolute;right:16px;top:14px;z-index:1000;font-family:var(--sans);
   font-size:11.5px;font-weight:600;color:var(--ink2);background:var(--card);
   border:1px solid var(--rule);border-radius:8px;padding:5px 11px;cursor:pointer;
+  box-shadow:0 2px 6px rgba(18,33,26,.18);
   box-shadow:0 1px 3px rgba(12,25,18,.12)}
 .mapwrap .volver:hover{border-color:var(--icbf-verde);color:var(--icbf-verde-osc)}
-.mp.ctx{fill:#EDF3EC;stroke:#DDE8DB;cursor:default}
-.mp.ctx:hover{stroke:#DDE8DB;stroke-width:.55}
 
 
 /* ---------- anatomia del dato ---------- */

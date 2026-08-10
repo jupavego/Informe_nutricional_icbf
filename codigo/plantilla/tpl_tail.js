@@ -2303,6 +2303,9 @@ const INDIC = [
   { k: "irn", lb: "Riesgo nutricional promedio", f: "irn", v: r => r.irnN ? r.irn / r.irnN : 0, inv: 0 },
 ];
 let MIND = "retraso", MCAPA = "auto", MZOOM = 1;
+/* instancia de Leaflet activa; se destruye antes de crear la siguiente,
+   si no cada cambio de filtro deja un mapa fantasma con sus listeners */
+let MAPINST = null;
 /* indice codigo -> posicion, para no recorrer el diccionario por cada UDS */
 const CU_IDX = (() => { const m = new Map(); DIC.cu.forEach((c, i) => m.set(c, i)); return m; })();
 /* la capa se decide sola salvo que el usuario la fije */
@@ -2393,20 +2396,28 @@ function vMapa() {
       bb = [Math.min(...xs) - mx, Math.min(...ys) - my, Math.max(...xs) + mx, Math.max(...ys) + my];
     }
   }
-  const W = 760;
-  const kx = Math.cos((bb[1] + bb[3]) / 2 * Math.PI / 180);
-  const gw = (bb[2] - bb[0]) * kx, gh = bb[3] - bb[1];
-  const H = Math.max(260, Math.min(620, Math.round(W * gh / gw)));
-  const X = x => (x - bb[0]) * kx / gw * W, Y = y => H - (y - bb[1]) / gh * H;
-
+  /* ---- mapa real con Leaflet + teselas de OpenStreetMap -----------------
+     Reemplaza el dibujo simplificado por un mapa con calles, relieve y
+     precision geografica real. Necesita internet para las teselas: sin
+     conexion el fondo queda gris, pero los poligonos, los puntos, los
+     clics y los filtros siguen funcionando igual -- solo cambia el fondo. */
+  if (MAPINST) { MAPINST.remove(); MAPINST = null; }
   const wrap = el("div", "mapwrap");
-  const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-  svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Mapa de Antioquia por " + ind.lb);
+  const mapDiv = el("div", "leafmap");
+  mapDiv.setAttribute("role", "img");
+  mapDiv.setAttribute("aria-label", "Mapa de Antioquia por " + ind.lb);
+  wrap.append(mapDiv);
+  s.append(wrap);   // debe estar en el documento antes de que Leaflet mida el contenedor
+
+  const map = L.map(mapDiv, { scrollWheelZoom: true });
+  MAPINST = map;
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18, minZoom: 6,
+    attribution: '&copy; colaboradores de <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+  }).addTo(map);
 
   const sinDato = [];
+  const capaPolis = L.layerGroup().addTo(map);
   D.mapa.f.forEach(ft => {
     let r = null, etiqueta = ft.nom, muCode = null;
     if (!ft.cod) {
@@ -2418,35 +2429,35 @@ function vMapa() {
       if (e) { r = e.r; muCode = e.code; }
     }
     const v = r ? ind.v(r) : null;
-    const d = ft.g.map(ring => "M" + ring.map(c => X(c[0]).toFixed(1) + " " + Y(c[1]).toFixed(1)).join("L") + "Z").join(" ");
-    const path = document.createElementNS(NS, "path");
-    path.setAttribute("d", d);
-    path.setAttribute("class", "mp");
     const dentro = !hayFiltro || enFiltro(ft);
-    if (!dentro) {
-      path.setAttribute("class", "mp ctx");
-    } else {
-      path.setAttribute("fill", CAPA === "uds" ? "#F2F7F2" : (v == null ? "#E9EFEA" : RAMPA[paso(v)]));
-      if (CAPA === "uds") path.setAttribute("stroke", "#D8E4D6");
-    }
-    if (FMUN >= 0 && muCode === FMUN) path.classList.add("sel");
+    const sel = FMUN >= 0 && muCode === FMUN;
+    const fillIn = CAPA === "uds" ? "#F2F7F2" : (v == null ? "#E9EFEA" : RAMPA[paso(v)]);
+    const estilo = dentro
+      ? { fillColor: fillIn, fillOpacity: .82, color: sel ? "#0C1912" : "#FDFEFD", weight: sel ? 2.2 : .8 }
+      : { fillColor: "#EDF3EC", fillOpacity: .8, color: "#DDE8DB", weight: .6 };
+    const latlngs = ft.g.map(ring => ring.map(c => [c[1], c[0]]));
+    const poly = L.polygon(latlngs, { ...estilo, stroke: true });
     const html = v == null
       ? "<b>" + esc(etiqueta) + "</b><div class='r'><span>Sin beneficiarios en el filtro actual</span></div>"
       : "<b>" + esc(etiqueta) + "</b><div class='r'><span>" + esc(ind.lb) + "</span><span>" + fnum(v, ind.k) + "</span></div>"
         + "<div class='r'><span>Beneficiarios</span><span>" + mil(r.n) + "</span></div>"
         + "<div class='r'><span>Centro zonal</span><span>" + esc(ft.cz) + "</span></div>";
-    path.onmousemove = e => showTT(e, html);
-    path.onmouseleave = hideTT;
-    if (muCode != null) path.onclick = () => { FMUN = FMUN === muCode ? -1 : muCode; hideTT(); render(); };
-    svg.append(path);
+    poly.on("mousemove", e => showTT(e.originalEvent, html));
+    poly.on("mouseout", hideTT);
+    if (dentro) {
+      poly.on("mouseover", () => poly.setStyle({ color: "#4F8245", weight: 1.8 }));
+      poly.on("mouseout", () => poly.setStyle({ color: sel ? "#0C1912" : "#FDFEFD", weight: sel ? 2.2 : .8 }));
+    }
+    if (muCode != null) poly.on("click", () => { FMUN = FMUN === muCode ? -1 : muCode; hideTT(); render(); });
+    poly.addTo(capaPolis);
     if (v == null && ft.cod && dentro) sinDato.push(ft.nom);
   });
 
   /* ---- capa de unidades de servicio ---- */
+  let pts = [];
   if (CAPA !== "cor" && D.uds && D.uds.length) {
     const porUds = new Map();
     for (const i of ix) { const k = N.cu[i]; (porUds.get(k) || porUds.set(k, []).get(k)).push(i); }
-    const pts = [];
     D.uds.forEach(u => {
       const code = CU_IDX.has(u.c) ? CU_IDX.get(u.c) : -1;
       const lista = code >= 0 ? porUds.get(code) : null;
@@ -2457,14 +2468,13 @@ function vMapa() {
     });
     const mb = Math.max(1, ...pts.map(p => p.r.n));
     pts.sort((a, b) => b.r.n - a.r.n);
-    const g = document.createElementNS(NS, "g");
+    const capaPts = L.layerGroup().addTo(map);
     pts.forEach(p => {
-      const c = document.createElementNS(NS, "circle");
-      c.setAttribute("cx", X(p.u.x).toFixed(1));
-      c.setAttribute("cy", Y(p.u.y).toFixed(1));
-      c.setAttribute("r", ((hayFiltro && MZOOM ? 3.2 : 1.7) + (hayFiltro && MZOOM ? 11 : 7) * Math.sqrt(p.r.n / mb)).toFixed(1));
-      c.setAttribute("fill", RAMPA[paso(p.v)]);
-      c.setAttribute("class", "up2");
+      const radio = (hayFiltro && MZOOM ? 4 : 2.5) + (hayFiltro && MZOOM ? 13 : 8) * Math.sqrt(p.r.n / mb);
+      const c = L.circleMarker([p.u.y, p.u.x], {
+        radius: radio, fillColor: RAMPA[paso(p.v)], fillOpacity: .88,
+        color: "#FDFEFD", weight: .8,
+      });
       const html = "<b>" + esc(p.u.n) + "</b>"
         + "<div class='r'><span>" + esc(ind.lb) + "</span><span>" + fnum(p.v, ind.k) + "</span></div>"
         + "<div class='r'><span>Beneficiarios</span><span>" + mil(p.r.n) + "</span></div>"
@@ -2472,11 +2482,13 @@ function vMapa() {
         + "<div class='r'><span>Operador</span><span>" + esc(p.u.e) + "</span></div>"
         + "<div class='r'><span>Modalidad</span><span>" + esc(p.u.s) + "</span></div>"
         + (p.u.z ? "<div class='r'><span>Zona</span><span>" + (p.u.z === "R" ? "Rural" : p.u.z === "C" ? "Cabecera" : esc(p.u.z)) + "</span></div>" : "");
-      c.onmousemove = e => showTT(e, html
-        + "<div class='r'><span>Clic</span><span>ver los registros</span></div>");
-      c.onmouseleave = hideTT;
-      c.onclick = e => {
-        e.stopPropagation(); hideTT();
+      c.on("mousemove", e => showTT(e.originalEvent, html
+        + "<div class='r'><span>Clic</span><span>ver los registros</span></div>"));
+      c.on("mouseout", hideTT);
+      c.on("mouseover", () => c.setStyle({ color: "#0C1912", weight: 1.6 }));
+      c.on("mouseout", () => c.setStyle({ color: "#FDFEFD", weight: .8 }));
+      c.on("click", () => {
+        hideTT();
         tablaRegistros({
           t: p.u.n,
           idx: () => p.ix,
@@ -2487,13 +2499,15 @@ function vMapa() {
           pie: "Ordenados por puntaje Z de peso para la talla, de menor a mayor: arriba el caso más "
             + "comprometido de la unidad. Los encabezados reordenan la tabla.",
         });
-      };
-      g.append(c);
+      });
+      c.addTo(capaPts);
     });
-    svg.append(g);
     s.dataset.pts = pts.length;
+  } else {
+    s.dataset.pts = "";
   }
-  wrap.append(svg);
+
+  map.fitBounds([[bb[1], bb[0]], [bb[3], bb[2]]], { padding: [10, 10] });
   if (hayFiltro) {
     const vb = el("button", "volver", MZOOM ? "Ver toda Antioquia" : "Acercar a la selección");
     vb.type = "button";
@@ -2527,7 +2541,7 @@ function vMapa() {
   if (sinDato.length && !hayFiltro) wrap.append(el("div", "nomatch",
     "Sin beneficiarios en el filtro actual: " + sinDato.slice(0, 8).join(", ")
     + (sinDato.length > 8 ? " y " + (sinDato.length - 8) + " mas" : "")));
-  s.append(wrap);
+  /* wrap ya esta en el documento desde antes de inicializar Leaflet */
 
   const rank = Array.from(valorMun.entries())
     .filter(k => resDe.has(k[0]) && resDe.get(k[0]).r.n >= 60)
