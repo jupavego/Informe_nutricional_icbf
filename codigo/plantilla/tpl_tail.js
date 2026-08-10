@@ -1297,6 +1297,7 @@ function spark(vals, color) {
     const b = el("i");
     b.style.height = Math.max(8, 100 * v / max) + "%";
     b.style.background = color || "var(--icbf-verde)";
+    b.style.color = color || "var(--icbf-verde)";
     b.style.opacity = i === vals.length - 1 ? "1" : ".42";
     w.append(b);
   });
