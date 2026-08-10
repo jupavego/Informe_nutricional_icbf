@@ -1429,6 +1429,8 @@ function nivelTerritorio() {
 let FCZ = -1, FMUN = -1, FEAS = -1, TAB = "semaforo";
 const N = D.nn, G = D.gs, DIC = D.dic, GDIC = D.gdic, CAT = D.cat;
 const NN_N = N.doc.length, GS_N = G.doc.length;
+const MESES_LARGO = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+  "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
 
 const SUBS = {
@@ -1566,7 +1568,7 @@ function vSemaforo() {
     { t: "Riesgo de desnutrición", f: "pt", tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar. Todavía no es desnutrición, pero es el grupo que puede cruzar el umbral entre una toma y la siguiente." }, v: p1(pct(a.riesgo, a.n)), d: mil(a.riesgo) + " niñas y niños", sp: sparks.riesgo, spc: "var(--d1)", cls: "crit" },
     { t: "Retraso en talla", f: "retraso", tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11, asc: true, lead: "Talla por debajo de −2 desviaciones estándar para la edad. Ordenados por puntaje Z de talla para la edad, de menor a mayor.", pie: "Contraste la <b>edad en meses</b> con el puntaje Z: si el retraso se concentra en los menores de 24 meses, revise cómo se está midiendo la longitud en acostado." }, v: p1(pct(a.retraso, a.n)), d: mil(a.retraso) + " niñas y niños", sp: sparks.retraso, spc: "var(--d2)", cls: "crit" },
     { t: "Sobrepeso u obesidad", f: "exceso", tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9, lead: "Peso para la talla por encima de +2 desviaciones estándar. Ordenados de mayor a menor puntaje Z." }, v: p1(pct(a.exceso, a.n)), d: mil(a.exceso) + " niñas y niños", sp: sparks.exceso, spc: "var(--e2)", cls: "warn" },
-    { t: "Cobertura de toma", f: "cobertura", tabla: { t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < D.meta.tmax - 1), ordenar: 16, asc: true, lead: "Beneficiarios cuya última toma es anterior al corte comparable (toma " + D.meta.tmax + "). Es un asunto de gestión del operador, no de estado nutricional.", pie: "Ordenados por número de toma: los de arriba son los que llevan más tiempo sin valoración." }, v: p1(pct(a.reciente, a.n)), d: "valoración de mayo o junio", sp: sparks.reciente, spc: "var(--icbf-verde)", cls: pct(a.reciente, a.n) > 85 ? "good" : "warn" },
+    { t: "Cobertura de toma", f: "cobertura", tabla: { t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < D.meta.tmax - 1), ordenar: 16, asc: true, lead: "Beneficiarios cuya última toma es anterior al corte comparable (toma " + D.meta.tmax + "). Es un asunto de gestión del operador, no de estado nutricional.", pie: "Ordenados por número de toma: los de arriba son los que llevan más tiempo sin valoración." }, v: p1(pct(a.reciente, a.n)), d: "valoración de " + (D.meta.tmax > 1 ? MESES_LARGO[D.meta.tmax - 1] + " o " + MESES_LARGO[D.meta.tmax] : MESES_LARGO[D.meta.tmax]), sp: sparks.reciente, spc: "var(--icbf-verde)", cls: pct(a.reciente, a.n) > 85 ? "good" : "warn" },
     { t: "No cumple criterio", f: "criterio", tabla: { t: "Registros que no cumplen criterio", idx: () => ix.filter(i => N.cr[i] === 1), lead: "Registros marcados por el sistema como <b>NO CUMPLE</b> en el campo de criterio." }, v: p1(pct(a.nc, a.n)), d: mil(a.nc) + " registros", sp: sparks.nc, spc: "var(--icbf-naranja)", cls: "warn" },
   ]));
 
