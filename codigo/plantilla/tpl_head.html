@@ -207,7 +207,7 @@ tbody tr:hover{background:var(--sunk)}
 .tag:hover{border-color:var(--accent2);color:var(--accent)}
 
 /* ---------- ficha tecnica ---------- */
-#modal{position:fixed;inset:0;z-index:80;display:none;place-items:center;padding:18px;
+#modal{position:fixed;inset:0;z-index:1300;display:none;place-items:center;padding:18px;
   background:rgba(10,24,17,.42);backdrop-filter:blur(3px)}
 #modal.on{display:grid}
 .fx{background:var(--card);border:1px solid var(--rule);border-radius:16px;max-width:640px;width:100%;
@@ -232,7 +232,10 @@ tbody tr:hover{background:var(--sunk)}
 .norm{display:inline-block;font-size:11.5px;background:var(--halo);color:var(--accent);border-radius:7px;padding:2px 8px}
 
 /* ---------- tooltip ---------- */
-#tt{position:fixed;pointer-events:none;z-index:60;background:var(--card);
+/* z-index alto a proposito: los paneles internos de Leaflet (mapa) usan
+   hasta 700, y sin esto el tooltip de un punto o municipio del mapa
+   quedaba tapado por el mapa mismo en vez de flotar encima */
+#tt{position:fixed;pointer-events:none;z-index:1200;background:var(--card);
   border:1px solid var(--icbf-verde-osc);border-radius:12px;overflow:hidden;
   box-shadow:0 10px 30px rgba(13,26,20,.22),0 2px 6px rgba(13,26,20,.12);
   font-size:13px;max-width:310px;opacity:0;transition:opacity .12s}
@@ -486,7 +489,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .hcard .ver svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round}
 
-#evid{position:fixed;z-index:70;width:min(390px,calc(100vw - 24px));background:var(--card);
+#evid{position:fixed;z-index:1100;width:min(390px,calc(100vw - 24px));background:var(--card);
   border:1px solid var(--icbf-verde-osc);border-radius:13px;overflow:hidden;
   box-shadow:0 14px 40px rgba(12,25,18,.26),0 3px 8px rgba(12,25,18,.14);
   opacity:0;visibility:hidden;transition:opacity .13s}
