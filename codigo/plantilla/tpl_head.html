@@ -875,8 +875,11 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 
 
 /* ---------- cuadricula de cien ---------- */
-.waffle{display:grid;grid-template-columns:repeat(auto-fill,minmax(14px,24px));
-  justify-content:start;gap:3px 2px;margin:10px 0 2px}
+/* auto-fill: usa todo el ancho del panel (mas columnas = menos filas =
+   menos alto) en vez de un numero fijo de columnas que deja hueco a la
+   derecha en paneles anchos y se vuelve enorme en paneles angostos */
+.waffle{display:grid;grid-template-columns:repeat(auto-fill,minmax(20px,30px));
+  justify-content:start;gap:4px 3px;margin:10px 0 2px}
 .waffle i{aspect-ratio:.75;display:block;transition:transform .1s;
   -webkit-mask:var(--fig-persona) center/contain no-repeat;
   mask:var(--fig-persona) center/contain no-repeat}
@@ -892,7 +895,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 /* que significa cada nivel, no solo cuantos hay */
 .wit .wd{display:block;margin-top:2px;font-size:11.5px;line-height:1.4;color:var(--ink3)}
 .wit small{color:var(--ink3);font-variant-numeric:tabular-nums}
-@media(max-width:520px){ .waffle{grid-template-columns:repeat(auto-fill,minmax(11px,20px))} }
+@media(max-width:520px){ .waffle{grid-template-columns:repeat(auto-fill,minmax(14px,22px))} }
 
 
 /* ---------- aviso de regla que interviene el calculo ---------- */

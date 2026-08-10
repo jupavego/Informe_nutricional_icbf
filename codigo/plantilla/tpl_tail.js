@@ -1165,7 +1165,7 @@ function btnTabla(cfg) {
 function waffle(partes, cfg) {
   /* 100 celdas, no 1.000: "1 de cada 100" se lee igual de bien y el
      grafico deja de ocupar media pantalla de alto */
-  const CELDAS = 100, POR_FILA = 10;
+  const CELDAS = 100;
   const p = el("div", "panel");
   if (cfg.cat) { const c = el("div", "catdato");
     c.append(el("i"), document.createTextNode(cfg.cat)); p.append(c); }
@@ -1178,13 +1178,11 @@ function waffle(partes, cfg) {
   exacto.map((e, i) => [e - cel[i], i]).sort((z, q) => q[0] - z[0])
     .slice(0, Math.max(0, falta)).forEach(([, i]) => cel[i]++);
 
+  /* el numero de columnas lo decide el CSS (auto-fill): usa todo el ancho
+     del panel, asi que en un panel ancho quedan mas columnas y menos
+     filas (grafico bajo) y en uno angosto pasa lo contrario, sin que
+     ninguno de los dos casos quede enorme ni con hueco a la derecha */
   const g = el("div", "waffle");
-  /* cuadricula explicita de 10 por fila (10x10). Columnas de ancho FIJO
-     (no 1fr): con 1fr las 10 columnas se estiraban para llenar todo el
-     ancho del panel y cada figura terminaba enorme. Con un ancho fijo
-     el grafico queda del mismo tamano compacto sin importar que tan
-     ancho sea el contenedor. */
-  g.style.gridTemplateColumns = "repeat(" + POR_FILA + ", 24px)";
   cel.forEach((n, i) => {
     for (let k = 0; k < n; k++) {
       const c = el("i");
@@ -1224,7 +1222,7 @@ function waffle(partes, cfg) {
 
   const nota = el("p", "note");
   nota.innerHTML = "Cada figura es <b>una centésima</b> del conjunto (" + mil(tot)
-    + " beneficiarios), y cada fila es el <b>10 %</b>. Se usa esta forma y no una barra apilada "
+    + " beneficiarios). Se usa esta forma y no una barra apilada "
     + "porque la categoría crítica pesa menos del 1 %: en una barra no alcanzaría a verse, y aquí "
     + "se puede contar.";
   p.append(nota);
