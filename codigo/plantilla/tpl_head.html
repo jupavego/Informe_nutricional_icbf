@@ -371,9 +371,19 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .hcard .hf{display:flex;align-items:center;gap:7px;margin-top:10px;padding-top:9px;
   border-top:1px solid var(--rule2);font-size:11px;color:var(--ink3)}
 .hcard .hf b{color:var(--ink2);font-weight:600}
-/* acciones al pie, separadas del contenido: no compiten con el chip ni la cifra */
+/* acciones al pie, separadas del contenido: no compiten con el chip ni la cifra.
+   "ver registros" y "ver por que" traian cada una su propio estilo (nacieron
+   en contextos distintos); aqui conviven, asi que se homogenizan a una sola
+   pastilla */
 .hcard .hact{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .hcard .hact:empty{margin-top:0}
+.hcard .hact .btabla,.hcard .hact .ver{font-family:var(--sans);font-size:10.5px;font-weight:700;
+  letter-spacing:.05em;line-height:1.4;gap:5px;padding:5px 11px;border-radius:20px;
+  color:var(--icbf-verde-osc);background:rgba(114,191,68,.14);border:1px solid var(--icbf-verde);
+  margin-left:0}
+.hcard .hact .btabla:hover,.hcard .hact .ver:hover{background:var(--icbf-verde-osc);color:#fff;border-color:transparent}
+.hcard .hact .ver.act{background:var(--icbf-verde-osc);color:#fff;border-color:transparent}
+.hcard .hact .btabla svg,.hcard .hact .ver svg{width:11px;height:11px}
 
 /* ---------- microgafico en la tarjeta ---------- */
 .spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:11px;
@@ -855,7 +865,6 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
   border-radius:8px;padding:2px 6px;line-height:1.5}
 .btabla:hover{border-color:var(--accent2);background:var(--card)}
 .btabla svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2.2}
-.hh .btabla{margin-left:4px}
 
 
 /* ---------- cuadricula de mil ---------- */
@@ -865,13 +874,16 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
   -webkit-mask:var(--fig-persona) center/contain no-repeat;
   mask:var(--fig-persona) center/contain no-repeat}
 .waffle i:hover{transform:scale(1.9);z-index:2;position:relative}
-.wleg{display:flex;flex-wrap:wrap;gap:9px 20px;margin-top:13px;padding-top:11px;
+.wleg{display:flex;flex-wrap:wrap;gap:12px 26px;margin-top:13px;padding-top:11px;
   border-top:1px solid var(--rule2)}
-.wit{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2)}
-.wit>i{width:13px;height:17.3px;flex:none;
+.wit{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--ink2);
+  max-width:260px}
+.wit>i{width:13px;height:17.3px;flex:none;margin-top:1px;
   -webkit-mask:var(--fig-persona) center/contain no-repeat;
   mask:var(--fig-persona) center/contain no-repeat}
 .wit b{color:var(--ink);font-variant-numeric:tabular-nums}
+/* que significa cada nivel, no solo cuantos hay */
+.wit .wd{display:block;margin-top:2px;font-size:11.5px;line-height:1.4;color:var(--ink3)}
 .wit small{color:var(--ink3);font-variant-numeric:tabular-nums}
 @media(max-width:520px){ .waffle{grid-template-columns:repeat(auto-fill,minmax(11px,1fr))} }
 
@@ -1283,16 +1295,25 @@ irn:{t:"Índice de Riesgo Nutricional (IRN)",k:"Índice compuesto · 0 a 100",
   IRN = 0,50·Antropométrico + 0,20·Tendencia
       + 0,15·Oportunidad   + 0,15·Factores
 
-ANTROPOMÉTRICO  el PEOR de los tres indicadores, no
-                el promedio: un solo hallazgo grave
-                no se diluye con dos normales
-TENDENCIA       la evolución entre tomas, en escala 0–100.
-                «Sin cambio» no penaliza a quien ya está
-                en estado adecuado: no hay qué mejorar
-OPORTUNIDAD     rezago de la toma + número de tomas
-                + criterio de cumplimiento
-FACTORES        controles de crecimiento, vacunación
-                al día y, si aplica, canalización y FTLC
+ANTROPOMÉTRICO  el PEOR entre Estado Peso Talla (57),
+                Estado Talla Edad (55) y Estado Peso
+                Edad (56) — no el promedio: un solo
+                hallazgo grave no se diluye con dos
+                normales
+TENDENCIA       compara Estado Peso Talla (57) de la
+                primera toma del periodo contra la
+                última, por documento, en escala 0–100.
+                «Sin cambio» no penaliza a quien ya
+                está en estado adecuado: no hay qué
+                mejorar
+OPORTUNIDAD     rezago de Toma Mensual (32) frente a la
+                toma comparable, más el número de tomas
+                del beneficiario (66) y Criterio de
+                cumplimiento de nutrición (71)
+FACTORES        Carnet de Crecimiento y Desarrollo (65)
+                y vacunación al día (63); si hay
+                desnutrición aguda moderada o severa se
+                suman canalización (69) y FTLC (70)
 
 SI HAY UNA      Tendencia no se evalúa y su 20 % se
 SOLA TOMA       reparte entre los otros tres componentes
@@ -1327,12 +1348,19 @@ ido:{t:"Índice de Desempeño del Operador (IDO)",k:"Índice compuesto · 0 a 10
       + 0,20·Cumplimiento+ 0,15·Calidad
       + 0,15·Respuesta clínica
 
-COBERTURA     % de sus beneficiarios SIN toma reciente
-SEGUIMIENTO   % con una sola toma en el periodo
-CUMPLIMIENTO  % con criterio en NO CUMPLE
-CALIDAD       % con marcas de plausibilidad o coherencia
-RESPUESTA     % de sus casos agudos sin canalizar
-              (si no tiene casos agudos, no puntúa)
+COBERTURA     % de beneficiarios cuya Toma Mensual (32)
+              es anterior a la toma comparable
+SEGUIMIENTO   % con Número de toma del beneficiario
+              frente a la atención (66) igual a 1
+CUMPLIMIENTO  % con Criterio de cumplimiento de
+              nutrición (71) en NO CUMPLE
+CALIDAD       % de registros marcados por alguna de las
+              27 reglas de plausibilidad o coherencia
+              de este tablero (ver Calidad del dato)
+RESPUESTA     de los casos con Estado Peso Talla (57)
+CLÍNICA       en desnutrición aguda, % SIN canalización
+              (69) registrada. Si no tiene casos
+              agudos, no puntúa
 
 MÍNIMO        40 beneficiarios para entrar al ranking
 

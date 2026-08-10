@@ -1163,13 +1163,15 @@ function btnTabla(cfg) {
    es tan pequena que en una barra apilada no se veria: aqui se cuenta.
    ------------------------------------------------------------------------ */
 function waffle(partes, cfg) {
-  const CELDAS = 1000, POR_FILA = 50;
+  /* 100 celdas, no 1.000: "1 de cada 100" se lee igual de bien y el
+     grafico deja de ocupar media pantalla de alto */
+  const CELDAS = 100, POR_FILA = 10;
   const p = el("div", "panel");
   if (cfg.cat) { const c = el("div", "catdato");
     c.append(el("i"), document.createTextNode(cfg.cat)); p.append(c); }
 
   const tot = cfg.tot || partes.reduce((z, x) => z + (x.v || 0), 0) || 1;
-  /* metodo del mayor resto: los cuadros suman exactamente mil */
+  /* metodo del mayor resto: los cuadros suman exactamente CELDAS */
   const exacto = partes.map(x => (x.v || 0) / tot * CELDAS);
   const cel = exacto.map(Math.floor);
   const falta = CELDAS - cel.reduce((z, v) => z + v, 0);
@@ -1177,6 +1179,9 @@ function waffle(partes, cfg) {
     .slice(0, Math.max(0, falta)).forEach(([, i]) => cel[i]++);
 
   const g = el("div", "waffle");
+  /* cuadricula explicita de 10 por fila (10x10): mas cuadrada y predecible
+     que dejar que el auto-fill de la grilla decida cuantas caben */
+  g.style.gridTemplateColumns = "repeat(" + POR_FILA + ", 1fr)";
   cel.forEach((n, i) => {
     for (let k = 0; k < n; k++) {
       const c = el("i");
@@ -1191,9 +1196,10 @@ function waffle(partes, cfg) {
     if (d == null) { hideTT(); return; }
     const x = partes[+d];
     showTT(e, "<b>" + esc(x.lb) + "</b>"
+      + (x.d ? "<div class='r'><span>" + esc(x.d) + "</span></div>" : "")
       + "<div class='r'><span>Beneficiarios</span><span>" + mil(x.v) + "</span></div>"
       + "<div class='r'><span>Del conjunto</span><span>" + p2f(pct(x.v, tot)) + "</span></div>"
-      + "<div class='r'><span>Figuras</span><span>" + mil(cel[+d]) + " de 1.000</span></div>");
+      + "<div class='r'><span>Figuras</span><span>" + mil(cel[+d]) + " de " + mil(CELDAS) + "</span></div>");
   };
   g.onmouseleave = hideTT;
   p.append(g);
@@ -1205,7 +1211,8 @@ function waffle(partes, cfg) {
     it.append(sw);
     const tx = el("span");
     tx.innerHTML = esc(x.lb) + " &nbsp;<b>" + mil(x.v) + "</b> <small>· " + p2f(pct(x.v, tot))
-      + " · " + mil(cel[i]) + " figuras de 1.000</small>";
+      + " · " + mil(cel[i]) + " de " + mil(CELDAS) + "</small>"
+      + (x.d ? "<small class='wd'>" + esc(x.d) + "</small>" : "");
     it.append(tx);
     if (x.tabla && x.v) it.append(btnTabla(x.tabla));
     leg.append(it);
@@ -1511,8 +1518,10 @@ const BANDAS7 = [
   { k: 7, lb: "Obesidad", c: "var(--e3)" },
 ];
 const IRN4 = [
-  { k: 1, lb: "Adecuado", c: "var(--ok)" }, { k: 2, lb: "Preventivo", c: "var(--d1)" },
-  { k: 3, lb: "Alto riesgo", c: "var(--d2)" }, { k: 4, lb: "Crítico", c: "var(--d3)" },
+  { k: 1, lb: "Adecuado", c: "var(--ok)", d: "0–24 · sin alertas: el estado, la tendencia y el seguimiento están dentro de lo esperado." },
+  { k: 2, lb: "Preventivo", c: "var(--d1)", d: "25–49 · amerita seguimiento cercano, todavía sin ser una alerta activa." },
+  { k: 3, lb: "Alto riesgo", c: "var(--d2)", d: "50–74 · requiere atención prioritaria del operador." },
+  { k: 4, lb: "Crítico", c: "var(--d3)", d: "75–100 · exige respuesta inmediata; el piso clínico puede llevar aquí un puntaje más bajo." },
 ];
 const GST4 = [
   { k: 1, lb: "Bajo peso para la edad gestacional", c: "var(--d2)" },
@@ -1672,13 +1681,14 @@ function vSemaforo() {
   /* la barra apilada dejaba fuera del denominador a los sin clasificar */
   const sinCl = a.n - IRN4.reduce((z, x) => z + a.irc[x.k], 0);
   const partesIRN = IRN4.map(x => ({
-    lb: x.lb, c: x.c, v: a.irc[x.k],
+    lb: x.lb, c: x.c, v: a.irc[x.k], d: x.d,
     tabla: { t: "Riesgo nutricional · " + x.lb,
       idx: () => ix.filter(i => N.irc[i] === x.k), ordenar: 9, asc: true,
       lead: "Los <b>" + mil(a.irc[x.k]) + "</b> beneficiarios clasificados como <b>"
         + x.lb.toLowerCase() + "</b> por el índice de riesgo nutricional." },
   }));
   if (sinCl > 0) partesIRN.push({ lb: "Sin clasificar", c: "var(--rule)", v: sinCl,
+    d: "excluidos del índice: Flag distinto de cero, puntaje Z fuera de los límites OMS, o sin puntaje Z registrado.",
     tabla: { t: "Riesgo nutricional · sin clasificar",
       idx: () => ix.filter(i => !IRN4.some(x => N.irc[i] === x.k)),
       lead: "Registros a los que no se les pudo calcular el índice, casi siempre por falta de puntaje Z." } });
