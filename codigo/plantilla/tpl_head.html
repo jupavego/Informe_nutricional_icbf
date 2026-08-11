@@ -1380,11 +1380,11 @@ ESTE CORTE    ${mil(a.mej)} mejoran · ${mil(a.ig)} se mantienen
  v:"Requiere al menos dos tomas, así que no aplica a todos. Los que tienen una sola quedan fuera de este indicador y se penalizan en Oportunidad."},
 
 irn:{t:"Índice de Riesgo Nutricional (IRN)",k:"Índice compuesto · 0 a 100",
- q:"Un solo número por beneficiario que combina su estado, su tendencia, la oportunidad del seguimiento y los factores asociados. Sirve para priorizar a quién atender primero.",
- c:"Estado Peso Talla (57) · Estado Talla Edad (55) · Estado Peso Edad (56) · ZScore (50–52) · Toma Mensual (32) · Criterio (71) · controles de crecimiento (65) · vacunación al día (63) · canalización (69) · FTLC (70)",
+ q:"Un solo número por beneficiario que combina su estado antropométrico, su tendencia entre tomas y los factores asociados. Sirve para priorizar a quién atender primero.",
+ c:"Estado Peso Talla (57) · Estado Talla Edad (55) · Estado Peso Edad (56) · ZScore (50–52) · controles de crecimiento (65) · vacunación al día (63) · canalización (69) · FTLC (70)",
  m:(a)=>`FÓRMULA
-  IRN = 0,50·Antropométrico + 0,20·Tendencia
-      + 0,15·Oportunidad   + 0,15·Factores
+  IRN = 0,65·Antropométrico + 0,20·Tendencia
+      + 0,15·Factores
 
 ANTROPOMÉTRICO  el PEOR entre Estado Peso Talla (57),
                 Estado Talla Edad (55) y Estado Peso
@@ -1397,17 +1397,25 @@ TENDENCIA       compara Estado Peso Talla (57) de la
                 «Sin cambio» no penaliza a quien ya
                 está en estado adecuado: no hay qué
                 mejorar
-OPORTUNIDAD     rezago de Toma Mensual (32) frente a la
-                toma comparable, más el número de tomas
-                del beneficiario (66) y Criterio de
-                cumplimiento de nutrición (71)
 FACTORES        Carnet de Crecimiento y Desarrollo (65)
                 y vacunación al día (63); si hay
                 desnutrición aguda moderada o severa se
                 suman canalización (69) y FTLC (70)
 
 SI HAY UNA      Tendencia no se evalúa y su 20 % se
-SOLA TOMA       reparte entre los otros tres componentes
+SOLA TOMA       reparte entre Antropométrico y Factores
+
+POR QUÉ NO HAY  el índice tenía un componente de
+"OPORTUNIDAD"   Oportunidad (rezago en meses desde la
+                última toma) que se quitó: la medición
+                se espera una vez por TRIMESTRE, no por
+                mes, y un beneficiario puede haber
+                entrado a mitad de año o cambiado de
+                UDS. Ese rezago mensual leía como
+                "atrasado" a quien en realidad está al
+                día, e imprecisaba el índice. Su 15 %
+                pasó completo a Antropométrico, que es
+                el dato clínico real.
 
 PISO CLÍNICO — solo SUBE la clase, nunca la baja
   desnutrición aguda severa            → CRÍTICO
@@ -1419,10 +1427,12 @@ PISO CLÍNICO — solo SUBE la clase, nunca la baja
   desnutrición global con Z < −3       → CRÍTICO
   obesidad                             → ALTO RIESGO
 
-  Hace falta porque el componente antropométrico
-  pesa 50 % y su techo son 90 puntos: 45, por debajo
-  del umbral de 50. Sin piso, ninguna condición
-  antropométrica alcanzaba su clase por sí sola.
+  Hace falta porque incluso con Antropométrico en 65 %,
+  su techo (90 puntos) pesa 58,5: por debajo de CRÍTICO
+  (75) siempre, y por debajo de ALTO RIESGO (50) para
+  retraso en talla, desnutrición global y obesidad en su
+  forma no severa. Sin piso, esas condiciones no
+  alcanzaban su clase por sí solas.
 
 TRAMOS    0–24 Adecuado    50–74 Alto riesgo
          25–49 Preventivo  75–100 Crítico
@@ -1648,7 +1658,7 @@ de la fórmula)     fijan una clase mínima SIN IMPORTAR el
                    dentro de cada clase; el piso clínico
                    decide la clase cuando la norma no admite
                    ambigüedad`,
- v:"Ponderar no es promediar: el componente antropométrico del IRN pesa 50 % porque es lo que de verdad importa clínicamente. Los demás (tendencia, oportunidad, factores asociados) ayudan a ordenar prioridades dentro de un mismo nivel de riesgo, pero no lo definen."},
+ v:"Ponderar no es promediar: el componente antropométrico del IRN pesa 65 % porque es lo que de verdad importa clínicamente. Los demás (tendencia y factores asociados) ayudan a ordenar prioridades dentro de un mismo nivel de riesgo, pero no lo definen."},
 };
 
 /* ---------- fuentes de referencia ----------

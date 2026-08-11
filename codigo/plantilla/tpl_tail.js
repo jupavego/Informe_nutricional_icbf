@@ -3195,8 +3195,8 @@ function vPerfil() {
         d: "<b>" + mil(a.irc[4]) + "</b> críticos · <b>" + mil(a.irc[3]) + "</b> en alto riesgo",
         barra: pct(a.irc[1], a.n),
         tip: lee("Índice propio, no del sistema. Resume en un solo número el estado antropométrico "
-          + "(50 %), la tendencia entre tomas (20 %), la oportunidad del seguimiento (15 %) y los "
-          + "factores asociados (15 %). Sirve para <b>ordenar por prioridad</b>, no para diagnosticar.",
+          + "(65 %), la tendencia entre tomas (20 %) y los factores asociados (15 %). Sirve para "
+          + "<b>ordenar por prioridad</b>, no para diagnosticar.",
           [["Adecuado", mil(a.irc[1])], ["Preventivo", mil(a.irc[2])],
            ["Alto riesgo", mil(a.irc[3])], ["Crítico", mil(a.irc[4])]]),
         evid: () => ({
@@ -3371,8 +3371,8 @@ function vPerfil() {
         d: "<b>" + mil(g.irc[3] + g.irc[4]) + "</b> en alto riesgo o crítico",
         barra: pct(g.irc[1], g.n),
         tip: lee("Índice propio, equivalente al de niñas y niños pero adaptado: combina el IMC "
-          + "gestacional, los controles prenatales, la edad de la gestante y la oportunidad del "
-          + "seguimiento. Sirve para <b>priorizar</b>, no para diagnosticar.",
+          + "gestacional (65 %), la tendencia entre tomas (20 %) y los controles prenatales (15 %). "
+          + "Sirve para <b>priorizar</b>, no para diagnosticar.",
           [["Adecuado", mil(g.irc[1])], ["Preventivo", mil(g.irc[2])],
            ["Alto riesgo", mil(g.irc[3])], ["Crítico", mil(g.irc[4])]]),
         evid: () => ({

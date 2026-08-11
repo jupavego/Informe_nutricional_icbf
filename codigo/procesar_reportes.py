@@ -313,13 +313,6 @@ def indices_nn(filas, hist, tmax):
         if d == 0 and fin == 0: return 0
         return 0 if d <= -2 else 20 if d == -1 else 40 if d == 0 else 75 if d == 1 else 100
 
-    def oport(row, doc):
-        rez = max(0, tmax - (I(row["toma"]) or 0))
-        s = 0 if rez == 0 else 30 if rez == 1 else 60 if rez == 2 else 90
-        if len(hist[doc]) == 1: s += 10
-        if (row["criterio"] or "").strip() == "NO CUMPLE": s += 10
-        return min(s, 100)
-
     def fact(row, pt):
         p = []
         c = I(row["n_cyd"])
@@ -334,9 +327,13 @@ def indices_nn(filas, hist, tmax):
         return base
 
     # ---- piso clinico ----------------------------------------------------
-    # El componente antropometrico pesa 50 % y su techo es 90 puntos: 45, por
-    # debajo del umbral de ALTO RIESGO. Sin este piso, ninguna condicion
-    # antropometrica alcanzaba su clase por si sola. El piso solo SUBE.
+    # El componente antropometrico pesa 65 % (antes 50 %, ver commit que
+    # quito Oportunidad). Su techo (90 puntos) pesa 58,5 -- por debajo de
+    # CRITICO (75) siempre, y por debajo de ALTO RIESGO (50) para retraso
+    # en talla, desnutricion global y obesidad en su forma NO severa (70,
+    # 75 y 70 puntos base -> 45,5 / 48,75 / 45,5 ponderados). El piso
+    # sigue siendo necesario para las siete condiciones de abajo; solo
+    # cambia cuanto tiene que subir en cada caso. El piso solo SUBE.
     ORDEN_CLASE = {"ADECUADO": 0, "PREVENTIVO": 1, "ALTO RIESGO": 2, "CRITICO": 3}
 
     def piso_clinico(pt, te, pe, zte, zpe, canal):
@@ -375,8 +372,15 @@ def indices_nn(filas, hist, tmax):
         A = antro(pt, te, pe, F(row["z_te"]), F(row["z_pe"]))
         if A is None:
             noeval += 1; res.append((row, m, None, "NO EVALUABLE")); continue
-        T = tend(doc); O = oport(row, doc); Fx = fact(row, pt)
-        irn = (A*.50/.80 + O*.15/.80 + Fx*.15/.80) if T is None else (A*.50+T*.20+O*.15+Fx*.15)
+        T = tend(doc); Fx = fact(row, pt)
+        # Se quito Oportunidad (rezago de meses desde la ultima toma): con
+        # una toma esperada por TRIMESTRE, no por mes, y beneficiarios que
+        # entran a mitad de año o cambian de UDS, ese rezago mensual median
+        # mal a quien esta al dia y penalizaba a quien no tiene la culpa.
+        # Su 15 % pasa completo a Antropometrico (50 %->65 %): el IRN queda
+        # anclado mas en la medida clinica real y menos en un proxy fragil
+        # de puntualidad del registro.
+        irn = (A*.65/.80 + Fx*.15/.80) if T is None else (A*.65 + T*.20 + Fx*.15)
         irn = round(irn, 1)
         c = ("ADECUADO" if irn < 25 else "PREVENTIVO" if irn < 50
              else "ALTO RIESGO" if irn < 75 else "CRITICO")
@@ -392,12 +396,11 @@ def indices_nn(filas, hist, tmax):
 
 def analizar_gs(ruta, R, det, exc):
     hist = defaultdict(list); docs_uds = defaultdict(set); par = Counter()
-    filas = []; n = 0; tmax = 0
+    filas = []; n = 0
     with open(ruta, encoding="utf-8-sig") as fh:
         for row in csv.DictReader(fh):
             n += 1; m = []
             doc = row["doc"]; toma = I(row["toma"])
-            if toma: tmax = max(tmax, toma)
             eg = (row["est_gest"] or "").strip()
             peso = F(row["peso"]); talla = F(row["talla"]); imc = F(row["imc_gest"])
             sem = I(row["sem_gest"])
@@ -435,12 +438,12 @@ def analizar_gs(ruta, R, det, exc):
         if len(v) >= 2:
             d_ = ORD_GEST[v[-1][1]] - ORD_GEST[v[0][1]]
             T = 0 if d_ <= -2 else 20 if d_ == -1 else 40 if d_ == 0 else 75 if d_ == 1 else 100
-        rez = max(0, tmax - (I(row["toma"]) or 0))
-        O = min((0 if rez == 0 else 30 if rez == 1 else 60 if rez == 2 else 90)
-                + (10 if len(hist[doc]) == 1 else 0), 100)
         c_ = I(row["controles"])
         Fx = 60 if c_ is None else 0 if c_ >= 6 else 25 if c_ >= 3 else 60
-        irg = (A*.50/.80 + O*.15/.80 + Fx*.15/.80) if T is None else (A*.50+T*.20+O*.15+Fx*.15)
+        # mismo cambio que en el IRN: se quita Oportunidad (rezago mensual,
+        # fragil frente a ingresos a mitad de año o cambio de UDS) y su
+        # 15 % pasa a Antropometrico
+        irg = (A*.65/.80 + Fx*.15/.80) if T is None else (A*.65 + T*.20 + Fx*.15)
         irg = round(irg, 1)
         c = ("ADECUADO" if irg < 25 else "PREVENTIVO" if irg < 50
              else "ALTO RIESGO" if irg < 75 else "CRITICO")
