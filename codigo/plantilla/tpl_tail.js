@@ -159,7 +159,7 @@ function nicePaso(max) {
   return (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
 }
 function lineas(cfg) {
-  const W = 720, H = 250, ml = 42, mr = 150, mt = 12, mb = 34;
+  const W = 720, H = 250, ml = 42, mr = 20, mt = 12, mb = 34;
   const iw = W - ml - mr, ih = H - mt - mb;
   const suf = cfg.suf ?? " %", fmt = cfg.fmt || p2;
   const max = Math.max(...cfg.series.flatMap(s => s.v)) * 1.12 || 1;
@@ -193,12 +193,12 @@ function lineas(cfg) {
       c.onmousemove = e => showTT(e, html); c.onmouseleave = hideTT;
       svg.append(c);
     });
-    const li = s.v.length - 1;
-    const t = mk("text", { x: W - mr + 9, y: y(s.v[li]) + 4, class: "axt", fill: s.c,
-      "font-weight": "700", "text-anchor": "start" });
-    t.textContent = s.lb; svg.append(t);
   });
   f.append(svg);
+  /* leyenda aparte, no pegada al final de cada linea: si dos series
+     terminan en valores parecidos, sus etiquetas quedaban una encima
+     de la otra y se volvian ilegibles */
+  f.append(legend(cfg.series));
   return f;
 }
 
