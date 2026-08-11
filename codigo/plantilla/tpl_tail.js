@@ -14,6 +14,7 @@ const ICO = {
   operadores: "M4 21V7l7-4 7 4v14M4 21h16M9 21v-5h6v5M8 10h.01M12 10h.01M16 10h.01M8 13.5h.01M12 13.5h.01M16 13.5h.01",
   calidad: "M12 3 4 6v6c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V6l-8-3zm-3 9 2.2 2.2L15.5 10",
   historico: "M4 19h16M4 19V9m4 10v-6m4 6v-9m4 9V7m4 12V5M4 9l5-4 4 3 4-6",
+  fuentes: "M12 3 3 8l9 5 9-5-9-5zM3 13l9 5 9-5M3 18l9 5 9-5",
   glosario: "M4 5.5A2 2 0 0 1 6 3.5h13v15H6a2 2 0 0 0-2 2v-15zM4 18.5v2h15M8 7.5h7M8 11h7",
 };
 
@@ -1473,12 +1474,13 @@ const SUBS = {
   operadores: "Desempeño de las entidades contratistas",
   calidad: "Las 27 reglas aplicadas a la descarga",
   historico: "Evolución mes a mes del cargue y el registro",
+  fuentes: "Los reportes e insumos con los que se construye el tablero",
   glosario: "Qué mide cada indicador y cómo se calcula",
 };
 
 const VIEWS = [["semaforo", "Semáforo"], ["perfil", "Perfil"], ["mapa", "Mapa"], ["anatomia", "Anatomía del dato"], ["estado", "Estado nutricional"],
   ["critica", "Ruta crítica"], ["gestantes", "Gestantes"], ["operadores", "Operadores"],
-  ["calidad", "Calidad del dato"], ["historico", "Histórico"], ["glosario", "Glosario"]];
+  ["calidad", "Calidad del dato"], ["historico", "Histórico"], ["fuentes", "Fuentes de referencia"], ["glosario", "Glosario"]];
 
 /* indices de niñas y niños que pasan el filtro */
 function idxNN() {
@@ -2339,6 +2341,20 @@ function vGlosario() {
     const c = el("button", "gcard"); c.type = "button";
     c.innerHTML = `<div class="kk">${esc(f.k)}</div><h4>${esc(f.t)}</h4><p>${esc(f.q)}</p>`;
     c.onclick = () => ficha(k);
+    g.append(c);
+  });
+  s.append(g);
+}
+
+function vFuentes() {
+  const s = $("#v-fuentes"); s.textContent = "";
+  s.append(h2("Fuentes de referencia"));
+  s.append(el("p", "note", "Todos los insumos que se tuvieron en cuenta para construir este tablero: de dónde sale cada dato, qué columnas se usan y qué filtro se les aplica antes de entrar. Haga clic en cualquier tarjeta para ver el detalle completo."));
+  const g = el("div", "gloss-list");
+  Object.entries(FUENTES).forEach(([k, f]) => {
+    const c = el("button", "gcard"); c.type = "button";
+    c.innerHTML = `<div class="kk">${esc(f.k)}</div><h4>${esc(f.t)}</h4><p>${esc(f.q)}</p>`;
+    c.onclick = () => ficha(k, FUENTES, ETQ_FUENTES);
     g.append(c);
   });
   s.append(g);
@@ -3531,7 +3547,7 @@ function render() {
      el corte desigual es una decision del equipo, no un hallazgo). */
   $("#warn").hidden = TAB !== VIEWS[0][0] || !$("#warn").innerHTML.trim();
   ({ semaforo: vSemaforo, perfil: vPerfil, mapa: vMapa, anatomia: vAnatomia, estado: vEstado, critica: vCritica, gestantes: vGestantes,
-     operadores: vOperadores, calidad: vCalidad, historico: vHistorico, glosario: vGlosario })[TAB]();
+     operadores: vOperadores, calidad: vCalidad, historico: vHistorico, fuentes: vFuentes, glosario: vGlosario })[TAB]();
   [...$("#nav").children].forEach(b => b.setAttribute("aria-selected", b.dataset.id === TAB));
 }
 

@@ -977,6 +977,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 <section id="v-operadores" hidden></section>
 <section id="v-calidad" hidden></section>
 <section id="v-historico" hidden></section>
+<section id="v-fuentes" hidden></section>
 <section id="v-glosario" hidden></section>
 
 <footer id="foot"></footer>
@@ -1591,6 +1592,54 @@ de la fórmula)     fijan una clase mínima SIN IMPORTAR el
  v:"Ponderar no es promediar: el componente antropométrico del IRN pesa 50 % porque es lo que de verdad importa clínicamente. Los demás (tendencia, oportunidad, factores asociados) ayudan a ordenar prioridades dentro de un mismo nivel de riesgo, pero no lo definen."},
 };
 
+/* ---------- fuentes de referencia ----------
+   Todo insumo EXTERNO que el pipeline (codigo/*.py) lee para construir
+   el tablero. No incluye los archivos intermedios que el propio ETL
+   escribe y vuelve a leer (_procesado/*.csv): esos son resultado, no
+   fuente. Usa el mismo formato de ficha que FICHAS, con etiquetas
+   propias (ETQ_FUENTES) porque "que mide"/"metodo de calculo" no
+   describen bien un archivo de origen. */
+const ETQ_FUENTES = { q: "Qué aporta al tablero", c: "Columnas usadas", m: "Detalle técnico",
+  n: "Ubicación", v: "Filtro aplicado" };
+const FUENTES = {
+ nn:{t:"Reporte de niñas y niños",k:"Insumo · sistema Cuéntame",
+  q:"Cada toma antropométrica (peso, talla, perímetros) y su clasificación nutricional. Es la base de las seis cifras del Semáforo, el IRN y el histórico de niñas y niños.",
+  c:"71 columnas del reporte ICBFCUEGeneralPorToma: documento, toma, centro zonal, código y nombre de UDS, municipio, entidad contratista, sexo, edad, peso, talla, perímetros, puntajes Z, estados Peso/Talla/Edad (Res. 2465 de 2016), flag, canalizado, FTLC, criterio, vacunación, lactancia, etnia, estado de vinculación.",
+  m:"Un archivo Excel por centro zonal, nombre con el patrón Ninos_CZ_*.xlsx. El encabezado se valida contra las 71 columnas esperadas antes de procesar cualquier fila; si no coincide, el archivo se rechaza en vez de leerse a medias.",
+  n:"Carpeta NN/ del corte, descargado del sistema Cuéntame",
+  v:"Filas completamente vacías se descartan (regla de calidad A2). El análisis posterior (prevalencias, IRN) se limita además a estado = VINCULADO."},
+ gs:{t:"Reporte de gestantes y lactantes",k:"Insumo · sistema Cuéntame",
+  q:"Cada toma de peso, talla e IMC gestacional. Es la base del IRG y de todas las vistas de Gestantes.",
+  c:"44 columnas del reporte GestanteLactantePorToma: documento, toma, centro zonal, código y nombre de UDS, municipio, estado nutricional gestacional, peso, talla, IMC, semanas de gestación, controles prenatales, edad, estado de vinculación.",
+  m:"Un archivo Excel por centro zonal, patrón Gestantes_CZ_*.xlsx. Mismo esquema de validación de encabezado que el reporte de niñas y niños.",
+  n:"Carpeta GS/ del corte, descargado del sistema Cuéntame",
+  v:"Filas vacías descartadas; el análisis se limita a estado = VINCULADO."},
+ uds:{t:"Reporte de Unidades de Servicio",k:"Insumo · sistema Cuéntame",
+  q:"El cupo autorizado y el estado de cada unidad de servicio. Es el denominador de \"Cobertura de toma\" (Cupos UDS), tanto en el mapa como en la tarjeta del Semáforo.",
+  c:"Código UDS, Cupos UDS, Estado de la UDS.",
+  m:"Archivo ICBFCUEUnidadesServicio <fecha>.xlsx. El encabezado no está en la primera fila: se busca la fila donde la columna A dice exactamente \"Tipo de Unidad\".",
+  n:"Carpeta del corte de cobertura, descargado del sistema Cuéntame",
+  v:"Solo unidades con Estado de la UDS = ACTIVA; cupos en 0 o vacíos se descartan."},
+ coord:{t:"Coordenadas y zona de las UDS",k:"Insumo · BD Análisis Cobertura",
+  q:"Latitud, longitud y zona (rural/cabecera) de cada unidad de servicio. Ubica cada punto en el mapa.",
+  c:"Hoja COORDENADAS UDS: Código UDS, LATITUD, LONGITUD. Hoja CUENTAME: Código UDS, Zona Ubicación UDS.",
+  m:"Archivo BD ANALISIS COBERTURA v21.xlsm, cruzado por Código UDS (con y sin ceros a la izquierda) contra el reporte nutricional.",
+  n:"Archivo de seguimiento de cobertura del equipo regional",
+  v:"Coordenadas fuera del recuadro de Antioquia (lat 5,2–9,1 · lon -77,3–-73,7) se descartan por ser evidentemente erróneas."},
+ mapa:{t:"Cartografía de Antioquia",k:"Insumo · cartografía",
+  q:"Los polígonos de municipios y de las comunas de Medellín que dibuja la coropleta del mapa.",
+  c:"Código y nombre del municipio, centro zonal asignado, subregión, geometría del polígono.",
+  m:"Archivo GeoJSON con 146 polígonos (125 municipios + 21 comunas/corregimientos de Medellín), simplificados para que el archivo sea liviano sin perder la forma reconocible de cada territorio.",
+  n:"antioquia_con_comunas v5.geojson",
+  v:"De cada municipio se conserva solo el contorno exterior de mayor área; islas o huecos menores no se dibujan."},
+ osm:{t:"Teselas del mapa (OpenStreetMap)",k:"Servicio externo · no es un dato del corte",
+  q:"El fondo de calles, relieve y nombres de lugar que se ve debajo de los colores del mapa. No aporta ninguna cifra: es solo el mapa base.",
+  c:"No aplica: es una imagen de fondo, no un dato tabular.",
+  m:"Se carga en vivo desde tile.openstreetmap.org mientras se navega la pestaña Mapa. Es la única parte del tablero que necesita conexión a internet; el resto funciona sin ella.",
+  n:"openstreetmap.org",
+  v:"Ninguno: es un servicio público, sin cruce con los datos del corte."},
+};
+
 /* ---------- utilidades ---------- */
 const $ = s => document.querySelector(s);
 const el = (t, c, h) => { const n = document.createElement(t); if (c) n.className = c; if (h != null) n.innerHTML = h; return n; };
@@ -1616,10 +1665,17 @@ const IRNC = [
   { k: "CRITICO", lb: "Crítico", c: "var(--d3)" },
 ];
 
-/* ---------- ficha tecnica ---------- */
+/* ---------- ficha tecnica ----------
+   Se reutiliza para el Glosario (FICHAS) y para Fuentes de referencia
+   (FUENTES): mismo modal, mismo formato dt/dd, solo cambian las
+   etiquetas de cada campo -- "Que mide" no tiene sentido para un
+   archivo de origen, ahi se lee "Que aporta". */
 const modal = $("#modal");
-function ficha(key) {
-  const f = FICHAS[key]; if (!f) return;
+const ETQ_DEFECTO = { q: "Qué mide", c: "Campos del reporte", m: "Método de cálculo",
+  n: "Referencia normativa", v: "Nota de lectura" };
+function ficha(key, dict, etq) {
+  const f = (dict || FICHAS)[key]; if (!f) return;
+  const L = etq || ETQ_DEFECTO;
   const b = el("div", "fx-inner");
   const hd = el("div", "hd");
   hd.innerHTML = `<div class="k">${esc(f.k)}</div><h3 id="fxtit">${esc(f.t)}</h3>`;
@@ -1628,13 +1684,13 @@ function ficha(key) {
   const bd = el("div", "bd");
   const dl = el("dl");
   const put = (t, h) => { dl.append(el("dt", null, t), el("dd", null, h)); };
-  put("Qué mide", esc(f.q));
-  put("Campos del reporte", f.c);
+  put(L.q, esc(f.q));
+  put(L.c, f.c);
   const met = typeof f.m === "function" ? f.m(resumen(idxNN()), resumenGS(idxGS())) : f.m;
-  dl.append(el("dt", null, "Método de cálculo"), (() => { const d = el("dd"); d.append(el("div", "fml", esc(met))); return d; })());
-  if (f.n) put("Referencia normativa", `<span class="norm">${esc(f.n)}</span>`);
+  dl.append(el("dt", null, L.m), (() => { const d = el("dd"); d.append(el("div", "fml", esc(met))); return d; })());
+  if (f.n) put(L.n, `<span class="norm">${esc(f.n)}</span>`);
   const nota = typeof f.v === "function" ? f.v(resumen(idxNN()), resumenGS(idxGS())) : f.v;
-  if (nota) put("Nota de lectura", nota.replace(/\n/g, "<br>"));
+  if (nota) put(L.v, nota.replace(/\n/g, "<br>"));
   bd.append(dl);
   $("#fx").textContent = ""; $("#fx").classList.remove("ancha");
   $("#fx").append(hd, bd);
