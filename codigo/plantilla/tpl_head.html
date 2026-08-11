@@ -455,21 +455,6 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
   color:#fff;box-shadow:0 1px 3px rgba(13,26,20,.18)}
 .side nav button[aria-selected=true] svg{opacity:1}
 
-.side .pie{margin:0 12px;padding:12px 13px;border-radius:11px;background:var(--sunk);
-  border:1px solid var(--rule2)}
-.side .pie .t{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--ink3);margin-bottom:6px}
-.side .pie .n{display:flex;align-items:baseline;gap:6px;margin-bottom:2px}
-.side .pie .n b{font-size:19px;font-weight:700;color:var(--icbf-verde-osc);letter-spacing:-.01em}
-.side .pie .n span{font-size:11.5px;color:var(--ink2)}
-.side .pie .v2{margin-top:8px;padding-top:7px;border-top:1px solid var(--rule);
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:var(--ink3);
-  display:flex;align-items:center;gap:6px}
-.side .pie .v2 i{width:6px;height:6px;border-radius:50%;background:var(--icbf-verde);flex:none}
-.vsn{}
-.side .pie .c{margin-top:9px;padding-top:8px;border-top:1px solid var(--rule);
-  font-size:11px;color:var(--ink2);line-height:1.45}
-
 /* ---------- columna de trabajo ---------- */
 .main{min-width:0;padding:0 clamp(14px,2.2vw,26px) 70px}
 .topbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;
@@ -477,12 +462,28 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .topbar h2.tt{font-size:20px;font-weight:700;letter-spacing:-.012em;margin:0;line-height:1.2}
 .topbar .sb{font-size:12.5px;color:var(--ink2);margin-top:2px}
 
+/* el resumen regional (antes vivia fijo en el menu lateral, obligando a
+   hacer scroll para ver todos los enlaces) se movio a la cabecera de
+   cada modulo: una franja horizontal compacta en vez de una tarjeta
+   apilada, alineada al extremo derecho del titulo */
+.topbar .pie{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:12px;
+  padding:8px 14px;border-radius:11px;background:var(--sunk);border:1px solid var(--rule2)}
+.topbar .pie .t{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink3)}
+.topbar .pie .n{display:flex;align-items:baseline;gap:5px}
+.topbar .pie .n b{font-size:16px;font-weight:700;color:var(--icbf-verde-osc);letter-spacing:-.01em}
+.topbar .pie .n span{font-size:11px;color:var(--ink2)}
+.topbar .pie .c{font-size:11px;color:var(--ink2);padding-left:12px;border-left:1px solid var(--rule)}
+.topbar .pie .v2{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--ink3);
+  display:flex;align-items:center;gap:5px;padding-left:12px;border-left:1px solid var(--rule)}
+.topbar .pie .v2 i{width:5px;height:5px;border-radius:50%;background:var(--icbf-verde);flex:none}
+
 @media(max-width:1000px){
   .app{grid-template-columns:1fr}
   .side{position:static;height:auto;border-right:none;border-bottom:1px solid var(--rule)}
   .side nav{flex-direction:row;flex-wrap:wrap;overflow:visible;flex:none}
   .side nav button{width:auto}
-  .side .pie{display:none}
+  .topbar .pie{margin-left:0}
 }
 
 
@@ -947,7 +948,6 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
     <div class="r" id="meta"></div>
   </div>
   <nav role="tablist" id="nav"></nav>
-  <div class="pie" id="lateral"></div>
 </aside>
 
 <main class="main">
@@ -956,6 +956,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
     <h2 class="tt" id="tsec"></h2>
     <div class="sb" id="tsub"></div>
   </div>
+  <div class="pie" id="lateral"></div>
 </div>
 <div class="alert" id="warn"></div>
 

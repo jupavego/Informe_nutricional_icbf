@@ -3517,8 +3517,8 @@ function render() {
   lat.innerHTML = '<div class="t">' + (filtrado ? "Selección actual" : "Regional completa") + '</div>'
     + '<div class="n"><b>' + mil(a.n) + '</b><span>niñas y niños</span></div>'
     + '<div class="n"><b>' + mil(g.n) + '</b><span>gestantes</span></div>'
-    + '<div class="c">Corte ' + esc(D.meta.corte) + '<br>Tomas de ' + esc(D.meta.periodo)
-    + '<br>' + DIC.cz.length + ' centros zonales</div>'
+    + '<div class="c">Corte ' + esc(D.meta.corte) + ' · tomas de ' + esc(D.meta.periodo)
+    + ' · ' + DIC.cz.length + ' centros zonales</div>'
     + '<div class="v2"><i></i>versión ' + esc(D.meta.build || "—") + '</div>';
   const tt2 = VIEWS.find(v => v[0] === TAB);
   $("#tsec").textContent = tt2 ? tt2[1] : "";
