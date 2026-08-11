@@ -350,14 +350,21 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .mb .g i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
 .mb .v{font-family:var(--mono);font-size:10.5px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
 
-/* ---------- selector de tipo de grafico ---------- */
-.vistas{display:inline-flex;gap:2px;background:var(--sunk);border:1px solid var(--rule);
-  border-radius:9px;padding:2px;margin-left:auto}
-.vistas button{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink2);
-  background:none;border:none;border-radius:7px;padding:5px 11px;cursor:pointer}
+/* ---------- selector de tipo de grafico ----------
+   Mismo tratamiento que el interruptor de Poblacion en Perfil
+   (.poptog/.popbtn): antes era texto chico casi sin peso visual, y
+   este selector cambia TODO el grafico de abajo, asi que merece la
+   misma prominencia. */
+.vistas{position:relative;display:inline-flex;gap:2px;background:var(--sunk);
+  border-radius:11px;padding:3px;margin-left:auto}
+.vistas button{font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink2);
+  background:none;border:none;border-radius:9px;padding:8px 18px;cursor:pointer;
+  transition:background .15s ease,color .15s ease}
 .vistas button:hover{color:var(--ink)}
-.vistas button[aria-pressed=true]{background:var(--card);color:var(--icbf-verde-osc);
-  box-shadow:0 1px 2px rgba(13,26,20,.10)}
+.vistas button[aria-pressed=true]{color:#fff;
+  background:linear-gradient(180deg,var(--icbf-verde) 0%,var(--icbf-verde-med) 100%);
+  box-shadow:0 1px 3px rgba(18,33,26,.2)}
+@media(max-width:640px){.vistas{width:100%}.vistas button{flex:1}}
 
 /* ---------- tarjetas de hallazgo ---------- */
 /* dos por fila en escritorio; el "que requiere atencion" son 4 tarjetas
@@ -454,11 +461,15 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .side nav button[aria-selected=true]{background:linear-gradient(180deg,var(--icbf-verde),var(--icbf-verde-med));
   color:#fff;box-shadow:0 1px 3px rgba(13,26,20,.18)}
 .side nav button[aria-selected=true] svg{opacity:1}
-.pdftodo{margin:8px 12px 12px;display:flex;align-items:center;justify-content:center;gap:7px;
-  font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--ink2);
-  background:var(--sunk);border:1px solid var(--rule2);border-radius:10px;padding:9px 10px;cursor:pointer}
-.pdftodo:hover{border-color:var(--icbf-verde);color:var(--icbf-verde-osc)}
-.pdftodo svg{flex:none;width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;
+/* contorno punteado en vez del recuadro gris solido: se lee como
+   "accion secundaria" (descargar algo), no como un enlace mas del
+   menu, y el texto queda en una sola linea */
+.pdftodo{margin:7px 12px 12px;padding:9px 11px;display:flex;align-items:center;gap:8px;
+  font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--icbf-verde-osc);
+  background:var(--card);border:1.5px dashed var(--icbf-verde);border-radius:10px;
+  cursor:pointer;text-align:left;white-space:nowrap}
+.pdftodo:hover{background:var(--sunk);border-style:solid}
+.pdftodo svg{flex:none;width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round}
 
 /* ---------- columna de trabajo ---------- */
@@ -981,7 +992,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
   <nav role="tablist" id="nav"></nav>
   <button type="button" id="btnpdftodo" class="pdftodo">
     <svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h4"/></svg>
-    descargar informe completo (PDF)
+    Informe completo (PDF)
   </button>
 </aside>
 
