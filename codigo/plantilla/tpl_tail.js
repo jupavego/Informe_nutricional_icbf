@@ -3546,9 +3546,38 @@ function render() {
      solo si de verdad hay algo que anunciar (init() la deja vacia cuando
      el corte desigual es una decision del equipo, no un hallazgo). */
   $("#warn").hidden = TAB !== VIEWS[0][0] || !$("#warn").innerHTML.trim();
-  ({ semaforo: vSemaforo, perfil: vPerfil, mapa: vMapa, anatomia: vAnatomia, estado: vEstado, critica: vCritica, gestantes: vGestantes,
-     operadores: vOperadores, calidad: vCalidad, historico: vHistorico, fuentes: vFuentes, glosario: vGlosario })[TAB]();
+  VISTAS[TAB]();
   [...$("#nav").children].forEach(b => b.setAttribute("aria-selected", b.dataset.id === TAB));
+}
+
+/* compartido con descargarInformeCompleto(): la misma funcion de cada
+   pestaña, para no mantener dos listas separadas */
+const VISTAS = { semaforo: vSemaforo, perfil: vPerfil, mapa: vMapa, anatomia: vAnatomia, estado: vEstado, critica: vCritica, gestantes: vGestantes,
+  operadores: vOperadores, calidad: vCalidad, historico: vHistorico, fuentes: vFuentes, glosario: vGlosario };
+
+/* "descargar PDF de esta seccion" es solo window.print(): la unica
+   seccion visible ya es la de la pestaña activa, y el CSS @media print
+   oculta menu/filtros/botones. El informe completo necesita, antes de
+   imprimir, que TODAS las secciones tengan contenido -- normalmente
+   solo se renderiza la pestaña activa -- y un titulo propio en cada
+   una, porque no todas traen su propio <h2> con el nombre del modulo. */
+function descargarInformeCompleto() {
+  const tabAntes = TAB;
+  VIEWS.forEach(([id, lb]) => {
+    TAB = id;
+    VISTAS[id]();
+    const sec = $("#v-" + id);
+    sec.hidden = false;
+    let tit = sec.querySelector(":scope > .imprimeTitulo");
+    if (!tit) { tit = el("h1", "imprimeTitulo"); sec.prepend(tit); }
+    tit.textContent = lb;
+  });
+  TAB = tabAntes;
+  /* afterprint es mas confiable que asumir que print() bloquea el script
+     hasta que se cierra el dialogo -- varia entre navegadores */
+  const restaurar = () => { render(); removeEventListener("afterprint", restaurar); };
+  addEventListener("afterprint", restaurar);
+  window.print();
 }
 
 (function init() {
@@ -3570,6 +3599,8 @@ function render() {
   $("#fmun").onchange = e => { FMUN = +e.target.value; render(); };
   $("#feas").onchange = e => { FEAS = +e.target.value; render(); };
   $("#reset").onclick = () => { FCZ = FMUN = FEAS = -1; render(); };
+  $("#btnpdf").onclick = () => window.print();
+  $("#btnpdftodo").onclick = () => descargarInformeCompleto();
   VIEWS.forEach(([id, lb]) => {
     const b = el("button"); b.dataset.id = id; b.setAttribute("role", "tab"); b.type = "button";
     b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + (ICO[id] || "") + '"/></svg>';
