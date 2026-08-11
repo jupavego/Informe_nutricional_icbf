@@ -1695,7 +1695,7 @@ function vSemaforo() {
     }
     return {
       t: "Retraso en talla",
-      lead: "Arriba, por " + nLb + ". Abajo, por edad — y ahí aparece lo interesante.",
+      lead: "Misma cifra por " + nLb + " y por tramo de edad, para ver en cuál de los dos se concentra el retraso.",
       chart: cont,
       pie: "El retraso <b>debería crecer</b> con la edad, porque la desnutrición crónica se acumula. Si aquí baja, lo más probable es que falle la <b>medición de longitud en menores de dos años</b>, que se toma acostado.",
     };
@@ -1724,7 +1724,7 @@ function vSemaforo() {
     ], null, "var(--e2)"));
     return {
       t: "Malnutrición por exceso",
-      lead: "Arriba, dónde se concentra por " + nLb + ". Abajo, el gradiente completo: las dos últimas filas son las que cuenta la tarjeta.",
+      lead: "Dónde se concentra por " + nLb + ", y el gradiente completo desde adecuado hasta obesidad: la tarjeta solo cuenta las dos últimas categorías.",
       chart: cont,
       pie: "Los <b>" + mil(a.pt[5]) + "</b> en riesgo de sobrepeso todavía no cuentan como exceso, pero son la antesala. El flujo entre tomas se mueve en esa dirección.",
     };
@@ -3113,7 +3113,7 @@ function vPerfil() {
            ["Mediana", un(med(KG)) + " kg"], ["Instrumento", "pesabebés hasta los 2 años"]]),
         evid: () => ({
           t: "Peso · distribución y precisión del registro",
-          lead: "Arriba, cómo se reparte el peso en el conjunto filtrado. Abajo, con qué dígito termina lo anotado.",
+          lead: "Cómo se reparte el peso en el conjunto filtrado, y con qué dígito termina cada registro.",
           chart: pila(
             histograma(KG, { min: 2, max: 32, u: "kg", color: "var(--icbf-verde-osc)", bins: 30 }),
             sub("Último dígito registrado"),
