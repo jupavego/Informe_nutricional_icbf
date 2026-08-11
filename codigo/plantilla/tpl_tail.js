@@ -1605,6 +1605,10 @@ function vSemaforo() {
   };
   const cob = cobUdsFiltro();
   const cobLbl = D.meta.uds_trimestre && D.meta.uds_trimestre.lbl ? D.meta.uds_trimestre.lbl : null;
+  /* las tarjetas de gestantes ya llevan su propio "Personas gestantes"
+     mas abajo; estas seis, en cambio, arrancaban sin ningun encabezado
+     que aclarara que hablan de niñas y niños */
+  s.append(h2("Niñas y niños"));
   s.append(tiles([
     { t: "Desnutrición aguda", f: "dnt_aguda", tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9, asc: true, lead: "Los casos clasificados en <b>desnutrición aguda severa o moderada</b> por peso para la talla, según la Resolución 2465 de 2016. Ordenados por puntaje Z de menor a mayor: arriba el caso más comprometido.", pie: "La columna <b>Canalizado</b> en «No» es la que exige gestión: hay caso detectado y no hay remisión registrada." }, v: mil(a.dnt), sp: sparks.dnt, spc: "var(--d2)", d: `${p2(pct(a.dnt, a.n))} · ${mil(a.dnt - a.canal)} sin canalizar`, cls: "crit" },
     { t: "Riesgo de desnutrición", f: "pt", tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar. Todavía no es desnutrición, pero es el grupo que puede cruzar el umbral entre una toma y la siguiente." }, v: p1(pct(a.riesgo, a.n)), d: mil(a.riesgo) + " niñas y niños", sp: sparks.riesgo, spc: "var(--d1)", cls: "crit" },
