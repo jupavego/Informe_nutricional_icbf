@@ -1432,6 +1432,16 @@ const N = D.nn, G = D.gs, DIC = D.dic, GDIC = D.gdic, CAT = D.cat;
 const NN_N = N.doc.length, GS_N = G.doc.length;
 const MESES_LARGO = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
   "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+/* "reciente" (valoracion reciente) usaba una ventana fija de los dos
+   ultimos meses del corte comparable -- el mismo problema que ya se
+   corrigio en Cobertura de toma y en el IRN: la toma se espera una vez
+   por TRIMESTRE, no por mes. Se reusa el trimestre ya calculado en el
+   backend (D.meta.uds_trimestre) en vez de inventar otra ventana: un
+   beneficiario cuenta como "reciente" si su ultima toma cae en el
+   trimestre completo mas reciente o despues. */
+const TRIM_INICIO = (D.meta.uds_trimestre && D.meta.uds_trimestre.meses)
+  ? D.meta.uds_trimestre.meses[0] : D.meta.tmax - 1;
+const TRIM_LBL_G = D.meta.uds_trimestre && D.meta.uds_trimestre.lbl;
 
 /* Cobertura de toma por Cupos UDS: beneficiarios unicos con toma en el
    ultimo trimestre completo, sobre el cupo autorizado de la UDS -- una
@@ -1524,7 +1534,7 @@ function resumen(ix) {
     if (N.te[i] === 1) r.retraso++;
     if (N.pe[i] === 1) r.glob++;
     if (N.cr[i]) r.nc++;
-    if (N.tm[i] >= D.meta.tmax - 1) r.reciente++;
+    if (N.tm[i] >= TRIM_INICIO) r.reciente++;
     if (N.nt[i] === 1) r.una++;
     if (N.ev[i] === 1) r.mej++; else if (N.ev[i] === 2) r.ig++; else if (N.ev[i] === 3) r.emp++;
     if (N.irn[i] >= 0) { r.irn += N.irn[i]; r.irnN++; }
@@ -1723,10 +1733,10 @@ function vSemaforo() {
     sev: pct(a.reciente, a.n) < 75 ? "alta" : pct(a.reciente, a.n) < 85 ? "media" : "baja",
     pct: p1(100 - pct(a.reciente, a.n)),
     t: "Sin valoración reciente",
-    d: "<b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma en los dos últimos meses del corte comparable, y <b>" + mil(a.una) + "</b> con una sola toma en todo el periodo.",
+    d: "<b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma desde el trimestre " + (TRIM_LBL_G || "más reciente completo") + ", y <b>" + mil(a.una) + "</b> con una sola toma en todo el periodo.",
     f: "Mide gestión del operador, no estado nutricional",
   }));
-  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < D.meta.tmax - 1), ordenar: 16, asc: true, lead: "Los <b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma en el corte comparable." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < TRIM_INICIO), ordenar: 16, asc: true, lead: "Los <b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma desde el trimestre " + (TRIM_LBL_G || "más reciente completo") + "." }));
   conEvidencia(hall.lastChild, () => {
     const media = 100 - pct(a.reciente, a.n);
     const filas = grupos.map(x => ({ lb: corto(x.lb), v: 100 - pct(x.r.reciente, x.r.n), n: x.r.n - x.r.reciente }))
@@ -3470,7 +3480,7 @@ function vPerfil() {
       { lb: "Riesgo de desnutrición", v: pct(a.riesgo, a.n), tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar." }, c: "linear-gradient(180deg,var(--d1),var(--d2))", txt: mil(a.riesgo) + " · " + p2f(pct(a.riesgo, a.n)) },
       { lb: "Retraso en talla", v: pct(a.retraso, a.n), tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11, asc: true, lead: "Los <b>" + mil(a.retraso) + "</b> casos con talla baja para su edad." }, c: "linear-gradient(180deg,var(--d2),var(--d3))", txt: mil(a.retraso) + " · " + p2f(pct(a.retraso, a.n)) },
       { lb: "Sobrepeso u obesidad", v: pct(a.exceso, a.n), tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9, lead: "Peso para la talla por encima de +2 desviaciones estándar." }, c: "linear-gradient(180deg,var(--e1),var(--e2))", txt: mil(a.exceso) + " · " + p2f(pct(a.exceso, a.n)) },
-      { lb: "Sin toma reciente", v: 100 - pct(a.reciente, a.n), tabla: { t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < D.meta.tmax - 1), ordenar: 16, asc: true, lead: "Última toma anterior al corte comparable (toma " + D.meta.tmax + ")." }, c: "linear-gradient(180deg,var(--icbf-naranja),#D96200)", txt: mil(a.n - a.reciente) + " · " + p2f(100 - pct(a.reciente, a.n)) },
+      { lb: "Sin toma reciente", v: 100 - pct(a.reciente, a.n), tabla: { t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < TRIM_INICIO), ordenar: 16, asc: true, lead: "Última toma anterior al trimestre " + (TRIM_LBL_G || "más reciente completo") + "." }, c: "linear-gradient(180deg,var(--icbf-naranja),#D96200)", txt: mil(a.n - a.reciente) + " · " + p2f(100 - pct(a.reciente, a.n)) },
       { lb: "No cumple criterio", v: pct(a.nc, a.n), tabla: { t: "Registros que no cumplen criterio", idx: () => ix.filter(i => N.cr[i] === 1), lead: "Registros marcados por el sistema como <b>NO CUMPLE</b> en el campo de criterio." }, c: "linear-gradient(180deg,var(--icbf-amarillo),var(--icbf-naranja))", txt: mil(a.nc) + " · " + p2f(pct(a.nc, a.n)) },
     ]));
     s.append(lectura("Este perfil resume <b>" + mil(a.n) + "</b> niñas y niños del conjunto filtrado. Las cuatro medidas de la izquierda son lo único que alguien tomó físicamente; todo lo de la derecha sale de combinarlas con la edad, el sexo y las tablas de la OMS."));
