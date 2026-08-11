@@ -422,7 +422,14 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .side::-webkit-scrollbar{width:7px}
 .side::-webkit-scrollbar-thumb{background:var(--rule);border-radius:4px}
 .side::-webkit-scrollbar-thumb:hover{background:var(--icbf-verde)}
-.marca{position:relative;overflow:hidden;padding:16px 16px 15px;color:#fff;
+/* flex-shrink:0 es el detalle que importa: .marca tiene overflow:hidden, y
+   eso le quita a un hijo flex su "tamano minimo automatico" (el que lo
+   protege de encogerse mas alla de su contenido). Sin flex-shrink:0, en
+   una ventana baja de alto el navegador encoje el recuadro verde para
+   que "quepa" junto al nav -- y como recorta (overflow:hidden), el
+   titulo "Vigilancia nutricional" y la fecha quedan fuera del area
+   verde, en blanco sobre blanco: invisibles, aunque sigan en el DOM. */
+.marca{position:relative;overflow:hidden;flex-shrink:0;padding:16px 16px 15px;color:#fff;
   background:linear-gradient(150deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 55%,var(--icbf-verde) 100%)}
 .marca::before{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
 .marca::after{content:"";position:absolute;right:-56px;top:-72px;width:190px;height:190px;border-radius:50%;
