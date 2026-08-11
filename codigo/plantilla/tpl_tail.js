@@ -3536,6 +3536,14 @@ function render() {
     + '<div class="c">Corte ' + esc(D.meta.corte) + ' · tomas de ' + esc(D.meta.periodo)
     + ' · ' + DIC.cz.length + ' centros zonales</div>'
     + '<div class="v2"><i></i>versión ' + esc(D.meta.build || "—") + '</div>';
+  /* solo se ve al imprimir (.filtroimpreso en pantalla es display:none):
+     los selects de .bar ya muestran el filtro activo, pero se ocultan
+     en el PDF -- sin este texto fijo, un informe filtrado y uno
+     regional se verian identicos en papel */
+  $("#filtroimpreso").innerHTML = "<b>Filtros de este informe</b> &nbsp;·&nbsp; Centro zonal: "
+    + esc(FCZ >= 0 ? DIC.cz[FCZ] : "todos") + " &nbsp;·&nbsp; Municipio de la UDS: "
+    + esc(FMUN >= 0 ? DIC.mun[FMUN] : "todos") + " &nbsp;·&nbsp; Entidad contratista: "
+    + esc(FEAS >= 0 ? DIC.eas[FEAS] : "todas");
   const tt2 = VIEWS.find(v => v[0] === TAB);
   $("#tsec").textContent = tt2 ? tt2[1] : "";
   $("#tsub").textContent = SUBS[TAB] || "";
