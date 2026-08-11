@@ -431,7 +431,10 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
    verde, en blanco sobre blanco: invisibles, aunque sigan en el DOM. */
 .marca{position:relative;overflow:hidden;flex-shrink:0;padding:16px 16px 15px;color:#fff;
   background:linear-gradient(150deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 55%,var(--icbf-verde) 100%)}
-.marca::before{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
+/* sin el brillo de --gloss: ese barniz blanco queda justo detras del
+   texto (tambien blanco) del titulo y le baja el contraste. El circulo
+   decorativo de ::after si se deja: esta corrido a la esquina, lejos
+   del texto */
 .marca::after{content:"";position:absolute;right:-56px;top:-72px;width:190px;height:190px;border-radius:50%;
   background:radial-gradient(circle at 36% 36%,rgba(255,255,255,.16),rgba(255,255,255,0) 64%);pointer-events:none}
 .marca .k{position:relative;font-size:9.5px;font-weight:700;letter-spacing:.13em;opacity:.86;margin-bottom:5px;
