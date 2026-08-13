@@ -1542,11 +1542,32 @@ function resumen(ix) {
   return r;
 }
 function resumenGS(ix) {
-  const r = { n: ix.length, st: new Array(5).fill(0), irc: new Array(6).fill(0), disc: 0 };
-  for (const i of ix) { r.st[G.st[i]]++; r.irc[G.irc[i]]++; if (G.disc[i]) r.disc++; }
+  const r = { n: ix.length, st: new Array(5).fill(0), irc: new Array(6).fill(0) };
+  for (const i of ix) { r.st[G.st[i]]++; r.irc[G.irc[i]]++; }
   r.bajo = r.st[1]; r.adec = r.st[2]; r.sobre = r.st[3]; r.obes = r.st[4];
   return r;
 }
+/* Gestantes con discapacidad que tuvieron toma: viene de D.gs_disc, no
+   de G/idxGS(), a proposito -- no se filtra por vinculada, porque
+   "tuvieron toma" ya lo garantiza estar en ese archivo (es su ULTIMA
+   toma), y filtrar por vinculada dejaba afuera casos reales solo
+   porque se desvincularon despues. Si respeta los filtros geograficos
+   ya activos en el tablero. */
+function gsDiscFiltro() {
+  return (D.gs_disc || []).filter(u =>
+    (FCZ < 0 || u.cz === DIC.cz[FCZ]) &&
+    (FMUN < 0 || u.mun === DIC.mun[FMUN]) &&
+    (FEAS < 0 || u.eas === DIC.eas[FEAS]));
+}
+const COLS_GS_DISC = [
+  ...(D.meta.publico ? [] : [{ lb: "Documento", v: u => u.doc }]),
+  { lb: "Centro zonal", v: u => u.cz },
+  { lb: "Municipio", v: u => u.mun },
+  { lb: "Entidad contratista", v: u => u.eas },
+  { lb: "Unidad de servicio", v: u => u.uds },
+  { lb: "Estado", v: u => u.estado },
+  { lb: "N.º de toma", num: 1, v: u => String(u.toma), o: u => u.toma },
+];
 /* agrupa por una columna y devuelve [{code, lb, r}] ordenado por poblacion */
 function porDim(ix, col, dic, min) {
   const m = new Map();
@@ -1845,9 +1866,9 @@ function vSemaforo() {
       { t: "IMC adecuado", v: p1(pct(g.adec, g.n)), d: mil(g.adec) + " gestantes", cls: "good",
         tabla: { t: "IMC adecuado para la edad gestacional", idx: () => gix.filter(i => G.st[i] === 2), cols: COLS_GS,
           lead: "Las <b>" + mil(g.adec) + "</b> gestantes con IMC adecuado para su semana de gestación." } },
-      { t: "Con discapacidad", v: mil(g.disc), d: p1(pct(g.disc, g.n)) + " de las gestantes con toma", cls: "neut",
-        tabla: { t: "Gestantes con discapacidad", idx: () => gix.filter(i => G.disc[i]), cols: COLS_GS, ordenar: 12, asc: true,
-          lead: "Las <b>" + mil(g.disc) + "</b> gestantes con discapacidad registrada que tuvieron una toma en el periodo." } },
+      { t: "Con discapacidad", v: mil(gsDiscFiltro().length), d: "con toma en el periodo", cls: "neut",
+        tabla: { t: "Gestantes con discapacidad", cols: COLS_GS_DISC, idx: gsDiscFiltro,
+          lead: "Las <b>" + mil(gsDiscFiltro().length) + "</b> gestantes con discapacidad registrada que tuvieron al menos una toma, estén vinculadas o no en este momento." } },
     ]));
   }
 }
@@ -2144,9 +2165,9 @@ function vGestantes() {
     { t: "Exceso de peso", v: p1(pct(g.sobre + g.obes, g.n)), d: `${mil(g.sobre + g.obes)} gestantes · ${mil(g.sobre)} con sobrepeso y ${mil(g.obes)} con obesidad`, cls: "warn",
       tabla: { t: "Sobrepeso u obesidad gestacional", idx: () => ix.filter(i => G.st[i] === 3 || G.st[i] === 4), cols: COLS_GS, ordenar: 9,
         lead: "Las <b>" + mil(g.sobre + g.obes) + "</b> gestantes con sobrepeso u obesidad para su semana de gestación, ordenadas de mayor a menor IMC." } },
-    { t: "Con discapacidad", v: mil(g.disc), d: p1(pct(g.disc, g.n)) + " de las gestantes con toma", cls: "neut",
-      tabla: { t: "Gestantes con discapacidad", idx: () => ix.filter(i => G.disc[i]), cols: COLS_GS, ordenar: 12, asc: true,
-        lead: "Las <b>" + mil(g.disc) + "</b> gestantes con discapacidad registrada que tuvieron una toma en el periodo." } },
+    { t: "Con discapacidad", v: mil(gsDiscFiltro().length), d: "con toma en el periodo", cls: "neut",
+      tabla: { t: "Gestantes con discapacidad", cols: COLS_GS_DISC, idx: gsDiscFiltro, ordenar: 1, asc: true,
+        lead: "Las <b>" + mil(gsDiscFiltro().length) + "</b> gestantes con discapacidad registrada que tuvieron al menos una toma, estén vinculadas o no en este momento." } },
   ]));
   const agrupar = (col, dic, min) => {
     const m = new Map();
@@ -2300,11 +2321,13 @@ function vCalidad() {
 function bloqueHistorico(s, etiquetas, d, cfgBk) {
   s.append(lineas({
     titulo: "Volumen de cargue",
-    sub: "Registros de toma cargados cada mes y beneficiarios únicos detrás de ellos.",
+    sub: "Registros de toma cargados cada mes, beneficiarios únicos detrás de ellos, y cuántos de esos registros eran de beneficiarios vinculados o ya desvinculados en ese momento. Sin filtrar por vinculación: mide el cargue completo, no solo el estado actual.",
     labels: etiquetas, suf: "", fmt: mil, ejeFmt: mil,
     series: [
       { lb: "Registros cargados", c: "var(--icbf-verde)", v: d.registros },
       { lb: "Beneficiarios únicos", c: "var(--icbf-naranja)", v: d.beneficiarios },
+      { lb: "Vinculados", c: "var(--ok)", v: d.vinculados },
+      { lb: "Desvinculados", c: "var(--d2)", v: d.desvinculados },
     ],
   }));
   s.append(lineas({

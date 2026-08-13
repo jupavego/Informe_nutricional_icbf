@@ -121,7 +121,7 @@ with open(os.path.join(D, "nn_ultima_toma.csv"), encoding="utf-8-sig") as fh:
 
 # ---------------- gestantes ----------------
 gcz, gmun, geas, guds = Dic(), Dic(), Dic(), Dic()
-G = {k: [] for k in ("doc", "cz", "mun", "eas", "uds", "st", "ed", "tm", "ctl", "irg", "irc", "sg", "disc",
+G = {k: [] for k in ("doc", "cz", "mun", "eas", "uds", "st", "ed", "tm", "ctl", "irg", "irc", "sg",
                      # medidas crudas de la gestante
                      "kg", "cm", "imc")}
 GTMAX = 0
@@ -145,10 +145,22 @@ with open(os.path.join(D, "gs_ultima_toma.csv"), encoding="utf-8-sig") as fh:
         v = F(r["irg"]); G["irg"].append(round(v, 1) if v is not None else -1)
         G["irc"].append(IRC.index(r["clasificacion_irg"]) if r["clasificacion_irg"] in IRC else 0)
         G["sg"].append(I(r["sem_gest"]) if I(r["sem_gest"]) is not None else -1)
-        G["disc"].append(1 if (r["discapacidad"] or "").strip() == "SI" else 0)
         _gk = F(r["peso"]);     G["kg"].append(round(_gk, 1) if _gk else -1)
         _gc = F(r["talla"]);    G["cm"].append(round(_gc, 1) if _gc else -1)
         _gi = F(r["imc_gest"]); G["imc"].append(round(_gi, 1) if _gi else -1)
+
+# gestantes con discapacidad que tuvieron toma: independiente de si siguen
+# vinculadas hoy, porque "tuvieron toma" ya lo garantiza estar en este
+# archivo (es la ULTIMA toma de cada una). Filtrar por VINCULADO aqui
+# dejaba afuera casos reales solo porque se desvincularon despues.
+GS_DISC = []
+with open(os.path.join(D, "gs_ultima_toma.csv"), encoding="utf-8-sig") as fh:
+    for r in csv.DictReader(fh):
+        if (r["discapacidad"] or "").strip() != "SI":
+            continue
+        GS_DISC.append({"doc": r["doc"], "cz": r["cz"], "mun": r["municipio"],
+                         "eas": r["eas"], "uds": r["uds"], "estado": r["estado"],
+                         "toma": I(r["toma"]) or 0})
 
 # ---------------- historico mes a mes (volumen de cargue, cobertura de
 # reporte y estado nutricional), a partir del histórico COMPLETO, no solo
@@ -173,9 +185,9 @@ def hist_mensual(ruta, campo_eas, campo_uds, campo_bucket, bucket_map, bucket_cl
     """Registros, beneficiarios y unidades que reportaron, mes a mes,
     total regional y por centro zonal."""
     tot = defaultdict(lambda: {"registros": 0, "docs": set(), "eas": set(), "uds": set(),
-                                "bk": Counter()})
+                                "bk": Counter(), "vinc": Counter()})
     porcz = defaultdict(lambda: defaultdict(lambda: {"registros": 0, "docs": set(),
-                                "eas": set(), "uds": set(), "bk": Counter()}))
+                                "eas": set(), "uds": set(), "bk": Counter(), "vinc": Counter()}))
     eas_univ, uds_univ = set(), set()
     eas_univ_cz, uds_univ_cz = defaultdict(set), defaultdict(set)
     with open(ruta, encoding="utf-8-sig") as fh:
@@ -192,18 +204,22 @@ def hist_mensual(ruta, campo_eas, campo_uds, campo_bucket, bucket_map, bucket_cl
                 if uds: d["uds"].add(uds)
                 bk = bucket_map.get((r[campo_bucket] or "").strip())
                 if bk: d["bk"][bk] += 1
+                est = (r["estado"] or "").strip()
+                if est: d["vinc"][est] += 1
             if eas: eas_univ.add(eas); eas_univ_cz[cz].add(eas)
             if uds: uds_univ.add(uds); uds_univ_cz[cz].add(uds)
 
     meses = sorted(tot.keys())
-    vacio = lambda: {"registros": 0, "docs": set(), "eas": set(), "uds": set(), "bk": Counter()}
+    vacio = lambda: {"registros": 0, "docs": set(), "eas": set(), "uds": set(), "bk": Counter(), "vinc": Counter()}
 
     def serie(d_por_toma):
         return {"registros": [d_por_toma[t]["registros"] for t in meses],
                 "beneficiarios": [len(d_por_toma[t]["docs"]) for t in meses],
                 "eas_rep": [len(d_por_toma[t]["eas"]) for t in meses],
                 "uds_rep": [len(d_por_toma[t]["uds"]) for t in meses],
-                "bk": {k: [d_por_toma[t]["bk"].get(k, 0) for t in meses] for k in bucket_claves}}
+                "bk": {k: [d_por_toma[t]["bk"].get(k, 0) for t in meses] for k in bucket_claves},
+                "vinculados": [d_por_toma[t]["vinc"].get("VINCULADO", 0) for t in meses],
+                "desvinculados": [d_por_toma[t]["vinc"].get("DESVINCULADO", 0) for t in meses]}
 
     cz_out = {}
     for cz in sorted(eas_univ_cz.keys() | uds_univ_cz.keys()):
@@ -315,7 +331,9 @@ print("periodo:", PERIODO, "| corte comparable toma", TCOM, "de", TMAX,
 if PUBLICO:
     C["doc"] = ["A%06d" % i for i in range(len(C["doc"]))]
     G["doc"] = ["A%06d" % i for i in range(len(G["doc"]))]
-    print(f"PUBLICO=1: documento anonimizado ({len(C['doc'])} NN, {len(G['doc'])} GS)")
+    for i, v in enumerate(GS_DISC):
+        v["doc"] = "A%06d" % i
+    print(f"PUBLICO=1: documento anonimizado ({len(C['doc'])} NN, {len(G['doc'])} GS, {len(GS_DISC)} GS_DISC)")
 
 data = {
     "meta": {"corte": CORTE, "periodo": PERIODO,
@@ -330,6 +348,7 @@ data = {
     "nn": C,
     "gdic": {"cz": gcz.a, "mun": gmun.a, "eas": geas.a, "uds": guds.a},
     "gs": G,
+    "gs_disc": GS_DISC,
     "trans": [{"a": a, "b": b, "n": n} for (a, b), n in trans.most_common(20)],
     "reglas": reglas,
     "mapa": json.load(io.open(os.path.join(REC, "mapa.json"), encoding="utf-8")),
