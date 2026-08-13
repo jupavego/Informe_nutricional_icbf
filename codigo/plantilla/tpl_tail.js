@@ -1637,6 +1637,14 @@ const etnRegistrada = et => et === 1 || et === 2 || et === 4;
    ===================================================================== */
 function vSemaforo() {
   const s = $("#v-semaforo"); s.textContent = "";
+  /* el Semaforo es la puerta de entrada del tablero: quien llega por
+     primera vez necesita saber en que sitio esta antes de leer una sola
+     cifra. Va solo aqui, no en las otras diez pestañas, para que siga
+     leyendose como bienvenida y no como decoracion repetida. */
+  s.append(el("div", "hero",
+    '<div class="k">ICBF · Regional Antioquia · Sistema de Información Primera Infancia</div>'
+    + '<h1>Tablero de vigilancia nutricional</h1>'
+    + '<div class="s">Está viendo el Semáforo: el punto de partida del ejercicio, con las cifras que deciden si hay que profundizar en niñas, niños y gestantes de toda la Regional. Filtre arriba por centro zonal, municipio o entidad contratista, y recorra el resto del menú para el detalle.</div>'));
   const ix = idxNN(); const a = resumen(ix);
   const g = resumenGS(idxGS());
   if (!a.n) { s.append(vacio("Ningún beneficiario con la combinación de filtros seleccionada.")); return; }

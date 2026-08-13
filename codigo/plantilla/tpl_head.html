@@ -64,8 +64,17 @@ header{padding:0}
   background:linear-gradient(135deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 42%,var(--icbf-verde) 100%);
   box-shadow:var(--shadow);color:#fff}
 .hero::before{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
-.hero::after{content:"";position:absolute;right:-70px;top:-120px;width:300px;height:300px;border-radius:50%;
-  background:radial-gradient(circle at 34% 34%,rgba(255,255,255,.35),rgba(255,255,255,0) 62%);pointer-events:none}
+/* varias "gotas de pintura" en vez del circulo unico -- mismo blanco
+   translucido y el mismo desvanecido radial que ya usa .marca en el
+   menu, solo que aqui se repite en distintos tamaños y posiciones */
+.hero::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(circle 150px at 93% -10%,rgba(255,255,255,.30),rgba(255,255,255,0) 70%),
+    radial-gradient(circle 90px at 80% 90%,rgba(255,255,255,.18),rgba(255,255,255,0) 68%),
+    radial-gradient(circle 55px at 58% 14%,rgba(255,255,255,.14),rgba(255,255,255,0) 68%),
+    radial-gradient(circle 130px at 2% 112%,rgba(255,255,255,.16),rgba(255,255,255,0) 68%),
+    radial-gradient(circle 45px at 24% 32%,rgba(255,255,255,.12),rgba(255,255,255,0) 68%),
+    radial-gradient(circle 70px at 68% 55%,rgba(255,255,255,.10),rgba(255,255,255,0) 68%)}
 .hero h1{font-size:clamp(19px,2.5vw,26px);font-weight:600;letter-spacing:-.01em;margin:0 0 3px;position:relative}
 .hero .s{font-size:13px;opacity:.93;position:relative}
 .hero .k{position:relative;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;opacity:.8;margin-bottom:7px}
