@@ -994,10 +994,14 @@ const op = v => v == null || v < 0 ? null : v;      /* centinela -1  */
    La version publica (D.meta.publico) no trae columna de documento ni de
    nombre: aunque el dato ya viene vacio/anonimizado desde Python, en esta
    version tampoco tiene sentido mostrar un identificador de fila que
-   nadie afuera va a usar. OFFSET_NN es cuantas columnas de menos hay al
-   principio en modo publico -- todo "ordenar: N" contra estas columnas
-   por defecto debe restarselo, o apunta a la columna equivocada. */
-const OFFSET_NN = D.meta.publico ? 2 : 0;
+   nadie afuera va a usar. Los "ordenar: N" de mas abajo se escribieron
+   contra el layout historico (Documento SIEMPRE presente, Nombre
+   inexistente). OFFSET_NN corrige eso: en publico faltan las dos
+   columnas pero el layout historico ya contaba una, entonces sobra 1
+   (offset +1, hay que restar); en interno se sumo una columna (Nombre)
+   que el layout historico no tenia, entonces falta 1 (offset -1, hay
+   que sumar). Todo "ordenar: N" contra COLS_NN/COLS_GS debe restarselo. */
+const OFFSET_NN = D.meta.publico ? 1 : -1;
 const COLS_NN = [
   ...(D.meta.publico ? [] : [
     { lb: "Documento", v: i => N.doc[i] },
@@ -1033,7 +1037,7 @@ const COLS_NN = [
 ];
 
 /* columnas de gestantes -- mismo criterio y mismo offset que COLS_NN */
-const OFFSET_GS = D.meta.publico ? 2 : 0;
+const OFFSET_GS = D.meta.publico ? 1 : -1;
 const COLS_GS = [
   ...(D.meta.publico ? [] : [
     { lb: "Documento", v: i => G.doc[i] },
