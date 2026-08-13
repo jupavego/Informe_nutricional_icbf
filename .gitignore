@@ -32,3 +32,6 @@ recursos/figuras_fuente/
 # --- python ---
 __pycache__/
 *.pyc
+
+.vercel
+.env*

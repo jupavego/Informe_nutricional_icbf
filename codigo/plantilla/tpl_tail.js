@@ -991,11 +991,18 @@ const oz = v => v == null || v <= -90 ? null : v;   /* centinela -99 */
 const op = v => v == null || v < 0 ? null : v;      /* centinela -1  */
 
 /* columnas de niñas y niños; 'v' devuelve el texto y 'o' el valor para ordenar.
-   La version publica (D.meta.publico) no trae columna de documento: aunque el
-   dato ya viene anonimizado desde Python, en esta version tampoco tiene
-   sentido mostrar un identificador de fila que nadie afuera va a usar. */
+   La version publica (D.meta.publico) no trae columna de documento ni de
+   nombre: aunque el dato ya viene vacio/anonimizado desde Python, en esta
+   version tampoco tiene sentido mostrar un identificador de fila que
+   nadie afuera va a usar. OFFSET_NN es cuantas columnas de menos hay al
+   principio en modo publico -- todo "ordenar: N" contra estas columnas
+   por defecto debe restarselo, o apunta a la columna equivocada. */
+const OFFSET_NN = D.meta.publico ? 2 : 0;
 const COLS_NN = [
-  ...(D.meta.publico ? [] : [{ lb: "Documento", v: i => N.doc[i] }]),
+  ...(D.meta.publico ? [] : [
+    { lb: "Documento", v: i => N.doc[i] },
+    { lb: "Nombre completo", v: i => N.nombre[i] || "—" },
+  ]),
   { lb: "Sexo", v: i => LB_SX[N.sx[i]] || "—" },
   { lb: "Edad (meses)", num: 1, v: i => N.em[i] >= 0 ? String(N.em[i]) : "—", o: i => op(N.em[i]) },
   { lb: "Centro zonal", v: i => DIC.cz[N.cz[i]] || "—" },
@@ -1022,11 +1029,16 @@ const COLS_NN = [
      es el que no cuadra */
   { lb: "Marcas de calidad", v: i => marcasDe(i).join(" ") || "—", o: i => marcasDe(i).length,
     cls: i => noPlausible(i) ? "mks mal" : "mks" },
+  { lb: "Grupo étnico", v: i => ETN[N.et[i]] || "—", o: i => N.et[i] },
 ];
 
-/* columnas de gestantes */
+/* columnas de gestantes -- mismo criterio y mismo offset que COLS_NN */
+const OFFSET_GS = D.meta.publico ? 2 : 0;
 const COLS_GS = [
-  ...(D.meta.publico ? [] : [{ lb: "Documento", v: i => G.doc[i] }]),
+  ...(D.meta.publico ? [] : [
+    { lb: "Documento", v: i => G.doc[i] },
+    { lb: "Nombre completo", v: i => G.nombre[i] || "—" },
+  ]),
   { lb: "Edad (años)", num: 1, v: i => G.ed[i] >= 0 ? String(G.ed[i]) : "—", o: i => op(G.ed[i]) },
   { lb: "Centro zonal", v: i => GDIC.cz[G.cz[i]] || "—" },
   { lb: "Municipio", v: i => GDIC.mun[G.mun[i]] || "—" },
@@ -1041,6 +1053,7 @@ const COLS_GS = [
   { lb: "Controles prenatales", num: 1, v: i => G.ctl[i] >= 0 ? String(G.ctl[i]) : "—", o: i => op(G.ctl[i]) },
   { lb: "Riesgo gestacional", v: i => LB_IRC[G.irc[i]] || "—", o: i => G.irc[i],
     cls: i => G.irc[i] >= 3 ? "mal" : "" },
+  { lb: "Grupo étnico", v: i => ETN[G.et[i]] || "—", o: i => G.et[i] },
 ];
 
 const TOPE_FILAS = 400;   /* lo que se pinta; la descarga lleva todo */
@@ -1560,7 +1573,10 @@ function gsDiscFiltro() {
     (FEAS < 0 || u.eas === DIC.eas[FEAS]));
 }
 const COLS_GS_DISC = [
-  ...(D.meta.publico ? [] : [{ lb: "Documento", v: u => u.doc }]),
+  ...(D.meta.publico ? [] : [
+    { lb: "Documento", v: u => u.doc },
+    { lb: "Nombre completo", v: u => u.nombre || "—" },
+  ]),
   { lb: "Centro zonal", v: u => u.cz },
   { lb: "Municipio", v: u => u.mun },
   { lb: "Entidad contratista", v: u => u.eas },
@@ -1607,6 +1623,10 @@ const EVO3 = [{ k: 1, lb: "Mejora", c: "var(--ok)" }, { k: 2, lb: "Se mantiene",
 const tramoEdad = m => m < 0 ? "sin dato" : m < 12 ? "0 a 11" : m < 24 ? "12 a 23" :
   m < 36 ? "24 a 35" : m < 48 ? "36 a 47" : m < 60 ? "48 a 59" : "60 y más";
 const ETN = ["Sin dato", "Indígena", "Afrocolombiano", "No se autorreconoce", "Otro"];
+/* grupo etnico "registrado": codigos 1 (indigena), 2 (afro/negro) y 4 (otro
+   -- raizal, palenquero). El 3 es "no se autorreconoce" y el 0 es sin dato:
+   ninguno de los dos cuenta como registro de pertenencia etnica. */
+const etnRegistrada = et => et === 1 || et === 2 || et === 4;
 
 /* =====================================================================
    VISTAS
@@ -1641,10 +1661,10 @@ function vSemaforo() {
      que aclarara que hablan de niñas y niños */
   s.append(h2("Niñas y niños"));
   s.append(tiles([
-    { t: "Desnutrición aguda", f: "dnt_aguda", tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9, asc: true, lead: "Los casos clasificados en <b>desnutrición aguda severa o moderada</b> por peso para la talla, según la Resolución 2465 de 2016. Ordenados por puntaje Z de menor a mayor: arriba el caso más comprometido.", pie: "La columna <b>Canalizado</b> en «No» es la que exige gestión: hay caso detectado y no hay remisión registrada." }, v: mil(a.dnt), sp: sparks.dnt, spc: "var(--d2)", d: `${p2(pct(a.dnt, a.n))} · ${mil(a.dnt - a.canal)} sin canalizar`, cls: "crit" },
-    { t: "Riesgo de desnutrición", f: "pt", tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar. Todavía no es desnutrición, pero es el grupo que puede cruzar el umbral entre una toma y la siguiente." }, v: p1(pct(a.riesgo, a.n)), d: mil(a.riesgo) + " niñas y niños", sp: sparks.riesgo, spc: "var(--d1)", cls: "crit" },
-    { t: "Retraso en talla", f: "retraso", tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11, asc: true, lead: "Talla por debajo de −2 desviaciones estándar para la edad. Ordenados por puntaje Z de talla para la edad, de menor a mayor.", pie: "Contraste la <b>edad en meses</b> con el puntaje Z: si el retraso se concentra en los menores de 24 meses, revise cómo se está midiendo la longitud en acostado." }, v: p1(pct(a.retraso, a.n)), d: mil(a.retraso) + " niñas y niños", sp: sparks.retraso, spc: "var(--d2)", cls: "crit" },
-    { t: "Sobrepeso u obesidad", f: "exceso", tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9, lead: "Peso para la talla por encima de +2 desviaciones estándar. Ordenados de mayor a menor puntaje Z." }, v: p1(pct(a.exceso, a.n)), d: mil(a.exceso) + " niñas y niños", sp: sparks.exceso, spc: "var(--e2)", cls: "warn" },
+    { t: "Desnutrición aguda", f: "dnt_aguda", tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9 - OFFSET_NN, asc: true, lead: "Los casos clasificados en <b>desnutrición aguda severa o moderada</b> por peso para la talla, según la Resolución 2465 de 2016. Ordenados por puntaje Z de menor a mayor: arriba el caso más comprometido.", pie: "La columna <b>Canalizado</b> en «No» es la que exige gestión: hay caso detectado y no hay remisión registrada." }, v: mil(a.dnt), sp: sparks.dnt, spc: "var(--d2)", d: `${p2(pct(a.dnt, a.n))} · ${mil(a.dnt - a.canal)} sin canalizar`, cls: "crit" },
+    { t: "Riesgo de desnutrición", f: "pt", tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9 - OFFSET_NN, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar. Todavía no es desnutrición, pero es el grupo que puede cruzar el umbral entre una toma y la siguiente." }, v: p1(pct(a.riesgo, a.n)), d: mil(a.riesgo) + " niñas y niños", sp: sparks.riesgo, spc: "var(--d1)", cls: "crit" },
+    { t: "Retraso en talla", f: "retraso", tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11 - OFFSET_NN, asc: true, lead: "Talla por debajo de −2 desviaciones estándar para la edad. Ordenados por puntaje Z de talla para la edad, de menor a mayor.", pie: "Contraste la <b>edad en meses</b> con el puntaje Z: si el retraso se concentra en los menores de 24 meses, revise cómo se está midiendo la longitud en acostado." }, v: p1(pct(a.retraso, a.n)), d: mil(a.retraso) + " niñas y niños", sp: sparks.retraso, spc: "var(--d2)", cls: "crit" },
+    { t: "Sobrepeso u obesidad", f: "exceso", tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9 - OFFSET_NN, lead: "Peso para la talla por encima de +2 desviaciones estándar. Ordenados de mayor a menor puntaje Z." }, v: p1(pct(a.exceso, a.n)), d: mil(a.exceso) + " niñas y niños", sp: sparks.exceso, spc: "var(--e2)", cls: "warn" },
     { t: "Cobertura de toma", f: "cobertura",
       tabla: { t: "Cobertura de toma por unidad de servicio", cols: COLS_UDS_COB,
         idx: () => (D.uds || []).filter(u => u.cu != null
@@ -1660,6 +1680,9 @@ function vSemaforo() {
       sp: sparks.cobcupos, spc: "var(--icbf-verde)",
       cls: cob.pct == null ? "neut" : cob.pct > 85 ? "good" : "warn" },
     { t: "No cumple criterio", f: "criterio", tabla: { t: "Registros que no cumplen criterio", idx: () => ix.filter(i => N.cr[i] === 1), lead: "Registros marcados por el sistema como <b>NO CUMPLE</b> en el campo de criterio." }, v: p1(pct(a.nc, a.n)), d: mil(a.nc) + " registros", sp: sparks.nc, spc: "var(--icbf-naranja)", cls: "warn" },
+    { t: "Con grupo étnico", v: mil(ix.filter(i => etnRegistrada(N.et[i])).length), d: "con pertenencia étnica registrada", cls: "neut",
+      tabla: { t: "Niñas y niños con grupo étnico registrado", idx: () => ix.filter(i => etnRegistrada(N.et[i])),
+        lead: "Los <b>" + mil(ix.filter(i => etnRegistrada(N.et[i])).length) + "</b> beneficiarios con pertenencia a un grupo étnico registrada en el reporte (indígena, afrocolombiano, raizal o palenquero), excluidos quienes no se autorreconocen en ninguno o no tienen el dato." } },
   ]));
 
   const critN = a.irc[4], altoN = a.irc[3];
@@ -1681,7 +1704,7 @@ function vSemaforo() {
        : "<b>" + mil(mod) + "</b> casos en grado moderado y ninguno severo en este conjunto.",
     f: "<b>" + mil(a.dnt - a.canal) + "</b> sin canalización registrada &nbsp;·&nbsp; Res. 2465 de 2016",
   }));
-  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9, asc: true, lead: "Los <b>" + mil(a.dnt) + "</b> casos que sustentan la tarjeta, con el detalle de cada uno.", pie: "De estos, <b>" + mil(a.dnt - a.canal) + "</b> no tienen canalización registrada." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9 - OFFSET_NN, asc: true, lead: "Los <b>" + mil(a.dnt) + "</b> casos que sustentan la tarjeta, con el detalle de cada uno.", pie: "De estos, <b>" + mil(a.dnt - a.canal) + "</b> no tienen canalización registrada." }));
   conEvidencia(hall.lastChild, () => {
     const d = evidDe(r => ({ v: pct(r.dnt, r.n), n: r.dnt }), pct(a.dnt, a.n), "var(--d2)", 9)();
     return {
@@ -1698,7 +1721,7 @@ function vSemaforo() {
     d: "<b>" + mil(a.retraso) + "</b> niñas y niños con talla baja para su edad. Refleja privación sostenida, no un episodio reciente, y no dispara ninguna alerta operativa automática.",
     f: "Desnutrición crónica &nbsp;·&nbsp; " + (a.dnt ? Math.round(a.retraso / a.dnt) + " veces más frecuente que la aguda" : "sin casos agudos para comparar"),
   }));
-  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11, asc: true, lead: "Los <b>" + mil(a.retraso) + "</b> casos con talla baja para su edad." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11 - OFFSET_NN, asc: true, lead: "Los <b>" + mil(a.retraso) + "</b> casos con talla baja para su edad." }));
   conEvidencia(hall.lastChild, () => {
     const media = pct(a.retraso, a.n);
     const d = evidDe(r => ({ v: pct(r.retraso, r.n), n: r.retraso }), media, "var(--d2)", 9)();
@@ -1727,7 +1750,7 @@ function vSemaforo() {
     d: "<b>" + mil(a.exceso) + "</b> con sobrepeso u obesidad, y <b>" + mil(a.pt[5]) + "</b> más en riesgo de sobrepeso. El flujo entre tomas se mueve hacia este lado.",
     f: "Peso para la talla por encima de +2 DE",
   }));
-  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9, lead: "Los <b>" + mil(a.exceso) + "</b> casos con peso para la talla por encima de +2 DE." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9 - OFFSET_NN, lead: "Los <b>" + mil(a.exceso) + "</b> casos con peso para la talla por encima de +2 DE." }));
   conEvidencia(hall.lastChild, () => {
     const cont = el("div");
     const media = pct(a.exceso, a.n);
@@ -1757,7 +1780,7 @@ function vSemaforo() {
     d: "<b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma desde el trimestre " + (TRIM_LBL_G || "más reciente completo") + ", y <b>" + mil(a.una) + "</b> con una sola toma en todo el periodo.",
     f: "Mide gestión del operador, no estado nutricional",
   }));
-  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < TRIM_INICIO), ordenar: 16, asc: true, lead: "Los <b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma desde el trimestre " + (TRIM_LBL_G || "más reciente completo") + "." }));
+  hall.lastChild.querySelector(".hact").append(btnTabla({ t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < TRIM_INICIO), ordenar: 16 - OFFSET_NN, asc: true, lead: "Los <b>" + mil(a.n - a.reciente) + "</b> beneficiarios sin toma desde el trimestre " + (TRIM_LBL_G || "más reciente completo") + "." }));
   conEvidencia(hall.lastChild, () => {
     const media = 100 - pct(a.reciente, a.n);
     const filas = grupos.map(x => ({ lb: corto(x.lb), v: 100 - pct(x.r.reciente, x.r.n), n: x.r.n - x.r.reciente }))
@@ -1783,7 +1806,7 @@ function vSemaforo() {
   const partesIRN = IRN4.map(x => ({
     lb: x.lb, c: x.c, v: a.irc[x.k], d: x.d,
     tabla: { t: "Riesgo nutricional · " + x.lb,
-      idx: () => ix.filter(i => N.irc[i] === x.k), ordenar: 9, asc: true,
+      idx: () => ix.filter(i => N.irc[i] === x.k), ordenar: 9 - OFFSET_NN, asc: true,
       lead: "Los <b>" + mil(a.irc[x.k]) + "</b> beneficiarios clasificados como <b>"
         + x.lb.toLowerCase() + "</b> por el índice de riesgo nutricional." },
   }));
@@ -1802,13 +1825,14 @@ function vSemaforo() {
     const tx = el("div");
     tx.innerHTML = "<b>" + mil(nPiso) + "</b> beneficiario" + (nPiso === 1 ? "" : "s")
       + " (" + p2f(pct(nPiso, a.n)) + ") están en su clase por <b>piso clínico</b> y no por "
-      + "su puntaje. El componente antropométrico pesa 50 % y su techo son 90 puntos, "
-      + "o sea 45: por debajo del umbral de 50. Sin el piso, una condición ya establecida "
-      + "—retraso en talla, desnutrición global, obesidad— no alcanzaba su clase por sí sola.";
+      + "su puntaje. El componente antropométrico pesa 65 % y su techo son 90 puntos, "
+      + "o sea 58,5: por debajo de Crítico (75) siempre, y por debajo de Alto riesgo (50) "
+      + "para retraso en talla, desnutrición global u obesidad en su forma no severa. Sin el "
+      + "piso, esas condiciones ya establecidas no alcanzaban su clase por sí solas.";
     av.append(tx);
     av.append(btnTabla({
       t: "Clasificados por piso clínico",
-      idx: () => ix.filter(subioPorPiso), ordenar: 17,
+      idx: () => ix.filter(subioPorPiso), ordenar: 17 - OFFSET_NN,
       lead: "Casos cuya clase la fija el <b>hecho clínico</b> y no el puntaje. La columna "
         + "«Riesgo nutricional» trae la clase publicada; el puntaje por sí solo los habría "
         + "dejado una o más clases abajo.",
@@ -1855,13 +1879,13 @@ function vSemaforo() {
     s.append(h2("Personas gestantes", "gest"));
     s.append(tiles([
       { t: "Gestantes vinculadas", v: mil(g.n), d: "última toma del periodo", cls: "neut",
-        tabla: { t: "Gestantes vinculadas", idx: () => gix, cols: COLS_GS, ordenar: 12, asc: true,
+        tabla: { t: "Gestantes vinculadas", idx: () => gix, cols: COLS_GS, ordenar: 12 - OFFSET_GS, asc: true,
           lead: "Las <b>" + mil(g.n) + "</b> gestantes vinculadas del conjunto filtrado, en su última toma." } },
       { t: "Exceso de peso", v: p1(pct(g.sobre + g.obes, g.n)), d: mil(g.sobre + g.obes) + " gestantes", cls: "warn",
-        tabla: { t: "Sobrepeso u obesidad gestacional", idx: () => gix.filter(i => G.st[i] === 3 || G.st[i] === 4), cols: COLS_GS, ordenar: 9,
+        tabla: { t: "Sobrepeso u obesidad gestacional", idx: () => gix.filter(i => G.st[i] === 3 || G.st[i] === 4), cols: COLS_GS, ordenar: 9 - OFFSET_GS,
           lead: "Las <b>" + mil(g.sobre + g.obes) + "</b> gestantes con sobrepeso u obesidad para su semana de gestación." } },
       { t: "Bajo peso", v: p1(pct(g.bajo, g.n)), d: mil(g.bajo) + " gestantes", cls: "crit",
-        tabla: { t: "Bajo peso gestacional", idx: () => gix.filter(i => G.st[i] === 1), cols: COLS_GS, ordenar: 9, asc: true,
+        tabla: { t: "Bajo peso gestacional", idx: () => gix.filter(i => G.st[i] === 1), cols: COLS_GS, ordenar: 9 - OFFSET_GS, asc: true,
           lead: "Las <b>" + mil(g.bajo) + "</b> gestantes con IMC por debajo de lo esperado para su semana de gestación." } },
       { t: "IMC adecuado", v: p1(pct(g.adec, g.n)), d: mil(g.adec) + " gestantes", cls: "good",
         tabla: { t: "IMC adecuado para la edad gestacional", idx: () => gix.filter(i => G.st[i] === 2), cols: COLS_GS,
@@ -1869,6 +1893,9 @@ function vSemaforo() {
       { t: "Con discapacidad", v: mil(gsDiscFiltro().length), d: "con toma en el periodo", cls: "neut",
         tabla: { t: "Gestantes con discapacidad", cols: COLS_GS_DISC, idx: gsDiscFiltro,
           lead: "Las <b>" + mil(gsDiscFiltro().length) + "</b> gestantes con discapacidad registrada que tuvieron al menos una toma, estén vinculadas o no en este momento." } },
+      { t: "Con grupo étnico", v: mil(gix.filter(i => etnRegistrada(G.et[i])).length), d: "con pertenencia étnica registrada", cls: "neut",
+        tabla: { t: "Gestantes con grupo étnico registrado", cols: COLS_GS, idx: () => gix.filter(i => etnRegistrada(G.et[i])),
+          lead: "Las <b>" + mil(gix.filter(i => etnRegistrada(G.et[i])).length) + "</b> gestantes con pertenencia a un grupo étnico registrada en el reporte (indígena, afrocolombiano, raizal o palenquero), excluidas quienes no se autorreconocen en ninguno o no tienen el dato." } },
     ]));
   }
 }
@@ -2154,20 +2181,23 @@ function vGestantes() {
   if (!g.n) { s.append(vacio("Sin gestantes con la combinación de filtros seleccionada.")); return; }
   s.append(tiles([
     { t: "Gestantes vinculadas", f: "gest", v: mil(g.n), d: "última toma del periodo", cls: "neut",
-      tabla: { t: "Gestantes vinculadas", idx: () => ix, cols: COLS_GS, ordenar: 12, asc: true,
+      tabla: { t: "Gestantes vinculadas", idx: () => ix, cols: COLS_GS, ordenar: 12 - OFFSET_GS, asc: true,
         lead: "Las <b>" + mil(g.n) + "</b> gestantes vinculadas del conjunto filtrado, en su última toma." } },
     { t: "Bajo peso gestacional", v: p1(pct(g.bajo, g.n)), d: mil(g.bajo) + " gestantes", cls: "crit",
-      tabla: { t: "Bajo peso gestacional", idx: () => ix.filter(i => G.st[i] === 1), cols: COLS_GS, ordenar: 9, asc: true,
+      tabla: { t: "Bajo peso gestacional", idx: () => ix.filter(i => G.st[i] === 1), cols: COLS_GS, ordenar: 9 - OFFSET_GS, asc: true,
         lead: "Las <b>" + mil(g.bajo) + "</b> gestantes con IMC por debajo de lo esperado para su semana de gestación, ordenadas de menor a mayor IMC." } },
     { t: "IMC adecuado", v: p1(pct(g.adec, g.n)), d: mil(g.adec) + " gestantes", cls: "good",
       tabla: { t: "IMC adecuado para la edad gestacional", idx: () => ix.filter(i => G.st[i] === 2), cols: COLS_GS,
         lead: "Las <b>" + mil(g.adec) + "</b> gestantes con IMC adecuado para su semana de gestación." } },
     { t: "Exceso de peso", v: p1(pct(g.sobre + g.obes, g.n)), d: `${mil(g.sobre + g.obes)} gestantes · ${mil(g.sobre)} con sobrepeso y ${mil(g.obes)} con obesidad`, cls: "warn",
-      tabla: { t: "Sobrepeso u obesidad gestacional", idx: () => ix.filter(i => G.st[i] === 3 || G.st[i] === 4), cols: COLS_GS, ordenar: 9,
+      tabla: { t: "Sobrepeso u obesidad gestacional", idx: () => ix.filter(i => G.st[i] === 3 || G.st[i] === 4), cols: COLS_GS, ordenar: 9 - OFFSET_GS,
         lead: "Las <b>" + mil(g.sobre + g.obes) + "</b> gestantes con sobrepeso u obesidad para su semana de gestación, ordenadas de mayor a menor IMC." } },
     { t: "Con discapacidad", v: mil(gsDiscFiltro().length), d: "con toma en el periodo", cls: "neut",
-      tabla: { t: "Gestantes con discapacidad", cols: COLS_GS_DISC, idx: gsDiscFiltro, ordenar: 1, asc: true,
+      tabla: { t: "Gestantes con discapacidad", cols: COLS_GS_DISC, idx: gsDiscFiltro,
         lead: "Las <b>" + mil(gsDiscFiltro().length) + "</b> gestantes con discapacidad registrada que tuvieron al menos una toma, estén vinculadas o no en este momento." } },
+    { t: "Con grupo étnico", v: mil(ix.filter(i => etnRegistrada(G.et[i])).length), d: "con pertenencia étnica registrada", cls: "neut",
+      tabla: { t: "Gestantes con grupo étnico registrado", cols: COLS_GS, idx: () => ix.filter(i => etnRegistrada(G.et[i])),
+        lead: "Las <b>" + mil(ix.filter(i => etnRegistrada(G.et[i])).length) + "</b> gestantes con pertenencia a un grupo étnico registrada en el reporte (indígena, afrocolombiano, raizal o palenquero), excluidas quienes no se autorreconocen en ninguno o no tienen el dato." } },
   ]));
   const agrupar = (col, dic, min) => {
     const m = new Map();
@@ -2657,7 +2687,7 @@ function vMapa() {
         tablaRegistros({
           t: p.u.n,
           idx: () => p.ix,
-          ordenar: 9, asc: true,
+          ordenar: 9 - OFFSET_NN, asc: true,
           lead: "Los <b>" + mil(p.r.n) + "</b> beneficiarios de esta unidad de servicio. "
             + esc(p.u.mu) + " · " + esc(p.u.s) + (p.u.z ? " · " + (p.u.z === "R" ? "zona rural" : "cabecera") : "")
             + "<br>Operador: " + esc(p.u.e),
@@ -3505,11 +3535,11 @@ function vPerfil() {
   if (PPOB === "nn") {
     s.append(h2("Lo que requiere atención", "irn"));
     s.append(bars([
-      { lb: "Desnutrición aguda", v: pct(a.dnt, a.n), tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9, asc: true, lead: "Los <b>" + mil(a.dnt) + "</b> casos que componen la barra, del más comprometido en adelante." }, c: "linear-gradient(180deg,var(--d2),var(--d3))", txt: mil(a.dnt) + " · " + p2f(pct(a.dnt, a.n)) },
-      { lb: "Riesgo de desnutrición", v: pct(a.riesgo, a.n), tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar." }, c: "linear-gradient(180deg,var(--d1),var(--d2))", txt: mil(a.riesgo) + " · " + p2f(pct(a.riesgo, a.n)) },
-      { lb: "Retraso en talla", v: pct(a.retraso, a.n), tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11, asc: true, lead: "Los <b>" + mil(a.retraso) + "</b> casos con talla baja para su edad." }, c: "linear-gradient(180deg,var(--d2),var(--d3))", txt: mil(a.retraso) + " · " + p2f(pct(a.retraso, a.n)) },
-      { lb: "Sobrepeso u obesidad", v: pct(a.exceso, a.n), tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9, lead: "Peso para la talla por encima de +2 desviaciones estándar." }, c: "linear-gradient(180deg,var(--e1),var(--e2))", txt: mil(a.exceso) + " · " + p2f(pct(a.exceso, a.n)) },
-      { lb: "Sin toma reciente", v: 100 - pct(a.reciente, a.n), tabla: { t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < TRIM_INICIO), ordenar: 16, asc: true, lead: "Última toma anterior al trimestre " + (TRIM_LBL_G || "más reciente completo") + "." }, c: "linear-gradient(180deg,var(--icbf-naranja),#D96200)", txt: mil(a.n - a.reciente) + " · " + p2f(100 - pct(a.reciente, a.n)) },
+      { lb: "Desnutrición aguda", v: pct(a.dnt, a.n), tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9 - OFFSET_NN, asc: true, lead: "Los <b>" + mil(a.dnt) + "</b> casos que componen la barra, del más comprometido en adelante." }, c: "linear-gradient(180deg,var(--d2),var(--d3))", txt: mil(a.dnt) + " · " + p2f(pct(a.dnt, a.n)) },
+      { lb: "Riesgo de desnutrición", v: pct(a.riesgo, a.n), tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9 - OFFSET_NN, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar." }, c: "linear-gradient(180deg,var(--d1),var(--d2))", txt: mil(a.riesgo) + " · " + p2f(pct(a.riesgo, a.n)) },
+      { lb: "Retraso en talla", v: pct(a.retraso, a.n), tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11 - OFFSET_NN, asc: true, lead: "Los <b>" + mil(a.retraso) + "</b> casos con talla baja para su edad." }, c: "linear-gradient(180deg,var(--d2),var(--d3))", txt: mil(a.retraso) + " · " + p2f(pct(a.retraso, a.n)) },
+      { lb: "Sobrepeso u obesidad", v: pct(a.exceso, a.n), tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9 - OFFSET_NN, lead: "Peso para la talla por encima de +2 desviaciones estándar." }, c: "linear-gradient(180deg,var(--e1),var(--e2))", txt: mil(a.exceso) + " · " + p2f(pct(a.exceso, a.n)) },
+      { lb: "Sin toma reciente", v: 100 - pct(a.reciente, a.n), tabla: { t: "Sin valoración reciente", idx: () => ix.filter(i => N.tm[i] < TRIM_INICIO), ordenar: 16 - OFFSET_NN, asc: true, lead: "Última toma anterior al trimestre " + (TRIM_LBL_G || "más reciente completo") + "." }, c: "linear-gradient(180deg,var(--icbf-naranja),#D96200)", txt: mil(a.n - a.reciente) + " · " + p2f(100 - pct(a.reciente, a.n)) },
       { lb: "No cumple criterio", v: pct(a.nc, a.n), tabla: { t: "Registros que no cumplen criterio", idx: () => ix.filter(i => N.cr[i] === 1), lead: "Registros marcados por el sistema como <b>NO CUMPLE</b> en el campo de criterio." }, c: "linear-gradient(180deg,var(--icbf-amarillo),var(--icbf-naranja))", txt: mil(a.nc) + " · " + p2f(pct(a.nc, a.n)) },
     ]));
     s.append(lectura("Este perfil resume <b>" + mil(a.n) + "</b> niñas y niños del conjunto filtrado. Las cuatro medidas de la izquierda son lo único que alguien tomó físicamente; todo lo de la derecha sale de combinarlas con la edad, el sexo y las tablas de la OMS."));

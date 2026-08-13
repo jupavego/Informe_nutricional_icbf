@@ -45,6 +45,11 @@ def F(v):
 def I(v):
     try: return int(float(str(v).replace(",", ".")))
     except (ValueError, TypeError): return None
+def nombre_de(r):
+    """Nombre completo, tal como viene en el reporte (apellidos primero).
+    Solo se usa en el build interno: se vacia por completo en PUBLICO=1."""
+    p = [r.get("apellido1"), r.get("apellido2"), r.get("nombre1"), r.get("nombre2")]
+    return " ".join(x.strip() for x in p if x and x.strip())
 
 class Dic:
     def __init__(self): self.a = []; self.m = {}
@@ -72,7 +77,7 @@ for d, v in hist.items():
 
 # ---------------- niñas y niños ----------------
 dcz, dmun, deas, dserv, duds, dcu = Dic(), Dic(), Dic(), Dic(), Dic(), Dic()
-C = {k: [] for k in ("doc", "cz", "mun", "eas", "serv", "uds", "cu", "pt", "te", "pe",
+C = {k: [] for k in ("doc", "nombre", "cz", "mun", "eas", "serv", "uds", "cu", "pt", "te", "pe",
                      "sx", "em", "tm", "nt", "cr", "can", "ftlc", "irn", "irc",
                      "ev", "mk", "et",
                      # medidas crudas: lo que alguien tomo con un instrumento
@@ -86,6 +91,7 @@ with open(os.path.join(D, "nn_ultima_toma.csv"), encoding="utf-8-sig") as fh:
         TMAX = max(TMAX, t)
         e = (r["etnia"] or "")
         C["doc"].append(r["doc"])
+        C["nombre"].append(nombre_de(r))
         C["cz"].append(dcz(r["cz"]))
         C["mun"].append(dmun(r["municipio"]))       # municipio de la UDS
         C["eas"].append(deas(r["eas"]))
@@ -121,7 +127,7 @@ with open(os.path.join(D, "nn_ultima_toma.csv"), encoding="utf-8-sig") as fh:
 
 # ---------------- gestantes ----------------
 gcz, gmun, geas, guds = Dic(), Dic(), Dic(), Dic()
-G = {k: [] for k in ("doc", "cz", "mun", "eas", "uds", "st", "ed", "tm", "ctl", "irg", "irc", "sg",
+G = {k: [] for k in ("doc", "nombre", "cz", "mun", "eas", "uds", "st", "ed", "tm", "ctl", "irg", "irc", "sg", "et",
                      # medidas crudas de la gestante
                      "kg", "cm", "imc")}
 GTMAX = 0
@@ -136,7 +142,8 @@ with open(os.path.join(D, "gs_ultima_toma.csv"), encoding="utf-8-sig") as fh:
             1 if "BAJO PESO" in st or st == "DELGADEZ" else
             3 if "SOBREPESO" in st else 4 if "OBESIDAD" in st else
             2 if "ADECUADO" in st or st == "NORMAL" else 0)
-        G["doc"].append(r["doc"]); G["cz"].append(gcz(r["cz"]))
+        G["doc"].append(r["doc"]); G["nombre"].append(nombre_de(r))
+        G["cz"].append(gcz(r["cz"]))
         G["mun"].append(gmun(r["municipio"])); G["eas"].append(geas(r["eas"]))
         G["uds"].append(guds(r["uds"])); G["st"].append(code)
         G["ed"].append(I(r["edad_anios"]) if I(r["edad_anios"]) is not None else -1)
@@ -145,6 +152,9 @@ with open(os.path.join(D, "gs_ultima_toma.csv"), encoding="utf-8-sig") as fh:
         v = F(r["irg"]); G["irg"].append(round(v, 1) if v is not None else -1)
         G["irc"].append(IRC.index(r["clasificacion_irg"]) if r["clasificacion_irg"] in IRC else 0)
         G["sg"].append(I(r["sem_gest"]) if I(r["sem_gest"]) is not None else -1)
+        ge = (r["etnia"] or "")
+        G["et"].append(1 if "INDIGENA" in ge else 2 if ("AFRO" in ge or "NEGRO" in ge)
+                       else 3 if "NO SE AUTORRECONOCE" in ge else 4 if ge else 0)
         _gk = F(r["peso"]);     G["kg"].append(round(_gk, 1) if _gk else -1)
         _gc = F(r["talla"]);    G["cm"].append(round(_gc, 1) if _gc else -1)
         _gi = F(r["imc_gest"]); G["imc"].append(round(_gi, 1) if _gi else -1)
@@ -158,7 +168,7 @@ with open(os.path.join(D, "gs_ultima_toma.csv"), encoding="utf-8-sig") as fh:
     for r in csv.DictReader(fh):
         if (r["discapacidad"] or "").strip() != "SI":
             continue
-        GS_DISC.append({"doc": r["doc"], "cz": r["cz"], "mun": r["municipio"],
+        GS_DISC.append({"doc": r["doc"], "nombre": nombre_de(r), "cz": r["cz"], "mun": r["municipio"],
                          "eas": r["eas"], "uds": r["uds"], "estado": r["estado"],
                          "toma": I(r["toma"]) or 0})
 
@@ -331,9 +341,12 @@ print("periodo:", PERIODO, "| corte comparable toma", TCOM, "de", TMAX,
 if PUBLICO:
     C["doc"] = ["A%06d" % i for i in range(len(C["doc"]))]
     G["doc"] = ["A%06d" % i for i in range(len(G["doc"]))]
+    C["nombre"] = ["" for _ in C["nombre"]]
+    G["nombre"] = ["" for _ in G["nombre"]]
     for i, v in enumerate(GS_DISC):
         v["doc"] = "A%06d" % i
-    print(f"PUBLICO=1: documento anonimizado ({len(C['doc'])} NN, {len(G['doc'])} GS, {len(GS_DISC)} GS_DISC)")
+        v["nombre"] = ""
+    print(f"PUBLICO=1: documento y nombre anonimizados ({len(C['doc'])} NN, {len(G['doc'])} GS, {len(GS_DISC)} GS_DISC)")
 
 data = {
     "meta": {"corte": CORTE, "periodo": PERIODO,
