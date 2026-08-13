@@ -3689,7 +3689,10 @@ function descargarInformeCompleto() {
     b.onclick = () => { TAB = id; render(); scrollTo({ top: 0, behavior: "smooth" }); };
     $("#nav").append(b);
   });
-  $("#foot").innerHTML = `Leído de ${DIC.cz.length * 2} archivos de Cuéntame · Sistema de Información Primera Infancia. Cifras deduplicadas a la última toma y filtradas a beneficiarios vinculados; el municipio es siempre el de la <b>unidad de servicio</b>, no el de residencia. Clasificación antropométrica según la <b>Resolución 2465 de 2016</b> sobre los Patrones de Crecimiento Infantil de la OMS. Generado por <code>procesar_reportes.py</code>.<br>Contiene número de documento del beneficiario para permitir la ubicación del caso en el sistema: <b>tratar como información de uso interno</b>. No incluye nombres.<br>Colores institucionales del Manual de Imagen Corporativa del ICBF; las rampas de los gráficos se derivaron de esos tonos y se validaron para visión con deficiencia cromática.`;
+  const notaId = D.meta.publico
+    ? "Los datos de identificación (documento y nombre) se reemplazaron por un código secuencial antes de publicar esta versión: no permiten ubicar ni identificar a ningún beneficiario."
+    : "Contiene número de documento y nombre completo del beneficiario para permitir la ubicación del caso en el sistema: <b>tratar como información de uso interno y confidencial</b>.";
+  $("#foot").innerHTML = `Leído de ${DIC.cz.length * 2} archivos de Cuéntame · Sistema de Información Primera Infancia. Cifras deduplicadas a la última toma y filtradas a beneficiarios vinculados; el municipio es siempre el de la <b>unidad de servicio</b>, no el de residencia. Clasificación antropométrica según la <b>Resolución 2465 de 2016</b> sobre los Patrones de Crecimiento Infantil de la OMS. Generado por <code>procesar_reportes.py</code>.<br>${notaId}<br>Colores institucionales del Manual de Imagen Corporativa del ICBF; las rampas de los gráficos se derivaron de esos tonos y se validaron para visión con deficiencia cromática.`;
   render();
 })();
 </script>
