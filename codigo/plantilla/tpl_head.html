@@ -63,21 +63,23 @@ header{padding:0}
 .hero{position:relative;overflow:hidden;border-radius:16px;padding:20px 22px 18px;
   background:linear-gradient(135deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 42%,var(--icbf-verde) 100%);
   box-shadow:var(--shadow);color:#fff}
-.hero::before{content:"";position:absolute;inset:0;background:var(--gloss);pointer-events:none}
-/* varias "gotas de pintura" en vez del circulo unico -- mismo blanco
-   translucido y el mismo desvanecido radial que ya usa .marca en el
-   menu, solo que aqui se repite en distintos tamaños y posiciones */
+/* sin --gloss: igual que en .marca (ver su comentario), el barniz
+   blanco de arriba a abajo le baja el contraste al texto, tambien
+   blanco, y encima del extremo mas claro del degradado se veia lavado.
+   En su lugar, aros y gotas con borde visible -- circunferencias de
+   verdad, no un resplandor difuso -- repartidos para no pisar el texto,
+   que ademas queda con z-index encima por si acaso. */
 .hero::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:
-    radial-gradient(circle 150px at 93% -10%,rgba(255,255,255,.30),rgba(255,255,255,0) 70%),
-    radial-gradient(circle 90px at 80% 90%,rgba(255,255,255,.18),rgba(255,255,255,0) 68%),
-    radial-gradient(circle 55px at 58% 14%,rgba(255,255,255,.14),rgba(255,255,255,0) 68%),
-    radial-gradient(circle 130px at 2% 112%,rgba(255,255,255,.16),rgba(255,255,255,0) 68%),
-    radial-gradient(circle 45px at 24% 32%,rgba(255,255,255,.12),rgba(255,255,255,0) 68%),
-    radial-gradient(circle 70px at 68% 55%,rgba(255,255,255,.10),rgba(255,255,255,0) 68%)}
-.hero h1{font-size:clamp(19px,2.5vw,26px);font-weight:600;letter-spacing:-.01em;margin:0 0 3px;position:relative}
-.hero .s{font-size:13px;opacity:.93;position:relative}
-.hero .k{position:relative;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;opacity:.8;margin-bottom:7px}
+    radial-gradient(circle 46px at 92% 22%,transparent 68%,rgba(255,255,255,.45) 72%,rgba(255,255,255,.45) 78%,transparent 82%),
+    radial-gradient(circle 28px at 81% 68%,transparent 62%,rgba(255,255,255,.38) 68%,rgba(255,255,255,.38) 76%,transparent 82%),
+    radial-gradient(circle 68px at 6% -18%,transparent 70%,rgba(255,255,255,.28) 73%,rgba(255,255,255,.28) 78%,transparent 82%),
+    radial-gradient(circle 9px at 70% 30%,rgba(255,255,255,.4),rgba(255,255,255,0) 74%),
+    radial-gradient(circle 6px at 88% 48%,rgba(255,255,255,.32),rgba(255,255,255,0) 74%),
+    radial-gradient(circle 13px at 62% 72%,rgba(255,255,255,.22),rgba(255,255,255,0) 74%)}
+.hero h1{font-size:clamp(19px,2.5vw,26px);font-weight:600;letter-spacing:-.01em;margin:0 0 3px;position:relative;z-index:1}
+.hero .s{font-size:13px;opacity:.93;position:relative;z-index:1}
+.hero .k{position:relative;z-index:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;opacity:.8;margin-bottom:7px}
 
 .alert{margin-top:12px;display:flex;gap:11px;align-items:flex-start;border-radius:12px;padding:11px 15px;
   background:var(--glass);border:1px solid var(--rule);box-shadow:var(--shadow);font-size:13.5px;color:var(--ink2)}
