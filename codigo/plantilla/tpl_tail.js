@@ -1542,8 +1542,8 @@ function resumen(ix) {
   return r;
 }
 function resumenGS(ix) {
-  const r = { n: ix.length, st: new Array(5).fill(0), irc: new Array(6).fill(0) };
-  for (const i of ix) { r.st[G.st[i]]++; r.irc[G.irc[i]]++; }
+  const r = { n: ix.length, st: new Array(5).fill(0), irc: new Array(6).fill(0), disc: 0 };
+  for (const i of ix) { r.st[G.st[i]]++; r.irc[G.irc[i]]++; if (G.disc[i]) r.disc++; }
   r.bajo = r.st[1]; r.adec = r.st[2]; r.sobre = r.st[3]; r.obes = r.st[4];
   return r;
 }
@@ -1845,6 +1845,9 @@ function vSemaforo() {
       { t: "IMC adecuado", v: p1(pct(g.adec, g.n)), d: mil(g.adec) + " gestantes", cls: "good",
         tabla: { t: "IMC adecuado para la edad gestacional", idx: () => gix.filter(i => G.st[i] === 2), cols: COLS_GS,
           lead: "Las <b>" + mil(g.adec) + "</b> gestantes con IMC adecuado para su semana de gestación." } },
+      { t: "Con discapacidad", v: mil(g.disc), d: p1(pct(g.disc, g.n)) + " de las gestantes con toma", cls: "neut",
+        tabla: { t: "Gestantes con discapacidad", idx: () => gix.filter(i => G.disc[i]), cols: COLS_GS, ordenar: 12, asc: true,
+          lead: "Las <b>" + mil(g.disc) + "</b> gestantes con discapacidad registrada que tuvieron una toma en el periodo." } },
     ]));
   }
 }
@@ -2141,6 +2144,9 @@ function vGestantes() {
     { t: "Exceso de peso", v: p1(pct(g.sobre + g.obes, g.n)), d: `${mil(g.sobre + g.obes)} gestantes · ${mil(g.sobre)} con sobrepeso y ${mil(g.obes)} con obesidad`, cls: "warn",
       tabla: { t: "Sobrepeso u obesidad gestacional", idx: () => ix.filter(i => G.st[i] === 3 || G.st[i] === 4), cols: COLS_GS, ordenar: 9,
         lead: "Las <b>" + mil(g.sobre + g.obes) + "</b> gestantes con sobrepeso u obesidad para su semana de gestación, ordenadas de mayor a menor IMC." } },
+    { t: "Con discapacidad", v: mil(g.disc), d: p1(pct(g.disc, g.n)) + " de las gestantes con toma", cls: "neut",
+      tabla: { t: "Gestantes con discapacidad", idx: () => ix.filter(i => G.disc[i]), cols: COLS_GS, ordenar: 12, asc: true,
+        lead: "Las <b>" + mil(g.disc) + "</b> gestantes con discapacidad registrada que tuvieron una toma en el periodo." } },
   ]));
   const agrupar = (col, dic, min) => {
     const m = new Map();

@@ -121,7 +121,7 @@ with open(os.path.join(D, "nn_ultima_toma.csv"), encoding="utf-8-sig") as fh:
 
 # ---------------- gestantes ----------------
 gcz, gmun, geas, guds = Dic(), Dic(), Dic(), Dic()
-G = {k: [] for k in ("doc", "cz", "mun", "eas", "uds", "st", "ed", "tm", "ctl", "irg", "irc", "sg",
+G = {k: [] for k in ("doc", "cz", "mun", "eas", "uds", "st", "ed", "tm", "ctl", "irg", "irc", "sg", "disc",
                      # medidas crudas de la gestante
                      "kg", "cm", "imc")}
 GTMAX = 0
@@ -145,6 +145,7 @@ with open(os.path.join(D, "gs_ultima_toma.csv"), encoding="utf-8-sig") as fh:
         v = F(r["irg"]); G["irg"].append(round(v, 1) if v is not None else -1)
         G["irc"].append(IRC.index(r["clasificacion_irg"]) if r["clasificacion_irg"] in IRC else 0)
         G["sg"].append(I(r["sem_gest"]) if I(r["sem_gest"]) is not None else -1)
+        G["disc"].append(1 if (r["discapacidad"] or "").strip() == "SI" else 0)
         _gk = F(r["peso"]);     G["kg"].append(round(_gk, 1) if _gk else -1)
         _gc = F(r["talla"]);    G["cm"].append(round(_gc, 1) if _gc else -1)
         _gi = F(r["imc_gest"]); G["imc"].append(round(_gi, 1) if _gi else -1)
