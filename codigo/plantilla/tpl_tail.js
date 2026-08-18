@@ -1445,6 +1445,12 @@ function nivelTerritorio() {
    graficos se recalculan sobre el subconjunto resultante.
    ===================================================================== */
 let FCZ = -1, FMUN = -1, FEAS = -1, TAB = "semaforo";
+/* contador de visitas: solo tiene sentido en el sitio publico (el build
+   interno se abre como archivo local, sin /api). Se pide UNA vez al
+   cargar la pagina, no cada vez que se entra a Glosario -- si la
+   pestaña ya esta abierta cuando responde, se actualiza el numero en
+   el sitio; si no, vGlosario() ya lo toma de aqui cuando se renderice. */
+let VISITAS = null;
 const N = D.nn, G = D.gs, DIC = D.dic, GDIC = D.gdic, CAT = D.cat;
 const NN_N = N.doc.length, GS_N = G.doc.length;
 const MESES_LARGO = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
@@ -2421,6 +2427,10 @@ function vGlosario() {
   const s = $("#v-glosario"); s.textContent = "";
   s.append(h2("Glosario técnico"));
   s.append(el("p", "note", "Cada indicador de este tablero con su definición, los campos exactos del reporte descargado del sistema y su método de cálculo. Haga clic en cualquier tarjeta para abrir la ficha completa."));
+  if (D.meta.publico) {
+    s.append(el("p", "note", "Visitas a este sitio: <b id=\"visitas-n\">"
+      + (VISITAS != null ? mil(VISITAS) : "—") + "</b>"));
+  }
   const g = el("div", "gloss-list");
   Object.entries(FICHAS).forEach(([k, f]) => {
     const c = el("button", "gcard"); c.type = "button";
@@ -3706,5 +3716,16 @@ function descargarInformeCompleto() {
     : "Contiene número de documento y nombre completo del beneficiario para permitir la ubicación del caso en el sistema: <b>tratar como información de uso interno y confidencial</b>.";
   $("#foot").innerHTML = `Leído de ${DIC.cz.length * 2} archivos de Cuéntame · Sistema de Información Primera Infancia. Cifras deduplicadas a la última toma y filtradas a beneficiarios vinculados; el municipio es siempre el de la <b>unidad de servicio</b>, no el de residencia. Clasificación antropométrica según la <b>Resolución 2465 de 2016</b> sobre los Patrones de Crecimiento Infantil de la OMS. Generado por <code>procesar_reportes.py</code>.<br>${notaId}<br>Colores institucionales del Manual de Imagen Corporativa del ICBF; las rampas de los gráficos se derivaron de esos tonos y se validaron para visión con deficiencia cromática.`;
   render();
+  /* una sola vez por carga de pagina, no por cada clic en Glosario */
+  if (D.meta.publico) {
+    fetch("/api/visitas", { method: "POST" })
+      .then(r => r.json())
+      .then(d => {
+        VISITAS = d.visitas;
+        const v = $("#visitas-n");
+        if (v) v.textContent = VISITAS != null ? mil(VISITAS) : "—";
+      })
+      .catch(() => {});
+  }
 })();
 </script>
