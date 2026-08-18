@@ -749,13 +749,14 @@ function reglasPuntos(reglas, bloques) {
     rs.forEach(r => {
       const row = el("div", "reg");
       row.append(el("div", "cod", r.cod));
-      const tr = el("div", "tr3");
-      tr.className = "tr2";
+      const tr = el("div", "tr2");
+      const ds = el("div", "dsc", esc(r.desc.slice(0, 52)));
+      const trk = el("div", "trk");
       const d = el("div", "pt3");
       d.style.left = Math.max(1.2, 100 * esc_(r.pct)) + "%";
       d.style.background = r.pct > 5 ? "var(--d3)" : r.pct > 0.5 ? "var(--icbf-naranja)" : "var(--icbf-verde)";
-      const ds = el("div", "dsc", esc(r.desc.slice(0, 52)));
-      tr.append(ds, d);
+      trk.append(d);
+      tr.append(ds, trk);
       const html = "<b>" + esc(r.cod) + " · " + esc(r.amb) + "</b><div class='r'><span>"
         + esc(r.desc) + "</span></div><div class='r'><span>Marcados</span><span>" + mil(r.n)
         + "</span></div><div class='r'><span>Del total</span><span>" + p2f(r.pct) + "</span></div>";
