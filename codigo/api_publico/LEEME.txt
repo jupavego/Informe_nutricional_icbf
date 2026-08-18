@@ -1,0 +1,15 @@
+Funcion serverless del sitio publico (Vercel), guardada aqui solo para
+control de versiones -- NO se despliega desde este repo. El folder que
+Vercel realmente sube es $HOME/tablero-publico (fuera del repo, a
+proposito, para que el CLI no incluya archivos de la raiz del proyecto).
+
+Al tocar visitas.js:
+  1. Editar aqui.
+  2. Copiar a $HOME/tablero-publico/api/visitas.js
+  3. cd $HOME/tablero-publico && vercel --prod --yes
+
+Requiere un storage tipo Redis conectado al proyecto "project-bnivv" en
+el dashboard de Vercel (Storage -> Create Database -> Upstash for
+Redis, o el que este disponible). Sin eso conectado, el endpoint
+responde {"visitas":null} sin romper nada: el tablero simplemente
+muestra "-" en vez de un numero.
