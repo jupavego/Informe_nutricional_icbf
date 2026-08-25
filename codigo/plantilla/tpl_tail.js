@@ -14,6 +14,7 @@ const ICO = {
   operadores: "M4 21V7l7-4 7 4v14M4 21h16M9 21v-5h6v5M8 10h.01M12 10h.01M16 10h.01M8 13.5h.01M12 13.5h.01M16 13.5h.01",
   calidad: "M12 3 4 6v6c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V6l-8-3zm-3 9 2.2 2.2L15.5 10",
   historico: "M4 19h16M4 19V9m4 10v-6m4 6v-9m4 9V7m4 12V5M4 9l5-4 4 3 4-6",
+  tendencia: "M3 12h4m10 0h4M12 3v4m0 10v4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
   fuentes: "M12 3 3 8l9 5 9-5-9-5zM3 13l9 5 9-5M3 18l9 5 9-5",
   glosario: "M4 5.5A2 2 0 0 1 6 3.5h13v15H6a2 2 0 0 0-2 2v-15zM4 18.5v2h15M8 7.5h7M8 11h7",
 };
@@ -1446,14 +1447,24 @@ function nivelTerritorio() {
    graficos se recalculan sobre el subconjunto resultante.
    ===================================================================== */
 let FCZ = -1, FMUN = -1, FEAS = -1, TAB = "semaforo";
+/* Set de meses (numero de "toma") incluidos, o null = todos. Vacio (size
+   0, no null) representa "se desmarcaron todos" -- ver toggleMeses(). */
+let FMES = null;
 /* contador de visitas: solo tiene sentido en el sitio publico (el build
    interno se abre como archivo local, sin /api). Se pide UNA vez al
    cargar la pagina, no cada vez que se entra a Glosario -- si la
    pestaña ya esta abierta cuando responde, se actualiza el numero en
    el sitio; si no, vGlosario() ya lo toma de aqui cuando se renderice. */
 let VISITAS = null;
-const N = D.nn, G = D.gs, DIC = D.dic, GDIC = D.gdic, CAT = D.cat;
-const NN_N = N.doc.length, GS_N = G.doc.length;
+/* N/G son reasignables (let, no const): con el filtro de Meses activo,
+   render() las apunta a una "vista" reconstruida (ver construirVistaNN/GS
+   mas abajo) en vez de a D.nn/D.gs directo -- todo lo demas en este
+   archivo sigue leyendo N.campo[i]/G.campo[i] sin cambios, porque nunca
+   sabe si esta viendo el dato completo o el recalculado por mes. */
+let N = D.nn, G = D.gs;
+const DIC = D.dic, GDIC = D.gdic, CAT = D.cat;
+const NN_N_TOTAL = D.nn.doc.length, GS_N_TOTAL = D.gs.doc.length;
+let NN_N = NN_N_TOTAL, GS_N = GS_N_TOTAL;
 const MESES_LARGO = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
   "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 /* "reciente" (valoracion reciente) usaba una ventana fija de los dos
@@ -1466,6 +1477,168 @@ const MESES_LARGO = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", 
 const TRIM_INICIO = (D.meta.uds_trimestre && D.meta.uds_trimestre.meses)
   ? D.meta.uds_trimestre.meses[0] : D.meta.tmax - 1;
 const TRIM_LBL_G = D.meta.uds_trimestre && D.meta.uds_trimestre.lbl;
+
+/* =====================================================================
+   FILTRO "MESES" -- recalculo del IRN/IRG con el subconjunto de meses
+   elegido, termino a termino igual a codigo/procesar_reportes.py
+   (antro/piso_clinico/fact/tend para NN; su equivalente para GS). Esto NO
+   reclasifica ninguna medida: cada toma de D.nn_hist/D.gs_hist ya trae su
+   est_pt/est_te/est_pe y z-scores tal como los calculo el sistema fuente
+   con los estandares OMS/Res. 2465 para la edad y la fecha de ESA toma.
+   Aqui solo se ELIGE, por beneficiario, cual toma queda vigente segun los
+   meses filtrados (la mas reciente dentro del filtro), y se reevalua el
+   mismo puntaje con esa toma y con la tendencia recortada al filtro.
+   Quien no tenga ninguna toma en los meses elegidos queda fuera -- nunca
+   se rellena ni se imputa un valor.
+   ===================================================================== */
+// posiciones dentro de cada arreglo de D.nn_hist[i] / D.gs_hist[i]
+const HT = 0, HPT = 1, HTE = 2, HPE = 3, HZTE = 4, HZPE = 5, HZPT = 6, HEM = 7,
+      HCR = 8, HCAN = 9, HFTLC = 10, HKG = 11, HCM = 12, HPB = 13, HPC = 14,
+      HFL = 15, HFCYD = 16, HFVAC = 17, HMK = 18;
+const GT = 0, HGST = 1, GCTL = 2, GKG = 3, GCM = 4, GIMC = 5, GED = 6, GSG = 7, GSTL = 8;
+
+const S_PT_C = [null, 100, 90, 40, 0, 25, 50, 70];
+const S_TE_C = [null, 70, 30, 0];
+const S_PE_C = [null, 75, 30, 0, 0];
+const DIST_PT = [null, 3, 2, 1, 0, 1, 2, 3];   // ORD_PT por codigo de pt: distancia a la adecuacion
+const AGUDA_PT = new Set([1, 2]);               // DESNUTRICION AGUDA SEVERA(1)/MODERADA(2)
+const ORDEN_CLASE = { "ADECUADO": 0, "PREVENTIVO": 1, "ALTO RIESGO": 2, "CRITICO": 3 };
+const IRC_COD = { "ADECUADO": 1, "PREVENTIVO": 2, "ALTO RIESGO": 3, "CRITICO": 4, "NO EVALUABLE": 5 };
+const S_GEST_C = [null, 80, 0, 40, 70];
+const ORD_GEST_C = [null, 2, 0, 1, 2];
+
+function sel(hist, mesesSet) { return mesesSet ? hist.filter(h => mesesSet.has(h[HT])) : hist; }
+/* round(x,1) de Python usa "redondeo al par" en los empates .X5 -- Math.round
+   de JS siempre redondea hacia arriba, asi que en los empates exactos (que
+   si ocurren: Fx es promedio de valores fijos como 0/30/60) los dos
+   difieren en 0.1. Se detecta el empate con una tolerancia chica porque el
+   binario de doble precision rara vez guarda x*10 como un .5 exacto. */
+function pyRound1(x) {
+  const n = x * 10, f = Math.floor(n);
+  if (Math.abs(n - f - 0.5) < 1e-9) return ((f % 2 === 0) ? f : f + 1) / 10;
+  return Math.round(n) / 10;
+}
+
+/* componente antropometrico (A, 0-100) de UNA toma sola -- independiente
+   de la historia del beneficiario (a diferencia de T, la tendencia, que
+   necesita un primero y un ultimo). Se reutiliza tanto para el IRN de la
+   toma vigente (irnDeSeleccion) como para el promedio de "Tendencia del
+   periodo" (vTendencia), que promedia este mismo puntaje toma por toma. */
+function antroDeToma(row) {
+  const pt = row[HPT], te = row[HTE], pe = row[HPE], zte = row[HZTE], zpe = row[HZPE];
+  const noEval = /C1|C2|C3|C4/.test(row[HMK]);
+  let sPT = pt >= 1 ? S_PT_C[pt] : null, sTE = te >= 1 ? S_TE_C[te] : null, sPE = pe >= 1 ? S_PE_C[pe] : null;
+  if (te === 1 && zte != null && zte < -3) sTE = 90;
+  if (pe === 1 && zpe != null && zpe < -3) sPE = 90;
+  const comp = [sPT, sTE, sPE].filter(x => x != null);
+  const A = comp.length ? Math.max(...comp) : null;
+  return { pt, te, pe, zte, zpe, A, noEval };
+}
+function irnDeSeleccion(seleccion) {
+  const row = seleccion[seleccion.length - 1];   // mas reciente dentro del filtro
+  const { pt, te, pe, zte, zpe, A, noEval } = antroDeToma(row);
+  if (noEval || A == null) return { row, irn: null, irc: IRC_COD["NO EVALUABLE"] };
+  const w = seleccion.filter(h => h[HPT] >= 1);
+  let T = null;
+  if (w.length >= 2) {
+    const a = DIST_PT[w[0][HPT]], b = DIST_PT[w[w.length - 1][HPT]], d = b - a;
+    T = (d === 0 && b === 0) ? 0 : d <= -2 ? 0 : d === -1 ? 20 : d === 0 ? 40 : d === 1 ? 75 : 100;
+  }
+  const Fx0 = (row[HFCYD] + row[HFVAC]) / 2;
+  const Fx = AGUDA_PT.has(pt) ? Math.max(Fx0, row[HCAN] === 1 ? 0 : 100, row[HFTLC] === 1 ? 0 : 60) : Fx0;
+  let irn = T == null ? (A * .65 / .80 + Fx * .15 / .80) : (A * .65 + T * .20 + Fx * .15);
+  irn = pyRound1(irn);
+  let c = irn < 25 ? "ADECUADO" : irn < 50 ? "PREVENTIVO" : irn < 75 ? "ALTO RIESGO" : "CRITICO";
+  let piso = null;
+  const sube = x => { if (piso === null || ORDEN_CLASE[x] > ORDEN_CLASE[piso]) piso = x; };
+  if (pt === 1) sube("CRITICO");
+  else if (pt === 2) sube(row[HCAN] === 1 ? "ALTO RIESGO" : "CRITICO");
+  if (te === 1) sube(zte != null && zte < -3 ? "CRITICO" : "ALTO RIESGO");
+  if (pe === 1) sube(zpe != null && zpe < -3 ? "CRITICO" : "ALTO RIESGO");
+  if (pt === 7) sube("ALTO RIESGO");
+  if (piso !== null && ORDEN_CLASE[piso] > ORDEN_CLASE[c]) c = piso;
+  return { row, irn, irc: IRC_COD[c] };
+}
+function evolDeSeleccion(seleccion) {
+  const w = seleccion.filter(h => h[HPT] >= 1);
+  if (w.length < 2) return 0;
+  const a = DIST_PT[w[0][HPT]], b = DIST_PT[w[w.length - 1][HPT]];
+  return b < a ? 1 : b > a ? 3 : 2;
+}
+function irgDeSeleccion(seleccion) {
+  const row = seleccion[seleccion.length - 1];
+  const eg = row[HGST];
+  if (eg < 1) return { row, irg: null, irc: IRC_COD["NO EVALUABLE"] };
+  const A = S_GEST_C[eg];
+  const w = seleccion.filter(h => h[HGST] >= 1);
+  let T = null;
+  if (w.length >= 2) {
+    const d = ORD_GEST_C[w[w.length - 1][HGST]] - ORD_GEST_C[w[0][HGST]];
+    T = d <= -2 ? 0 : d === -1 ? 20 : d === 0 ? 40 : d === 1 ? 75 : 100;
+  }
+  const c_ = row[GCTL];
+  const Fx = c_ < 0 ? 60 : c_ >= 6 ? 0 : c_ >= 3 ? 25 : 60;
+  let irg = T == null ? (A * .65 / .80 + Fx * .15 / .80) : (A * .65 + T * .20 + Fx * .15);
+  irg = pyRound1(irg);
+  let c = irg < 25 ? "ADECUADO" : irg < 50 ? "PREVENTIVO" : irg < 75 ? "ALTO RIESGO" : "CRITICO";
+  if (eg === 1 && c === "PREVENTIVO") c = "ALTO RIESGO";
+  return { row, irg, irc: IRC_COD[c] };
+}
+
+/* Reconstruye N/G con exactamente la misma forma de D.nn/D.gs, pero con
+   cada beneficiario representado por su toma mas reciente DENTRO de
+   mesesSet (o la de siempre, si mesesSet es null). Quien no tenga ninguna
+   toma en el filtro queda fuera del arreglo por completo. */
+function construirVistaNN(mesesSet) {
+  const base = D.nn, hists = D.nn_hist;
+  const out = { doc: [], nombre: [], cz: [], mun: [], eas: [], serv: [], uds: [], cu: [],
+    pt: [], te: [], pe: [], sx: [], em: [], tm: [], nt: [], cr: [], can: [], ftlc: [],
+    irn: [], irc: [], ev: [], mk: [], et: [], kg: [], cm: [], pb: [], pc: [], zt: [], zp: [], fl: [] };
+  for (let i = 0; i < base.doc.length; i++) {
+    const seleccion = sel(hists[i] || [], mesesSet);
+    if (!seleccion.length) continue;
+    const r = irnDeSeleccion(seleccion), row = r.row;
+    out.doc.push(base.doc[i]); out.nombre.push(base.nombre[i]);
+    out.cz.push(base.cz[i]); out.mun.push(base.mun[i]); out.eas.push(base.eas[i]);
+    out.serv.push(base.serv[i]); out.uds.push(base.uds[i]); out.cu.push(base.cu[i]);
+    out.pt.push(row[HPT]); out.te.push(row[HTE]); out.pe.push(row[HPE]);
+    out.sx.push(base.sx[i]); out.em.push(row[HEM]); out.tm.push(row[HT]); out.nt.push(seleccion.length);
+    out.cr.push(row[HCR]); out.can.push(row[HCAN]); out.ftlc.push(row[HFTLC]);
+    out.irn.push(r.irn == null ? -1 : r.irn); out.irc.push(r.irc);
+    out.ev.push(evolDeSeleccion(seleccion)); out.mk.push(row[HMK]); out.et.push(base.et[i]);
+    out.kg.push(row[HKG]); out.cm.push(row[HCM]); out.pb.push(row[HPB]); out.pc.push(row[HPC]);
+    out.zt.push(row[HZTE] == null ? -99 : row[HZTE]); out.zp.push(row[HZPT] == null ? -99 : row[HZPT]);
+    out.fl.push(row[HFL]);
+  }
+  return out;
+}
+function construirVistaGS(mesesSet) {
+  const base = D.gs, hists = D.gs_hist;
+  const out = { doc: [], nombre: [], cz: [], mun: [], eas: [], uds: [], st: [], ed: [],
+    tm: [], ctl: [], irg: [], irc: [], sg: [], et: [], kg: [], cm: [], imc: [] };
+  for (let i = 0; i < base.doc.length; i++) {
+    const seleccion = sel(hists[i] || [], mesesSet);
+    if (!seleccion.length) continue;
+    const r = irgDeSeleccion(seleccion), row = r.row;
+    out.doc.push(base.doc[i]); out.nombre.push(base.nombre[i]);
+    out.cz.push(base.cz[i]); out.mun.push(base.mun[i]); out.eas.push(base.eas[i]); out.uds.push(base.uds[i]);
+    out.st.push(row[GSTL]); out.ed.push(base.ed[i]); out.tm.push(row[GT]); out.ctl.push(row[GCTL]);
+    out.irg.push(r.irg == null ? -1 : r.irg); out.irc.push(r.irc); out.sg.push(row[GSG]); out.et.push(base.et[i]);
+    out.kg.push(row[GKG]); out.cm.push(row[GCM]); out.imc.push(row[GIMC]);
+  }
+  return out;
+}
+/* memoiza por firma de FMES: idxNN/idxGS y refrescarFiltros() llaman a
+   render() -> aplicarFiltroMeses() varias veces por interaccion, y
+   recorrer ~100.000 historiales en cada una se nota. */
+let _vistaClave = null, _vistaNN = null, _vistaGS = null;
+function aplicarFiltroMeses() {
+  const clave = FMES ? "S" + Array.from(FMES).sort().join(",") : "";
+  if (clave === _vistaClave) { N = _vistaNN; G = _vistaGS; }
+  else if (!FMES) { N = D.nn; G = D.gs; _vistaClave = clave; _vistaNN = N; _vistaGS = G; }
+  else { N = construirVistaNN(FMES); G = construirVistaGS(FMES); _vistaClave = clave; _vistaNN = N; _vistaGS = G; }
+  NN_N = N.doc.length; GS_N = G.doc.length;
+}
 
 /* Cobertura de toma por Cupos UDS: beneficiarios unicos con toma en el
    ultimo trimestre completo, sobre el cupo autorizado de la UDS -- una
@@ -1508,13 +1681,15 @@ const SUBS = {
   operadores: "Desempeño de las entidades contratistas",
   calidad: "Las 27 reglas aplicadas a la descarga",
   historico: "Evolución mes a mes del cargue y el registro",
+  tendencia: "El rasgo característico de cada zona a lo largo de todo el periodo filtrado, no solo en su toma más reciente",
   fuentes: "Los reportes e insumos con los que se construye el tablero",
   glosario: "Qué mide cada indicador y cómo se calcula",
 };
 
 const VIEWS = [["semaforo", "Semáforo"], ["perfil", "Perfil"], ["mapa", "Mapa"], ["anatomia", "Anatomía del dato"], ["estado", "Estado nutricional"],
   ["critica", "Ruta crítica"], ["gestantes", "Gestantes"], ["operadores", "Operadores"],
-  ["calidad", "Calidad del dato"], ["historico", "Histórico"], ["fuentes", "Fuentes de referencia"], ["glosario", "Glosario"]];
+  ["calidad", "Calidad del dato"], ["historico", "Histórico"], ["tendencia", "Tendencia del periodo"],
+  ["fuentes", "Fuentes de referencia"], ["glosario", "Glosario"]];
 
 /* indices de niñas y niños que pasan el filtro */
 function idxNN() {
@@ -2326,6 +2501,29 @@ function vOperadores() {
   s.append(lectura(`El índice va de ${abajo(String(ord[ord.length - 1].ido).replace(".", ","))} a ${arriba(String(ord[0].ido).replace(".", ","))} sobre 100 entre ${mil(filas.length)} operadores. Esa dispersión es la que permite sustentar una decisión: si todos estuvieran en un rango de dos o tres puntos, el índice no serviría para priorizar nada.`));
 }
 
+/* Preferencia de digito en peso/talla -- prueba estandar de calidad de
+   captura antropometrica (metodologia SMART/ENA), no una de las 27 reglas
+   de depuracion: no marca ni excluye ninguna fila, solo describe la
+   distribucion. Si el instrumento se lee con precision de 0,1 kg/cm, cada
+   digito decimal deberia aparecer ~10% de las veces; una concentracion
+   fuerte en ".0"/".5" indica que se esta redondeando a ojo en vez de leer
+   el instrumento -- una señal sobre la tecnica de medicion en la UDS, no
+   sobre el calculo del tablero. Regional, no responde a filtros (se mide
+   sobre nn_completo.csv, igual que las 27 reglas de arriba). */
+function vPrecisionDigito(s) {
+  const dg = D.calidad_extra.digitos;
+  s.append(h2("Precisión de la medición: preferencia de dígito"));
+  s.append(el("p", "note", "Si el peso y la talla se leen con precisión de 0,1 kg/cm, cada dígito decimal (0 a 9) debería aparecer alrededor del 10 % de las veces -- la línea punteada marca ese 10 % esperado. Una concentración fuerte en \".0\" y \".5\" es la señal estándar de que buena parte de las medidas se está redondeando a ojo en vez de leerse del instrumento. Igual que las 27 reglas de arriba, es una cifra regional (todas las tomas, antes de deduplicar) y no responde a los filtros."));
+  const filasBar = campo => Array.from({ length: 10 }, (_, d) => ({ lb: "." + d, v: dg[campo].pct[d] }));
+  s.append(el("h4", null, `Peso (${mil(dg.peso.n)} mediciones)`));
+  s.append(barsDelta(filasBar("peso"), 10));
+  s.append(el("h4", null, `Talla (${mil(dg.talla.n)} mediciones)`));
+  s.append(barsDelta(filasBar("talla"), 10));
+  const excesoPeso = dg.peso.pct[0] - 10;
+  const excesoTalla = dg.talla.pct[0] + dg.talla.pct[5] - 20;
+  s.append(lectura(`En talla, <b>${p1(dg.talla.pct[0] + dg.talla.pct[5])}</b> de las mediciones termina exactamente en ".0" o ".5" cm (esperado ~20 % si la lectura fuera pareja) -- ${excesoTalla > 15 ? arriba("un exceso importante") : excesoTalla > 5 ? "un exceso moderado" : "dentro de lo esperado"}. En peso, <b>${p1(dg.peso.pct[0])}</b> termina en ".0" kg (esperado ~10 %). No invalida las clasificaciones individuales, pero es una alerta real de técnica de medición en punta de servicio, no del cálculo de este tablero.`));
+}
+
 function vCalidad() {
   const s = $("#v-calidad"); s.textContent = "";
   s.append(h2("Reglas de depuración aplicadas a la descarga", "calidad"));
@@ -2343,6 +2541,9 @@ function vCalidad() {
   const peor = D.reglas.slice().sort((a, b) => b.pct - a.pct)[0];
   const d1 = D.reglas.find(x => x.cod === "D1");
   s.append(lectura(`La regla más disparada es <b>${esc(peor.cod)}</b> — ${esc(peor.desc.toLowerCase())} — con ${arriba(mil(peor.n) + " registros")} (${p2(peor.pct)}).${d1 && d1.n === 0 ? ` En cambio <b>D1</b> está en cero: la clasificación que entrega el sistema coincide exactamente con el puntaje Z en las ${mil(D.meta.filas_nn)} filas, así que ${abajo("la clasificación antropométrica es confiable")}. Lo que falla es todo lo que la rodea.` : ""}`));
+
+  if (D.calidad_extra && D.calidad_extra.digitos) vPrecisionDigito(s);
+
   s.append(h2("Unidades de servicio con mayor tasa de marcas", "talla_inf"));
   s.append(el("p", "note", "Porcentaje de beneficiarios con al menos una marca de plausibilidad o coherencia. Responde a los filtros. Mínimo 25 beneficiarios. Es la lista de reinducción."));
   const ix = idxNN(); const m = new Map();
@@ -2399,6 +2600,7 @@ function vHistorico() {
   const s = $("#v-historico"); s.textContent = "";
   s.append(el("p", "note", "El histórico recorre TODAS las tomas del corte, no solo la última, y no filtra por vinculación: mide cuánto se está cargando cada mes, no la prevalencia clínica (para eso está 'Estado nutricional')."));
   if (FMUN >= 0 || FEAS >= 0) s.append(el("p", "note", "Esta vista se agrega por centro zonal: los filtros de municipio y entidad contratista no aplican aquí."));
+  if (FMES) s.append(el("p", "note", "Esta vista siempre muestra la serie completa mes a mes -- para eso existe. El filtro de Meses del encabezado no la recorta; se aplica a las demás pestañas (Semáforo, Estado nutricional, Ruta crítica, etc.), donde recalcula el indicador con solo los meses elegidos."));
 
   const czNom = FCZ >= 0 ? DIC.cz[FCZ] : null;
   const hn = D.historico.nn, hg = D.historico.gs;
@@ -2422,6 +2624,138 @@ function vHistorico() {
     { k: "sobrepeso", lb: "Sobrepeso", c: "var(--icbf-naranja)" },
     { k: "obesidad", lb: "Obesidad", c: "var(--e2)" },
   ]);
+}
+
+function promedio(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null; }
+function fmtProm(v, dec) { return v == null ? "–" : v.toFixed(dec).replace(".", ","); }
+/* Complemento a las demas pestañas: esas muestran la toma MAS RECIENTE
+   dentro del filtro (un corte puntual); esta promedia TODAS las tomas
+   validas de cada beneficiario dentro del filtro -- el rasgo caracteristico
+   de la zona a lo largo del periodo, no solo su ultimo momento. Se excluyen
+   las tomas con marca C1/C2/C3/C4 (Z implausible, flag OMS, peso/talla
+   fuera de rango fisico): promediar una medida ya identificada como
+   biologicamente imposible distorsiona el promedio, la misma razon por la
+   que esas tomas quedan fuera del IRN (ver antroDeToma). Cada beneficiario
+   pesa igual sin importar cuantas tomas tuvo: primero se promedian SUS
+   propias tomas, y despues se promedian esos promedios entre beneficiarios
+   de la zona -- alguien con 6 tomas no pesa 6 veces mas que alguien con 1. */
+function tendenciaPorBenefNN(mesesSet) {
+  const ix = idxNN();
+  const docToHist = new Map(); D.nn.doc.forEach((d, i) => docToHist.set(d, i));
+  const out = [];
+  for (const i of ix) {
+    const origIdx = docToHist.get(N.doc[i]);
+    const hist = (D.nn_hist[origIdx] || []).filter(h => !/C1|C2|C3|C4/.test(h[HMK]));
+    const seleccion = sel(hist, mesesSet);
+    if (!seleccion.length) continue;
+    const As = [], Ztes = [], Zpes = [], Zpts = [];
+    for (const h of seleccion) {
+      const { A, zte, zpe } = antroDeToma(h);
+      if (A != null) As.push(A);
+      if (zte != null) Ztes.push(zte);
+      if (zpe != null) Zpes.push(zpe);
+      if (h[HZPT] != null) Zpts.push(h[HZPT]);
+    }
+    out.push({ cz: N.cz[i], nt: seleccion.length, a: promedio(As), zte: promedio(Ztes), zpe: promedio(Zpes), zpt: promedio(Zpts) });
+  }
+  return out;
+}
+function tendenciaPorBenefGS(mesesSet) {
+  const ix = idxGS();
+  const docToHist = new Map(); D.gs.doc.forEach((d, i) => docToHist.set(d, i));
+  const out = [];
+  for (const i of ix) {
+    const origIdx = docToHist.get(G.doc[i]);
+    const seleccion = sel(D.gs_hist[origIdx] || [], mesesSet);
+    if (!seleccion.length) continue;
+    const As = [], Imcs = [];
+    for (const h of seleccion) {
+      const eg = h[HGST];
+      if (eg >= 1) As.push(S_GEST_C[eg]);
+      if (h[GIMC] != null && h[GIMC] >= 0) Imcs.push(h[GIMC]);
+    }
+    out.push({ cz: G.cz[i], nt: seleccion.length, a: promedio(As), imc: promedio(Imcs) });
+  }
+  return out;
+}
+/* Mismo umbral que ya usa Operadores (ver vOperadores, "Mínimo 40
+   beneficiarios") -- un promedio de zona con menos casos que eso es
+   estadísticamente inestable (una sola toma atípica lo mueve entero) y no
+   se muestra como si fuera un rasgo confiable de la zona. */
+const UMBRAL_TENDENCIA_N = 40;
+function agruparPorCZ(porBenef, dic) {
+  const g = new Map();
+  porBenef.forEach(b => { if (!g.has(b.cz)) g.set(b.cz, []); g.get(b.cz).push(b); });
+  const todas = [], chicas = [];
+  for (const [cz, arr] of g) (arr.length >= UMBRAL_TENDENCIA_N ? todas : chicas).push({ cz: dic[cz], n: arr.length, arr });
+  todas.sort((x, y) => y.n - x.n);
+  chicas.sort((x, y) => y.n - x.n);
+  return { filas: todas, excluidas: chicas };
+}
+/* Igual que en el corte comparable de Python (ver analizar_nn, "corte
+   desigual"): si el rango de meses elegido se mete mas alla de la toma que
+   TODOS los centros zonales alcanzaron (D.meta.tmax), los que van
+   rezagados (D.meta.rezagados) aportan mas meses de datos a su propio
+   promedio que el resto -- no porque su poblacion este mejor o peor, sino
+   porque cargaron mas. Se avisa solo en ese caso, igual que decidio el
+   equipo para el resto del tablero (no alarmar quien ya esta dentro del
+   corte comparable). */
+function avisoCorteDesigual(mesesSet) {
+  if (!mesesSet || !D.meta.rezagados || !D.meta.rezagados.length) return null;
+  const masAlla = Array.from(mesesSet).some(m => m > D.meta.tmax);
+  if (!masAlla) return null;
+  return `Los meses elegidos incluyen alguno posterior a la toma ${D.meta.tmax}, que no todos los centros zonales habían alcanzado a este corte (van más adelantados: <b>${esc(D.meta.rezagados.join(", "))}</b>). Esas zonas aportan más meses de datos a su propio promedio que el resto -- la comparación entre zonas en este rango puede reflejar diferencia de cargue, no de estado nutricional.`;
+}
+function vTendencia() {
+  const s = $("#v-tendencia"); s.textContent = "";
+  s.append(h2("Tendencia del periodo"));
+  s.append(el("p", "note", "Las demás pestañas muestran la toma más reciente de cada beneficiario dentro del filtro -- un corte puntual. Esta promedia TODAS sus tomas válidas en el periodo filtrado (excluye las marcadas con Z biológicamente implausible, flag OMS o peso/talla fuera de rango físico), para caracterizar a la zona a lo largo de todo el periodo y no solo en su último momento. Cada beneficiario pesa igual en el promedio de su zona, sin importar cuántas tomas tuvo. Zonas con menos de " + UMBRAL_TENDENCIA_N + " beneficiarios en el filtro no se muestran: el promedio no es estable con tan pocos casos."));
+  const aviso = avisoCorteDesigual(FMES);
+  if (aviso) s.append(el("p", "note warn2", aviso));
+
+  const pbNN = tendenciaPorBenefNN(FMES);
+  s.append(h2("Niñas y niños"));
+  if (!pbNN.length) { s.append(vacio("Sin tomas válidas en el periodo filtrado.")); }
+  else {
+    const { filas: gruposNN, excluidas: excNN } = agruparPorCZ(pbNN, DIC.cz);
+    const filasNN = gruposNN.map(f => ({
+      cz: f.cz, n: f.n,
+      a: promedio(f.arr.map(x => x.a).filter(x => x != null)),
+      zte: promedio(f.arr.map(x => x.zte).filter(x => x != null)),
+      zpe: promedio(f.arr.map(x => x.zpe).filter(x => x != null)),
+      zpt: promedio(f.arr.map(x => x.zpt).filter(x => x != null)),
+    }));
+    if (!filasNN.length) { s.append(vacio(`Ninguna zona llega a ${UMBRAL_TENDENCIA_N} beneficiarios con el filtro actual.`)); }
+    else {
+      const colsNN = [{ lb: "Centro zonal" }, { lb: "Beneficiarios", n: 1 },
+        { lb: "Puntaje antropométrico (0=mejor, 100=peor)", n: 1 },
+        { lb: "Z talla/edad", n: 1 }, { lb: "Z peso/edad", n: 1 }, { lb: "Z peso/talla", n: 1 }];
+      s.append(tabla(colsNN, filasNN.map(f => [esc(f.cz), mil(f.n), fmtProm(f.a, 1), fmtProm(f.zte, 2), fmtProm(f.zpe, 2), fmtProm(f.zpt, 2)])));
+      const mediaA = promedio(pbNN.map(x => x.a).filter(x => x != null));
+      const mediaZte = promedio(pbNN.map(x => x.zte).filter(x => x != null));
+      s.append(lectura(`Puntaje antropométrico promedio regional: <b>${fmtProm(mediaA, 1)}</b> sobre 100 (0 es adecuado). Z talla/edad promedio: <b>${fmtProm(mediaZte, 2)}</b> -- según la referencia OMS, un promedio cercano a 0 indica una población alineada con el patrón de crecimiento de referencia; valores negativos indican una tendencia hacia el retraso en talla, aunque cada beneficiario individual esté dentro de rango.`));
+    }
+    if (excNN.length) s.append(el("p", "note", `Zonas con menos de ${UMBRAL_TENDENCIA_N} beneficiarios, no mostradas: ${esc(excNN.map(f => f.cz + " (" + f.n + ")").join(", "))}.`));
+  }
+
+  const pbGS = tendenciaPorBenefGS(FMES);
+  s.append(h2("Gestantes"));
+  if (!pbGS.length) { s.append(vacio("Sin tomas válidas en el periodo filtrado.")); }
+  else {
+    const { filas: gruposGS, excluidas: excGS } = agruparPorCZ(pbGS, DIC.cz);
+    const filasGS = gruposGS.map(f => ({
+      cz: f.cz, n: f.n,
+      a: promedio(f.arr.map(x => x.a).filter(x => x != null)),
+      imc: promedio(f.arr.map(x => x.imc).filter(x => x != null)),
+    }));
+    if (!filasGS.length) { s.append(vacio(`Ninguna zona llega a ${UMBRAL_TENDENCIA_N} gestantes con el filtro actual.`)); }
+    else {
+      const colsGS = [{ lb: "Centro zonal" }, { lb: "Gestantes", n: 1 },
+        { lb: "Puntaje IMC gestacional (0=mejor, 80=peor)", n: 1 }, { lb: "IMC gestacional promedio", n: 1 }];
+      s.append(tabla(colsGS, filasGS.map(f => [esc(f.cz), mil(f.n), fmtProm(f.a, 1), fmtProm(f.imc, 1)])));
+    }
+    if (excGS.length) s.append(el("p", "note", `Zonas con menos de ${UMBRAL_TENDENCIA_N} gestantes, no mostradas: ${esc(excGS.map(f => f.cz + " (" + f.n + ")").join(", "))}.`));
+  }
 }
 
 function vGlosario() {
@@ -3621,11 +3955,63 @@ function refrescarFiltros() {
   if ($("#feas").value === "-1") FEAS = -1;
 }
 
+/* Filtro "Meses": panel de casillas (Todos los meses + una por mes del
+   corte), calcado del filtro de checkboxes del tablero de georreferenciación
+   de Buen Comienzo Medellín. FMES=null es "todos" (equivalente a hoy);
+   un Set (aunque este vacio) es una seleccion explicita -- Set vacio =
+   "se desmarcaron todos", nadie pasa el filtro (mismo criterio marcado
+   con NINGUN_VALOR en aquel tablero, aqui basta con el Set vacio porque
+   no comparte namespace con otro filtro por numero). */
+const MESES_CORTE = (D.historico && D.historico.nn && D.historico.nn.meses) || [];
+function etiquetaMeses() {
+  if (!FMES) return "todos (" + MESES_CORTE.map(m => MESES_LARGO[m]).join(", ") + ")";
+  if (!FMES.size) return "ninguno";
+  return MESES_CORTE.filter(m => FMES.has(m)).map(m => MESES_LARGO[m]).join(", ");
+}
+function toggleMeses(m) {
+  if (m === "") { FMES = FMES === null ? new Set() : null; render(); return; }
+  const actual = FMES === null ? new Set(MESES_CORTE) : new Set(FMES);
+  if (actual.has(m)) actual.delete(m); else actual.add(m);
+  FMES = (actual.size === MESES_CORTE.length) ? null : actual;
+  render();
+}
+function poblarFiltroMeses() {
+  const panel = $("#fmesPanel");
+  if (!panel || panel.dataset.armado) return;
+  panel.dataset.armado = "1";
+  const labTodas = el("label");
+  labTodas.innerHTML = '<input type="checkbox" data-mes-todas="1"><span>Todos los meses</span>';
+  labTodas.querySelector("input").onchange = () => toggleMeses("");
+  panel.append(labTodas);
+  if (MESES_CORTE.length) panel.append(el("hr"));
+  MESES_CORTE.forEach(m => {
+    const lab = el("label");
+    lab.innerHTML = '<input type="checkbox" data-mes="' + m + '"><span>' + esc(MESES_LARGO[m]) + "</span>";
+    lab.querySelector("input").onchange = () => toggleMeses(m);
+    panel.append(lab);
+  });
+}
+function sincronizarPanelMeses() {
+  const btn = $("#fmesTrigger"); if (!btn) return;
+  const lbl = btn.querySelector(".fmes-label");
+  lbl.textContent = !FMES ? "Todos los meses"
+    : !FMES.size ? "Meses (ninguno)" : "Meses (" + FMES.size + ")";
+  const panel = $("#fmesPanel");
+  const todas = !FMES || FMES.size === MESES_CORTE.length;
+  panel.querySelector('[data-mes-todas]').checked = todas;
+  panel.querySelectorAll("[data-mes]").forEach(i => {
+    const m = +i.dataset.mes;
+    i.checked = FMES === null ? true : FMES.has(m);
+  });
+}
+
 function render() {
+  aplicarFiltroMeses();
   refrescarFiltros();
+  sincronizarPanelMeses();
   const a = resumen(idxNN()); const g = resumenGS(idxGS());
   const lat = $("#lateral");
-  const filtrado = FCZ >= 0 || FMUN >= 0 || FEAS >= 0;
+  const filtrado = FCZ >= 0 || FMUN >= 0 || FEAS >= 0 || !!FMES;
   lat.innerHTML = '<div class="t">' + (filtrado ? "Selección actual" : "Regional completa") + '</div>'
     + '<div class="n"><b>' + mil(a.n) + '</b><span>niñas y niños</span></div>'
     + '<div class="n"><b>' + mil(g.n) + '</b><span>gestantes</span></div>'
@@ -3639,7 +4025,8 @@ function render() {
   $("#filtroimpreso").innerHTML = "<b>Filtros de este informe</b> &nbsp;·&nbsp; Centro zonal: "
     + esc(FCZ >= 0 ? DIC.cz[FCZ] : "todos") + " &nbsp;·&nbsp; Municipio de la UDS: "
     + esc(FMUN >= 0 ? DIC.mun[FMUN] : "todos") + " &nbsp;·&nbsp; Entidad contratista: "
-    + esc(FEAS >= 0 ? DIC.eas[FEAS] : "todas");
+    + esc(FEAS >= 0 ? DIC.eas[FEAS] : "todas") + " &nbsp;·&nbsp; Meses: "
+    + esc(etiquetaMeses());
   const tt2 = VIEWS.find(v => v[0] === TAB);
   $("#tsec").textContent = tt2 ? tt2[1] : "";
   $("#tsub").textContent = SUBS[TAB] || "";
@@ -3657,7 +4044,7 @@ function render() {
 /* compartido con descargarInformeCompleto(): la misma funcion de cada
    pestaña, para no mantener dos listas separadas */
 const VISTAS = { semaforo: vSemaforo, perfil: vPerfil, mapa: vMapa, anatomia: vAnatomia, estado: vEstado, critica: vCritica, gestantes: vGestantes,
-  operadores: vOperadores, calidad: vCalidad, historico: vHistorico, fuentes: vFuentes, glosario: vGlosario };
+  operadores: vOperadores, calidad: vCalidad, historico: vHistorico, tendencia: vTendencia, fuentes: vFuentes, glosario: vGlosario };
 
 /* "descargar PDF de esta seccion" es solo window.print(): la unica
    seccion visible ya es la de la pestaña activa, y el CSS @media print
@@ -3702,7 +4089,11 @@ function descargarInformeCompleto() {
   $("#fcz").onchange = e => { FCZ = +e.target.value; render(); };
   $("#fmun").onchange = e => { FMUN = +e.target.value; render(); };
   $("#feas").onchange = e => { FEAS = +e.target.value; render(); };
-  $("#reset").onclick = () => { FCZ = FMUN = FEAS = -1; render(); };
+  $("#reset").onclick = () => { FCZ = FMUN = FEAS = -1; FMES = null; render(); };
+  poblarFiltroMeses();
+  $("#fmesTrigger").onclick = ev => { ev.stopPropagation(); $("#fmesPanel").classList.toggle("abierto"); };
+  $("#fmesPanel").onclick = ev => ev.stopPropagation();
+  document.addEventListener("click", () => $("#fmesPanel").classList.remove("abierto"));
   $("#btnpdf").onclick = () => window.print();
   $("#btnpdftodo").onclick = () => descargarInformeCompleto();
   VIEWS.forEach(([id, lb]) => {

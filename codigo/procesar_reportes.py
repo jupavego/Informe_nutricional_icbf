@@ -24,6 +24,12 @@
      gs_completo.csv          idem para gestantes
      nn_ultima_toma.csv       una fila por nino + marcas + IRN
      gs_ultima_toma.csv       una fila por gestante + marcas + IRG
+     nn_historial.csv         una fila por (nino, toma): solo los campos que
+                               hacen falta para recalcular el IRN por mes en
+                               el tablero (filtro "Meses") -- no toca la
+                               seleccion de "ultima toma" de arriba, es un
+                               insumo aparte para generar_tablero.py
+     gs_historial.csv         idem para gestantes (IRG)
      excepciones.csv          log trazable de cada regla incumplida
      indice_operadores.csv    IDO por entidad contratista
      diccionario_datos.csv    campo, alias, tipo, % llenado, dominio
@@ -186,6 +192,14 @@ def buscar(base, patron):
         if os.path.basename(r).startswith("_"):
             continue
         for f in fs:
+            # "~$..." es el archivo de bloqueo temporal que Excel/Office crea
+            # mientras alguien tiene el libro abierto -- unos bytes, no un
+            # xlsx real. Sin este filtro, el patron por subcadena SI lo
+            # encuentra (trae el mismo nombre) y openpyxl truena al
+            # intentar abrirlo. Encontrado en vivo: ~$Gestantes_CZ_ABURRA_
+            # NORTE.xlsx en la carpeta GS mientras se auditaba el pipeline.
+            if f.startswith("~$"):
+                continue
             if f.lower().endswith((".xlsx", ".xlsm")) and patron.lower() in f.lower():
                 if "consolidado" in f.lower():
                     continue
@@ -380,6 +394,21 @@ def indices_nn(filas, hist, tmax):
         # Su 15 % pasa completo a Antropometrico (50 %->65 %): el IRN queda
         # anclado mas en la medida clinica real y menos en un proxy fragil
         # de puntualidad del registro.
+        #
+        # 2026-08-24: se confirmo con los .xlsx que el sistema SI trae una
+        # toma por MES (columna "Toma Mensual"), no por trimestre -- la
+        # premisa de arriba estaba mal en la unidad de medida. Aun asi, NO
+        # se reinstauro: el problema de fondo no es la unidad, es que no
+        # hay una linea base limpia de "cuando debia empezar/dejar de
+        # contar" por beneficiario (entra a mitad de año, se desvincula,
+        # cambia de UDS).
+        #
+        # 2026-08-25: DECISION DEL USUARIO -- Oportunidad queda excluida del
+        # IRN/IRG de forma deliberada, no es un pendiente. Si se retoma en el
+        # futuro, f_ingreso y estado (VINCULADO/DESVINCULADO) son el punto de
+        # partida para anclar una linea base por beneficiario, pero el umbral
+        # de "cuanto rezago es aceptable" sigue siendo una decision de
+        # politica del programa, no tecnica -- no inventarla aqui.
         irn = (A*.65/.80 + Fx*.15/.80) if T is None else (A*.65 + T*.20 + Fx*.15)
         irn = round(irn, 1)
         c = ("ADECUADO" if irn < 25 else "PREVENTIVO" if irn < 50
@@ -573,6 +602,50 @@ def main():
         w = csv.writer(fh)
         w.writerow(["archivo", "centro_zonal", "municipio", "eas", "uds", "documento", "toma", "reglas"])
         w.writerows(exc)
+
+    # historial compacto por toma (no solo la ultima): insumo para que el
+    # tablero recalcule el IRN/IRG con el subconjunto de meses que el
+    # usuario filtre, sin reimplementar las reglas de depuracion en JS --
+    # "no_eval" ya trae el mismo criterio C1-C4 que usa indices_nn() arriba
+    # para decidir "NO EVALUABLE", calculado sobre las marcas `m` de CADA
+    # fila (no solo la ultima), asi que no hay logica duplicada.
+    with open(os.path.join(dst, "nn_historial.csv"), "w", newline="", encoding="utf-8-sig") as fh:
+        w = csv.writer(fh)
+        w.writerow(["doc", "toma", "cz", "municipio", "eas", "servicio", "uds", "cod_uds",
+                    "edad_meses", "est_pt", "est_te", "est_pe", "z_te", "z_pe", "z_pt",
+                    "peso", "talla", "pb", "pc", "flag", "canalizado", "ftlc", "criterio",
+                    "fact_cyd", "fact_vac", "marcas"])
+        for row, m in filas:
+            # mismas dos piezas que fact() (arriba, linea ~316-323) calcula
+            # para el factor de oportunidad del IRN -- se precalculan aqui,
+            # UNA VEZ por toma, para no duplicar el "NO APLICA"/umbrales en
+            # JS: el tablero solo suma estas dos piezas (ver fact() para el
+            # tercer termino, canalizado/ftlc, que si depende de pt y se
+            # evalua en JS porque pt puede cambiar segun la toma elegida).
+            c_cyd = I(row["n_cyd"])
+            fact_cyd = (0 if (row["n_cyd"] or "").strip() == "NO APLICA" else
+                        30 if c_cyd is None else 0 if c_cyd >= 2 else 30 if c_cyd == 1 else 60)
+            va = (row["vac_aldia"] or "").strip()
+            fact_vac = 0 if va in ("S", "SI") else 40 if va in ("N", "NO") else 20
+            # "marcas" = las mismas reglas por fila que ya trae marcas_calidad
+            # en nn_ultima_toma.csv (linea ~564), calculadas para ESTA toma en
+            # vez de solo la ultima -- el tablero deriva NO EVALUABLE (C1-C4) y
+            # las reglas que muestra en Operadores/Calidad (C5/C6/C8/D1/D3/D4)
+            # de este mismo string, sin reimplementar ningun umbral en JS.
+            w.writerow([row["doc"], row["toma"], row["cz"], row["municipio"], row["eas"],
+                        row["servicio"], row["uds"], row["cod_uds"], row["edad_meses"],
+                        row["est_pt"], row["est_te"], row["est_pe"], row["z_te"], row["z_pe"],
+                        row["z_pt"], row["peso"], row["talla"], row["pb"], row["pc"],
+                        row["flag"], row["canalizado"], row["ftlc"], row["criterio"],
+                        fact_cyd, fact_vac, ";".join(sorted(set(m)))])
+    with open(os.path.join(dst, "gs_historial.csv"), "w", newline="", encoding="utf-8-sig") as fh:
+        w = csv.writer(fh)
+        w.writerow(["doc", "toma", "cz", "municipio", "eas", "uds", "edad_anios", "est_gest",
+                    "peso", "talla", "imc_gest", "controles", "sem_gest"])
+        for row, m in filas_gs:
+            w.writerow([row["doc"], row["toma"], row["cz"], row["municipio"], row["eas"],
+                        row["uds"], row["edad_anios"], row["est_gest"], row["peso"], row["talla"],
+                        row["imc_gest"], row["controles"], row["sem_gest"]])
 
     filas_ido = []
     for eas, e in ido.items():
