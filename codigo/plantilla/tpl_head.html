@@ -88,27 +88,47 @@ header{padding:0}
 .alert b{color:var(--ink)}
 
 /* ---------- controles ---------- */
-.bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin:16px 0 0;
-  background:var(--glass);border:1px solid var(--rule);border-radius:12px;padding:11px 14px;box-shadow:var(--shadow)}
+/* la barra de filtros es la primera decision que toma quien mira el
+   tablero (¿regional o un recorte?) -- por eso lleva su propio acento de
+   color, no el mismo gris plano que cualquier panel, para que no se
+   confunda con contenido de solo lectura */
+.bar{position:relative;display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;margin:18px 0 0;
+  background:linear-gradient(135deg,rgba(114,191,68,.10) 0%,rgba(114,191,68,.03) 55%,transparent 100%),var(--glass);
+  border:1px solid var(--rule);border-top:3px solid var(--icbf-verde);border-radius:14px;
+  padding:14px 16px 13px;box-shadow:var(--shadow)}
 /* solo se ve al imprimir (ver @media print): en pantalla los filtros
    activos ya se leen en los propios selects de .bar, pero esos se
    ocultan en el PDF -- sin esto, un informe filtrado y uno regional
    se verian identicos en papel */
 .filtroimpreso{display:none}
-label.f{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%}
-label.f>select{max-width:100%;min-width:0}
-select,input[type=search]{font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--card);
-  border:1px solid var(--rule);padding:6px 9px;min-width:200px;border-radius:8px}
+label.f{font-family:var(--sans);font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--icbf-verde-osc);display:flex;flex-direction:column;gap:5px;min-width:0;max-width:100%;
+  flex:1 1 190px}
+label.f>select{max-width:100%;min-width:0;width:100%}
+/* flecha propia (se apaga la nativa del navegador) para que el select y el
+   boton de Meses compartan exactamente el mismo indicador de "desplegable" */
+select,input[type=search]{font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--card);
+  border:1.5px solid var(--rule);padding:8px 32px 8px 12px;min-width:200px;border-radius:10px;
+  box-shadow:0 1px 2px rgba(18,33,26,.05);cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+select{appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  background-repeat:no-repeat;background-position:right 11px center;background-size:15px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F8245' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+select:hover,.fmes-btn:hover{border-color:var(--icbf-verde);box-shadow:0 3px 10px rgba(79,130,69,.16);transform:translateY(-1px)}
 select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
 /* filtro "Meses": panel de casillas (no un <select> de una sola opcion,
-   porque se pueden marcar/desmarcar varios meses a la vez) */
-.fmes{position:relative}
-.fmes-btn{font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--card);
-  border:1px solid var(--rule);padding:6px 9px;min-width:200px;max-width:100%;border-radius:8px;
-  text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fmes-btn:hover{border-color:var(--accent2)}
-.fmes-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:20;min-width:220px;max-height:280px;
-  overflow-y:auto;background:var(--card);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--shadow);padding:8px}
+   porque se pueden marcar/desmarcar varios meses a la vez) -- el boton
+   imita al select en todo, incluida la flecha, para que se lea como el
+   mismo tipo de control y no como texto suelto */
+.fmes{position:relative;flex:1 1 190px;min-width:0;max-width:100%}
+.fmes-btn{font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--card);
+  border:1.5px solid var(--rule);padding:8px 32px 8px 12px;min-width:200px;max-width:100%;width:100%;border-radius:10px;
+  box-shadow:0 1px 2px rgba(18,33,26,.05);text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease;position:relative}
+.fmes-btn::after{content:"";position:absolute;right:11px;top:50%;width:15px;height:15px;
+  transform:translateY(-50%);pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F8245' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/15px no-repeat}
+.fmes-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:20;min-width:220px;max-height:280px;
+  overflow-y:auto;background:var(--card);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow);padding:8px}
 .fmes-panel.abierto{display:block}
 .fmes-panel label{display:flex;align-items:center;gap:7px;font-family:var(--sans);font-size:13px;font-weight:400;
   text-transform:none;letter-spacing:normal;color:var(--ink);padding:5px 4px;border-radius:6px;cursor:pointer}
@@ -293,7 +313,7 @@ tbody tr:hover{background:var(--sunk)}
 .gcard .kk{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
 
 /* ---------- referencias bibliograficas (APA), sangria francesa ---------- */
-.biblio{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:14px;max-width:82ch}
+.biblio{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:14px;max-width:none}
 .biblio li{font-size:13.5px;line-height:1.55;color:var(--ink2);padding-left:1.6em;text-indent:-1.6em}
 .biblio li i{color:var(--ink);font-style:italic}
 
@@ -780,9 +800,11 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .ecaida .ec b{color:var(--d2);font-family:var(--mono);font-weight:700}
 
 /* ---------- mosaico de 100 casillas ---------- */
-/* iconos de persona un 33% mas chicos (misma proporcion que el ajuste
-   del grafico del IRN): max-width baja de 470 a 315px (470*.67) */
-.waf{display:grid;grid-template-columns:repeat(20,1fr);gap:5px 4px;max-width:315px;margin:9px 0 2px}
+/* usa todo el ancho del panel en vez de un limite fijo (antes 315px, un
+   resto de cuando el ajuste de tamano de icono se hizo con max-width en
+   vez de con el propio tamano del icono): con 20 columnas a 1fr, el
+   icono crece con el contenedor y no deja una franja vacia al lado */
+.waf{display:grid;grid-template-columns:repeat(20,1fr);gap:5px 4px;max-width:100%;margin:9px 0 2px}
 /* la forma la da la mascara y el color el fondo: asi cada categoria conserva
    su color exacto y la silueta se ve igual en cualquier equipo */
 .waf i{aspect-ratio:.75;transition:transform .1s;
