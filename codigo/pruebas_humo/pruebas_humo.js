@@ -70,14 +70,19 @@ async function main() {
     JSON.stringify(rTabs.errores));
 
   // ---------------------------------------------------------------------
-  // 2) regresion exacta: construirVistaNN/GS con TODOS los meses del
-  //    corte debe reproducir D.nn/D.gs campo por campo (el IRN/IRG
-  //    portado a JS no debe desviarse un solo digito del que calculo
-  //    procesar_reportes.py en Python)
+  // 2) regresion exacta: construirVistaNN/GS con TODOS los meses alguna
+  //    vez vistos (no MESES_CORTE, que a proposito deja fuera los meses
+  //    mas alla del corte comparable -- ver tpl_tail.js) debe reproducir
+  //    D.nn/D.gs campo por campo: el IRN/IRG portado a JS no debe
+  //    desviarse un solo digito del que calculo procesar_reportes.py en
+  //    Python, sea cual sea la toma mas reciente de cada quien.
   // ---------------------------------------------------------------------
   const rRegresion = await page.evaluate(() => {
-    const full = new Set(MESES_CORTE);
-    const vNN = construirVistaNN(full), vGS = construirVistaGS(full);
+    const todosLosMeses = new Set([
+      ...((D.historico && D.historico.nn && D.historico.nn.meses) || []),
+      ...((D.historico && D.historico.gs && D.historico.gs.meses) || []),
+    ]);
+    const vNN = construirVistaNN(todosLosMeses), vGS = construirVistaGS(todosLosMeses);
     const camposNN = ["pt", "te", "pe", "irn", "irc", "nt", "tm", "ev", "cr", "can", "ftlc",
       "kg", "cm", "pb", "pc", "zt", "zp", "fl"];
     const camposGS = ["st", "ed", "tm", "ctl", "irg", "irc", "sg", "kg", "cm", "imc"];
@@ -145,11 +150,16 @@ async function main() {
 
   // ---------------------------------------------------------------------
   // 4) el filtro de Meses tampoco pierde ni duplica: la union de "un solo
-  //    mes" para cada mes del corte debe dar EXACTAMENTE el mismo conjunto
-  //    de personas que "todos los meses"
+  //    mes" para cada mes SELECCIONABLE (MESES_CORTE, que a proposito deja
+  //    fuera lo que esta mas alla del corte comparable) debe dar
+  //    EXACTAMENTE el mismo conjunto de personas que marcarlos todos a la
+  //    vez -- OJO, esto ya NO tiene por que coincidir con "todos los
+  //    meses" sin filtro (FMES=null), porque quien solo tiene toma en un
+  //    mes fuera de MESES_CORTE queda fuera del filtro a proposito.
   // ---------------------------------------------------------------------
   const rMeses = await page.evaluate(() => {
-    FCZ = -1; FMUN = -1; FEAS = -1; FMES = null; aplicarFiltroMeses();
+    FCZ = -1; FMUN = -1; FEAS = -1;
+    FMES = new Set(MESES_CORTE); aplicarFiltroMeses();
     const docsTodos = new Set(idxNN().map(i => N.doc[i]));
     let union = new Set();
     for (const m of MESES_CORTE) {
@@ -161,7 +171,7 @@ async function main() {
     const sobran = [...union].filter(d => !docsTodos.has(d)).length;
     return { docsTodos: docsTodos.size, union: union.size, faltan, sobran };
   });
-  ok("Union de filtros de un solo mes == total sin filtro (sin perder ni duplicar)",
+  ok("Union de filtros de un solo mes == todos los meses seleccionables a la vez (sin perder ni duplicar)",
     rMeses.faltan === 0 && rMeses.sobran === 0 && rMeses.union === rMeses.docsTodos,
     JSON.stringify(rMeses));
 

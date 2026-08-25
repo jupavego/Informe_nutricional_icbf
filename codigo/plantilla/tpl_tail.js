@@ -3962,7 +3962,16 @@ function refrescarFiltros() {
    "se desmarcaron todos", nadie pasa el filtro (mismo criterio marcado
    con NINGUN_VALOR en aquel tablero, aqui basta con el Set vacio porque
    no comparte namespace con otro filtro por numero). */
-const MESES_CORTE = (D.historico && D.historico.nn && D.historico.nn.meses) || [];
+/* Solo se puede filtrar hasta el corte comparable (D.meta.tmax): los meses
+   mas alla de eso (agosto, en el corte actual) todavia no los reportan
+   todos los centros zonales -- ver "Corte desigual" en el log de
+   procesar_reportes.py. Ofrecerlos como opcion de filtro dejaria elegir
+   un periodo que no es parejo entre zonas sin que nada lo impida (el
+   aviso de avisoCorteDesigual mas abajo ya no aplica en la practica con
+   esto, pero se deja como resguardo). Se acordo con el usuario no incluir
+   esos registros en el filtro -- 2026-08-25. */
+const MESES_CORTE = ((D.historico && D.historico.nn && D.historico.nn.meses) || [])
+  .filter(m => m <= D.meta.tmax);
 function etiquetaMeses() {
   if (!FMES) return "todos (" + MESES_CORTE.map(m => MESES_LARGO[m]).join(", ") + ")";
   if (!FMES.size) return "ninguno";
