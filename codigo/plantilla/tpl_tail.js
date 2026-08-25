@@ -1495,7 +1495,7 @@ const TRIM_LBL_G = D.meta.uds_trimestre && D.meta.uds_trimestre.lbl;
 const HT = 0, HPT = 1, HTE = 2, HPE = 3, HZTE = 4, HZPE = 5, HZPT = 6, HEM = 7,
       HCR = 8, HCAN = 9, HFTLC = 10, HKG = 11, HCM = 12, HPB = 13, HPC = 14,
       HFL = 15, HFCYD = 16, HFVAC = 17, HMK = 18;
-const GT = 0, HGST = 1, GCTL = 2, GKG = 3, GCM = 4, GIMC = 5, GED = 6, GSG = 7, GSTL = 8;
+const GT = 0, HGST = 1, GCTL = 2, GKG = 3, GCM = 4, GIMC = 5, GED = 6, GSG = 7, GSTL = 8, GMK = 9;
 
 const S_PT_C = [null, 100, 90, 40, 0, 25, 50, 70];
 const S_TE_C = [null, 70, 30, 0];
@@ -1526,7 +1526,14 @@ function pyRound1(x) {
    periodo" (vTendencia), que promedia este mismo puntaje toma por toma. */
 function antroDeToma(row) {
   const pt = row[HPT], te = row[HTE], pe = row[HPE], zte = row[HZTE], zpe = row[HZPE];
-  const noEval = /C1|C2|C3|C4/.test(row[HMK]);
+  // igual que la exclusion de indices_nn() en procesar_reportes.py: el flag
+  // decide aparte de C2 (flag 1 SI se evalua, Guia Tabla 13), y si C1 se
+  // disparo SOLO por el z_te extremo que ese mismo flag 1 explica (Tabla 9),
+  // tampoco excluye -- si no, la excepcion del flag 1 quedaria anulada.
+  const mk = row[HMK] || "", fl = row[HFL];
+  const excluyeFlag = fl >= 0 && fl !== 0 && fl !== 1;
+  const excluyeC1 = mk.indexOf("C1") >= 0 && fl !== 1;
+  const noEval = excluyeFlag || excluyeC1 || /C3|C4|C8|H1|H2|H3|H4|H5/.test(mk);
   let sPT = pt >= 1 ? S_PT_C[pt] : null, sTE = te >= 1 ? S_TE_C[te] : null, sPE = pe >= 1 ? S_PE_C[pe] : null;
   if (te === 1 && zte != null && zte < -3) sTE = 90;
   if (pe === 1 && zpe != null && zpe < -3) sPE = 90;
@@ -1568,7 +1575,11 @@ function evolDeSeleccion(seleccion) {
 function irgDeSeleccion(seleccion) {
   const row = seleccion[seleccion.length - 1];
   const eg = row[HGST];
-  if (eg < 1) return { row, irg: null, irc: IRC_COD["NO EVALUABLE"] };
+  // igual que la exclusion de analizar_gs() en procesar_reportes.py: H6-H8
+  // (Guia Tabla 13 -- semanas de gestacion, edad de la gestante, embarazo
+  // multiple) excluyen ademas de que est_gest no clasifique.
+  const mk = row[GMK] || "";
+  if (eg < 1 || /H6|H7|H8/.test(mk)) return { row, irg: null, irc: IRC_COD["NO EVALUABLE"] };
   const A = S_GEST_C[eg];
   const w = seleccion.filter(h => h[HGST] >= 1);
   let T = null;

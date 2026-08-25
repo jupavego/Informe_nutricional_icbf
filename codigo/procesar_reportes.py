@@ -668,9 +668,9 @@ def main():
             fact_vac = 0 if va in ("S", "SI") else 40 if va in ("N", "NO") else 20
             # "marcas" = las mismas reglas por fila que ya trae marcas_calidad
             # en nn_ultima_toma.csv (linea ~564), calculadas para ESTA toma en
-            # vez de solo la ultima -- el tablero deriva NO EVALUABLE (C1-C4) y
-            # las reglas que muestra en Operadores/Calidad (C5/C6/C8/D1/D3/D4)
-            # de este mismo string, sin reimplementar ningun umbral en JS.
+            # vez de solo la ultima -- el tablero deriva NO EVALUABLE (C3/C4/
+            # C8/H1-H5, mas el flag salvo el 1, ver antroDeToma en tpl_tail.js)
+            # de este mismo string, sin reimplementar ningun umbral aparte.
             w.writerow([row["doc"], row["toma"], row["cz"], row["municipio"], row["eas"],
                         row["servicio"], row["uds"], row["cod_uds"], row["edad_meses"],
                         row["est_pt"], row["est_te"], row["est_pe"], row["z_te"], row["z_pe"],
@@ -680,11 +680,11 @@ def main():
     with open(os.path.join(dst, "gs_historial.csv"), "w", newline="", encoding="utf-8-sig") as fh:
         w = csv.writer(fh)
         w.writerow(["doc", "toma", "cz", "municipio", "eas", "uds", "edad_anios", "est_gest",
-                    "peso", "talla", "imc_gest", "controles", "sem_gest"])
+                    "peso", "talla", "imc_gest", "controles", "sem_gest", "marcas"])
         for row, m in filas_gs:
             w.writerow([row["doc"], row["toma"], row["cz"], row["municipio"], row["eas"],
                         row["uds"], row["edad_anios"], row["est_gest"], row["peso"], row["talla"],
-                        row["imc_gest"], row["controles"], row["sem_gest"]])
+                        row["imc_gest"], row["controles"], row["sem_gest"], ";".join(sorted(set(m)))])
 
     filas_ido = []
     for eas, e in ido.items():

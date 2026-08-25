@@ -448,6 +448,7 @@ def _toma_gs(r):
         I(r["edad_anios"]) if I(r["edad_anios"]) is not None else -1,
         I(r["sem_gest"]) if I(r["sem_gest"]) is not None else -1,
         _gst_code_laxo((r["est_gest"] or "").strip()),   # solo para mostrar (G["st"])
+        r.get("marcas") or "",
     ]
 
 GS_HIST = [sorted((_toma_gs(r) for r in HIST_GS_ROWS.get(doc, [])), key=lambda x: x[0])
