@@ -92,18 +92,26 @@ header{padding:0}
    tablero (¿regional o un recorte?) -- por eso lleva su propio acento de
    color, no el mismo gris plano que cualquier panel, para que no se
    confunda con contenido de solo lectura */
-.bar{position:relative;display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;margin:18px 0 0;
+/* grid con auto-fit en vez de flex-wrap: cada control pide un minimo de
+   190px y el grid decide solo cuantos caben por fila. Con flex-wrap, una
+   fila que cae con un solo sobrante (ej. "Meses" solo) se estira para
+   llenar toda la fila y deja huecos raros -- el grid nunca estira una
+   columna mas alla de lo que le toca, sea cual sea el ancho de pantalla. */
+.bar{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:12px 16px;align-items:end;margin:18px 0 0;
   background:linear-gradient(135deg,rgba(114,191,68,.10) 0%,rgba(114,191,68,.03) 55%,transparent 100%),var(--glass);
   border:1px solid var(--rule);border-top:3px solid var(--icbf-verde);border-radius:14px;
   padding:14px 16px 13px;box-shadow:var(--shadow)}
+/* los botones son celdas del mismo grid -- sin esto "stretch" (el default
+   de las celdas) los infla al ancho completo de su columna */
+.bar>button{justify-self:start}
 /* solo se ve al imprimir (ver @media print): en pantalla los filtros
    activos ya se leen en los propios selects de .bar, pero esos se
    ocultan en el PDF -- sin esto, un informe filtrado y uno regional
    se verian identicos en papel */
 .filtroimpreso{display:none}
 label.f{font-family:var(--sans);font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--icbf-verde-osc);display:flex;flex-direction:column;gap:5px;min-width:0;max-width:100%;
-  flex:1 1 190px}
+  color:var(--icbf-verde-osc);display:flex;flex-direction:column;gap:5px;min-width:0;max-width:100%}
 label.f>select{max-width:100%;min-width:0;width:100%}
 /* flecha propia (se apaga la nativa del navegador) para que el select y el
    boton de Meses compartan exactamente el mismo indicador de "desplegable" */
@@ -119,7 +127,11 @@ select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid 
    porque se pueden marcar/desmarcar varios meses a la vez) -- el boton
    imita al select en todo, incluida la flecha, para que se lea como el
    mismo tipo de control y no como texto suelto */
-.fmes{position:relative;flex:1 1 190px;min-width:0;max-width:100%}
+/* SIN flex-basis aqui: label.f es flex en columna, asi que un "190px" en
+   este nivel se aplica a la ALTURA (eje principal), no al ancho -- fue
+   justo el bug que inflaba esta celda del grid. label.f ya estira a sus
+   hijos al ancho completo por su "align-items:stretch" por defecto. */
+.fmes{position:relative;min-width:0;max-width:100%}
 .fmes-btn{font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--card);
   border:1.5px solid var(--rule);padding:8px 32px 8px 12px;min-width:200px;max-width:100%;width:100%;border-radius:10px;
   box-shadow:0 1px 2px rgba(18,33,26,.05);text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;
