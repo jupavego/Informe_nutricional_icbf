@@ -295,9 +295,13 @@ reglas = []
 for ln in open(os.path.join(D, "PANEL depuracion y calidad.txt"), encoding="utf-8"):
     if len(ln) > 70 and ln[:1].isalpha() and ln[1:2].isdigit() and ln[4:5] == " ":
         try:
+            # el origen va al final de la linea entre corchetes: "... [GUIA]"
+            lns = ln.rstrip()
+            origen = lns[lns.rfind("[") + 1:-1] if lns.endswith("]") else "PROPIA"
             reglas.append({"cod": ln[:2], "amb": ln[6:9].strip(), "desc": ln[10:64].strip(),
                            "n": int(ln[64:74].strip().replace(".", "")),
-                           "pct": float(ln[74:82].strip().rstrip("%"))})
+                           "pct": float(ln[74:82].strip().rstrip("%")),
+                           "origen": origen})
         except ValueError:
             pass
 

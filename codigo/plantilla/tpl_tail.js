@@ -1506,7 +1506,7 @@ const SUBS = {
   critica: "Listado nominal de los casos que requieren seguimiento",
   gestantes: "Estado nutricional de la población gestante",
   operadores: "Desempeño de las entidades contratistas",
-  calidad: "Las 27 reglas aplicadas a la descarga",
+  calidad: "Las reglas aplicadas a la descarga, incluida la Guía ICBF",
   historico: "Evolución mes a mes del cargue y el registro",
   fuentes: "Los reportes e insumos con los que se construye el tablero",
   glosario: "Qué mide cada indicador y cómo se calcula",
@@ -2326,19 +2326,45 @@ function vOperadores() {
   s.append(lectura(`El índice va de ${abajo(String(ord[ord.length - 1].ido).replace(".", ","))} a ${arriba(String(ord[0].ido).replace(".", ","))} sobre 100 entre ${mil(filas.length)} operadores. Esa dispersión es la que permite sustentar una decisión: si todos estuvieran en un rango de dos o tres puntos, el índice no serviría para priorizar nada.`));
 }
 
+const BLOQUES_CALIDAD = {
+  A: "Integridad de la descarga",
+  B: "Validez de dominio · catálogo Res. 2465",
+  C: "Plausibilidad biológica",
+  D: "Coherencia interna",
+  E: "Completitud",
+  F: "Duplicidad",
+  G: "Seguimiento",
+  H: "Criterios de depuración · Guía ICBF Tablas 13 y 14",
+};
+const ORIGEN_LB = {
+  GUIA: ["o-guia", "Fuente oficial", "Normativa oficial (Guía ICBF, Anexo 1, Resolución 2465)",
+    "Reglas que están escritas, con ese número o rango, en la Guía ICBF G44.PP v1, su Anexo 1, o en la Resolución 2465 de 2016 que la Guía adopta como catálogo. Son las oficiales: si algo choca con una regla propia, esta gana.",
+    "M5 13l4 4L19 7"],
+  OMS: ["o-oms", "Convención internacional", "OMS · OPS",
+    "Límites o criterios de organismos internacionales que la Guía usa pero no transcribe como tabla propia.",
+    "M12 3a9 9 0 100 18 9 9 0 000-18z M3 12h18 M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9z"],
+  PROPIA: ["o-propia", "Diseño del equipo", "Autoría propia de este tablero",
+    "Reglas que el equipo del tablero diseñó porque tenían sentido operativo, pero que NO están en la Guía ni en la Resolución 2465. Se mantienen mientras no contradigan ni dupliquen una regla oficial.",
+    "M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z M14.5 6.5l3 3"],
+};
 function vCalidad() {
   const s = $("#v-calidad"); s.textContent = "";
   s.append(h2("Reglas de depuración aplicadas a la descarga", "calidad"));
-  s.append(el("p", "note", "Estas 27 reglas se evalúan sobre las " + mil(D.meta.filas_nn) + " filas de toma, antes de deduplicar; por eso son cifras regionales y no responden a los filtros. Ninguna regla borra datos: cada una marca y deja constancia en un log trazable."));
-  s.append(reglasPuntos(D.reglas, {
-    A: "Integridad de la descarga",
-    B: "Validez de dominio · catálogo Res. 2465",
-    C: "Plausibilidad biológica · límites OMS",
-    D: "Coherencia interna",
-    E: "Completitud",
-    F: "Duplicidad",
-    G: "Seguimiento",
-  }));
+  s.append(el("p", "note", "Estas " + D.reglas.length + " reglas se evalúan sobre las " + mil(D.meta.filas_nn) + " filas de toma, antes de deduplicar; por eso son cifras regionales y no responden a los filtros. La mayoría solo marca y deja constancia en un log trazable; las reglas C1, C2 (flag distinto de 0 y 1), C3, C4, C8 y H1 a H8 además EXCLUYEN la toma de prevalencias, Semáforo e IRN/IRG."));
+  s.append(el("p", "note", "Segmentadas por ORIGEN: primero lo que dice la Guía ICBF (y lo que de ahí se deriva), luego lo que es autoría propia del tablero. Ante cualquier choque entre una regla propia y una de la Guía, la de la Guía es la válida — por eso C1, C3, C4 y C9 ya usan los números exactos de la Guía y no los que el tablero traía antes."));
+  ["GUIA", "OMS", "PROPIA"].forEach(origen => {
+    const rs = D.reglas.filter(r => r.origen === origen);
+    if (!rs.length) return;
+    const [cls, kick, tit, sub, path] = ORIGEN_LB[origen];
+    const marcados = rs.reduce((a, r) => a + r.n, 0);
+    const h = el("div", "origen-cal " + cls);
+    h.innerHTML = `<div class="oc-ico"><svg viewBox="0 0 24 24"><path d="${path}"/></svg></div>`
+      + `<div class="oc-txt"><div class="oc-kick">${esc(kick)}</div><h3>${esc(tit)}</h3><p>${esc(sub)}</p></div>`
+      + `<div class="oc-badge"><b>${rs.length}</b><span>${rs.length === 1 ? "regla" : "reglas"}</span></div>`;
+    h.title = mil(marcados) + " registros marcados en total por este bloque";
+    s.append(h);
+    s.append(reglasPuntos(rs, BLOQUES_CALIDAD));
+  });
 
   const peor = D.reglas.slice().sort((a, b) => b.pct - a.pct)[0];
   const d1 = D.reglas.find(x => x.cod === "D1");
@@ -2454,6 +2480,12 @@ function vFuentes() {
     g.append(c);
   });
   s.append(g);
+
+  s.append(h2("Referencias bibliográficas"));
+  s.append(el("p", "note", "La documentación normativa y técnica que se tuvo en cuenta para construir este tablero — depuración de datos, clasificación antropométrica y método de cálculo de los índices — citada en formato APA 7."));
+  const ol = el("ol", "biblio");
+  BIBLIOGRAFIA.forEach(ref => ol.append(el("li", null, ref)));
+  s.append(ol);
 }
 
 

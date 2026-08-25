@@ -106,34 +106,51 @@ ORD_GEST = {"IMC ADECUADO PARA LA EDAD GESTACIONAL": 0, "SOBREPESO PARA LA EDAD 
             "OBESIDAD PARA LA EDAD GESTACIONAL": 2, "BAJO PESO PARA LA EDAD GESTACIONAL": 2}
 
 # ---- catalogo de reglas ------------------------------------------------------
+# Cada regla lleva su ORIGEN, para que Calidad del dato en el tablero pueda
+# segmentar que es normativa oficial y que es diseno propio del equipo:
+#   GUIA    la Guia ICBF G44.PP v1 (Tablas 1-14), su Anexo 1, o la
+#           Resolucion 2465 de 2016 que la Guia adopta como catalogo oficial
+#   OMS     limites o convenciones de organismos internacionales (OMS/OPS)
+#           que la Guia usa pero no transcribe como tabla propia
+#   PROPIA  diseno del equipo del tablero: no esta en la Guia ni en Res. 2465
 REGLAS = [
-    ("A1", "NN", "Falta el archivo de un centro zonal esperado", "Volver a descargar"),
-    ("A2", "NN", "Fila completamente vacia arrastrada del consolidado", "Descartar"),
-    ("B1", "NN", "Estado Peso/Talla fuera del catalogo Res. 2465", "Reasignar a 'Sin clasificar'"),
-    ("B2", "NN", "Estado Talla/Edad fuera del catalogo", "Reasignar a 'Sin clasificar'"),
-    ("B3", "NN", "Estado Peso/Edad fuera del catalogo", "Reasignar a 'Sin clasificar'"),
-    ("B4", "GS", "Estado nutricional gestante fuera del catalogo", "Reasignar a 'Sin clasificar'"),
-    ("C1", "NN", "Puntaje Z fuera de los limites OMS de plausibilidad", "EXCLUIR de prevalencias"),
-    ("C2", "NN", "Flag de la OMS distinto de cero", "EXCLUIR de prevalencias"),
-    ("C3", "AMB", "Peso fuera del rango fisico esperado", "EXCLUIR"),
-    ("C4", "AMB", "Talla fuera del rango fisico esperado", "EXCLUIR"),
-    ("C5", "NN", "IMC recalculado desde peso y talla fuera de 8-30", "Revisar medicion"),
-    ("C6", "NN", "La talla disminuye respecto de la toma anterior", "Reinduccion a la UDS"),
-    ("C7", "NN", "Salto de mas de 3 DE en Z peso/talla entre tomas", "Revisar medicion"),
-    ("C8", "NN", "El sistema ya marco 'talla inferior a la ultima toma'", "Cruzar con C6"),
-    ("C9", "GS", "Semanas de gestacion fuera de 4-45", "Revisar"),
-    ("D1", "NN", "La clasificacion no corresponde a su puntaje Z", "Recalcular desde Z"),
-    ("D2", "NN", "Canalizacion 'NO' en nino SIN desnutricion aguda", "No contar como no canalizado"),
-    ("D3", "NN", "Nino CON desnutricion aguda sin dato de canalizacion", "ALERTA a supervision"),
-    ("D4", "NN", "Nino CON desnutricion aguda sin dato de FTLC", "ALERTA a supervision"),
-    ("D5", "GS", "IMC gestante incoherente con peso y talla", "Revisar medicion"),
-    ("E1", "NN", "Sin puntaje Z de peso/talla", "Excluir de ese indicador"),
-    ("E2", "AMB", "Sin EPS registrada", "Solicitar al operador"),
-    ("E3", "NN", "Lactancia materna exclusiva con el valor por defecto 6", "Verificar captura"),
-    ("F1", "AMB", "Documento repetido dentro de la misma toma", "Deduplicar"),
-    ("F2", "AMB", "Mismo documento en mas de una unidad de servicio", "Verificar traslado"),
-    ("G1", "AMB", "Beneficiario con una sola toma en el periodo", "Revisar cumplimiento"),
-    ("G2", "AMB", "Ultima toma con dos periodos o mas de rezago", "Revisar cumplimiento"),
+    ("A1", "NN", "Falta el archivo de un centro zonal esperado", "Volver a descargar", "PROPIA"),
+    ("A2", "NN", "Fila completamente vacia arrastrada del consolidado", "Descartar", "PROPIA"),
+    ("B1", "NN", "Estado Peso/Talla fuera del catalogo Res. 2465", "Reasignar a 'Sin clasificar'", "GUIA"),
+    ("B2", "NN", "Estado Talla/Edad fuera del catalogo", "Reasignar a 'Sin clasificar'", "GUIA"),
+    ("B3", "NN", "Estado Peso/Edad fuera del catalogo", "Reasignar a 'Sin clasificar'", "GUIA"),
+    ("B4", "GS", "Estado nutricional gestante fuera del catalogo", "Reasignar a 'Sin clasificar'", "GUIA"),
+    ("C1", "NN", "Puntaje Z fuera de los limites de plausibilidad (Guia Tabla 9)", "EXCLUIR salvo lo que el flag 1 explica", "GUIA"),
+    ("C2", "NN", "Flag de la OMS distinto de cero (flag 1 SI se evalua, Guia Tabla 13)", "EXCLUIR salvo flag 1", "GUIA"),
+    ("C3", "AMB", "Peso fuera del rango fisico por grupo etario (Guia Tabla 10)", "EXCLUIR", "GUIA"),
+    ("C4", "AMB", "Talla fuera del rango fisico por grupo etario (Guia Tabla 10)", "EXCLUIR", "GUIA"),
+    ("C5", "NN", "IMC recalculado desde peso y talla fuera de 8-30", "Revisar medicion", "PROPIA"),
+    ("C6", "NN", "La talla disminuye respecto de la toma anterior (proxy simple de la Tabla 11)", "Reinduccion a la UDS", "PROPIA"),
+    ("C7", "NN", "Salto de mas de 3 DE en Z peso/talla entre tomas", "Revisar medicion", "PROPIA"),
+    ("C8", "NN", "Talla inferior a la ultima toma (Guia Tabla 13/14)", "EXCLUIR de prevalencias", "GUIA"),
+    ("C9", "GS", "Edad gestacional fuera de 4-42 semanas (Guia Tabla 10)", "Revisar", "GUIA"),
+    ("D1", "NN", "La clasificacion no corresponde a su puntaje Z", "Recalcular desde Z", "PROPIA"),
+    ("D2", "NN", "Canalizacion 'NO' en nino SIN desnutricion aguda", "No contar como no canalizado", "PROPIA"),
+    ("D3", "NN", "Nino CON desnutricion aguda sin dato de canalizacion", "ALERTA a supervision", "PROPIA"),
+    ("D4", "NN", "Nino CON desnutricion aguda sin dato de FTLC", "ALERTA a supervision", "PROPIA"),
+    ("D5", "GS", "IMC gestante incoherente con peso y talla (Guia, consistencia P/T)", "Revisar medicion", "GUIA"),
+    ("E1", "NN", "Sin puntaje Z de peso/talla", "Excluir de ese indicador", "PROPIA"),
+    ("E2", "AMB", "Sin EPS registrada", "Solicitar al operador", "PROPIA"),
+    ("E3", "NN", "Lactancia materna exclusiva con el valor por defecto 6", "Verificar captura", "PROPIA"),
+    ("F1", "AMB", "Documento repetido dentro de la misma toma", "Deduplicar", "PROPIA"),
+    ("F2", "AMB", "Mismo documento en mas de una unidad de servicio", "Verificar traslado", "PROPIA"),
+    ("G1", "AMB", "Beneficiario con una sola toma en el periodo", "Revisar cumplimiento", "PROPIA"),
+    ("G2", "AMB", "Ultima toma con dos periodos o mas de rezago", "Revisar cumplimiento", "PROPIA"),
+    # ---- criterios de depuracion de la Guia ICBF (Tabla 13 y 14, G44.PP v1) ----
+    ("H1", "NN", "Grupo de Edad = Grupo 3 (Guia Tabla 13/14)", "EXCLUIR de prevalencias", "GUIA"),
+    ("H2", "NN", "Edad negativa o mayor a 59 meses (Guia Tabla 13/14)", "EXCLUIR de prevalencias", "GUIA"),
+    ("H3", "NN", "Sexo = Intersexual (Guia Tabla 13/14)", "EXCLUIR de prevalencias", "GUIA"),
+    ("H4", "NN", "Discapacidad Down/Acondroplasia/Paralisis cerebral (Guia)", "EXCLUIR (necesita otro patron)", "GUIA"),
+    ("H5", "NN", "Al momento de la valoracion, menor de 40 semanas (Guia)", "EXCLUIR de prevalencias", "GUIA"),
+    ("H6", "GS", "Semanas de gestacion en blanco, 0 o menores a 6 (Guia)", "EXCLUIR de prevalencias", "GUIA"),
+    ("H7", "GS", "Edad de la gestante menor a 10 o mayor a 60 anios (Guia)", "EXCLUIR de prevalencias", "GUIA"),
+    ("H8", "GS", "Embarazo multiple (Guia Tabla 13)", "EXCLUIR de prevalencias", "GUIA"),
+    ("H9", "GS", "Sexo = Hombre (Guia Tabla 13)", "SOLO INDICADOR, no se excluye (falta la columna)", "GUIA"),
 ]
 
 # =============================================================================
@@ -249,11 +266,20 @@ def analizar_nn(ruta, R, det, exc, log):
                     R["C1"] += 1; m.append("C1"); det["C1"][zc] += 1; break
             if I(row["flag"]) not in (0, None):
                 R["C2"] += 1; m.append("C2"); det["C2"][row["flag"]] += 1
-            if peso is not None and not (1.5 <= peso <= 40): R["C3"] += 1; m.append("C3")
-            if talla is not None and not (40 <= talla <= 135): R["C4"] += 1; m.append("C4")
+            # rangos de la Guia Tabla 10 para ninas y ninos 0-72 meses (antes 1.5-40 / 40-135, propios)
+            if peso is not None and not (0.5 <= peso <= 45): R["C3"] += 1; m.append("C3")
+            if talla is not None and not (30 <= talla <= 130): R["C4"] += 1; m.append("C4")
             if peso and talla and talla > 0 and not (8 <= peso/((talla/100.0)**2) <= 30):
                 R["C5"] += 1; m.append("C5")
             if (row["talla_inferior"] or "").strip() == "SI": R["C8"] += 1; m.append("C8")
+            # ---- criterios de depuracion de la Guia ICBF (Tabla 13/14) --------
+            if (row["grupo_edad"] or "").strip() == "GRUPO3": R["H1"] += 1; m.append("H1")
+            em = I(row["edad_meses"])
+            if em is not None and (em < 0 or em > 59): R["H2"] += 1; m.append("H2")
+            if (row["sexo"] or "").strip() == "INTERSEX": R["H3"] += 1; m.append("H3")
+            if (row["dx_discapacidad"] or "").strip() in ("SINDROME DE DOWN", "ACONDROPLASIA", "PARALISIS CEREBRAL"):
+                R["H4"] += 1; m.append("H4")
+            if (row["menor40sem"] or "").strip() == "SI": R["H5"] += 1; m.append("H5")
             if pt in CAT_PT and zpt is not None and clasificar_pt(zpt) != pt:
                 R["D1"] += 1; m.append("D1"); det["D1"][f"{pt} -> {clasificar_pt(zpt)}"] += 1
             can = (row["canalizado"] or "").strip(); ftlc = (row["ftlc"] or "").strip()
@@ -367,7 +393,13 @@ def indices_nn(filas, hist, tmax):
         if pt in AGUDA:
             e["aguda"] += 1
             if (row["canalizado"] or "").strip() != "SI": e["sin_canalizar"] += 1
-        if any(x in m for x in ("C1", "C2", "C3", "C4")):
+        flg = I(row["flag"])
+        excluye_flag = flg is not None and flg not in (0, 1)   # Guia Tabla 13: el flag 1 SI se evalua
+        # Flag 1 (Tabla 9) significa exactamente "z_te fuera de rango": si C1 se
+        # disparo SOLO por eso, el flag 1 ya lo explica y no debe excluir -- si
+        # no, la excepcion de la Guia para flag 1 quedaria anulada por C1.
+        excluye_c1 = "C1" in m and flg != 1
+        if any(x in m for x in ("C3", "C4", "C8", "H1", "H2", "H3", "H4", "H5")) or excluye_flag or excluye_c1:
             noeval += 1; res.append((row, m, None, "NO EVALUABLE")); continue
         A = antro(pt, te, pe, F(row["z_te"]), F(row["z_pe"]))
         if A is None:
@@ -405,12 +437,19 @@ def analizar_gs(ruta, R, det, exc):
             peso = F(row["peso"]); talla = F(row["talla"]); imc = F(row["imc_gest"])
             sem = I(row["sem_gest"])
             if eg and eg not in CAT_GEST: R["B4"] += 1; m.append("B4"); det["B4"][eg] += 1
-            if peso is not None and not (30 <= peso <= 180): R["C3"] += 1; m.append("C3")
-            if talla is not None and not (120 <= talla <= 200): R["C4"] += 1; m.append("C4")
-            if sem is not None and not (4 <= sem <= 45): R["C9"] += 1; m.append("C9")
+            # rangos de la Guia Tabla 10 para gestantes (antes 30-180 / 120-200, propios)
+            if peso is not None and not (25 <= peso <= 160): R["C3"] += 1; m.append("C3")
+            if talla is not None and not (120 <= talla <= 190): R["C4"] += 1; m.append("C4")
+            # rango fisiologico de la Guia (texto 7.3.1): menor a 4 o mayor a 42 semanas (antes 4-45, propio)
+            if sem is not None and not (4 <= sem <= 42): R["C9"] += 1; m.append("C9")
             if peso and talla and imc and talla > 0:
                 if abs(imc - peso/((talla/100.0)**2)) > 1.0: R["D5"] += 1; m.append("D5")
             if not (row["eps"] or "").strip(): R["E2"] += 1; m.append("E2")
+            # ---- criterios de depuracion de la Guia ICBF (Tabla 13) -----------
+            if sem is None or sem < 6: R["H6"] += 1; m.append("H6")
+            ea = I(row["edad_anios"])
+            if ea is not None and (ea < 10 or ea > 60): R["H7"] += 1; m.append("H7")
+            if (row["multiple"] or "").strip() == "SI": R["H8"] += 1; m.append("H8")
             if toma is not None: par[(doc, toma)] += 1
             docs_uds[doc].add(row["cod_uds"])
             hist[doc].append((toma, eg))
@@ -430,7 +469,7 @@ def analizar_gs(ruta, R, det, exc):
     for doc, (row, m) in ultima.items():
         eg = (row["est_gest"] or "").strip()
         A = S_GEST.get(eg)
-        if A is None:
+        if A is None or any(x in m for x in ("H6", "H7", "H8")):
             res.append((row, m, None, "NO EVALUABLE")); continue
         v = sorted((x for x in hist[doc] if x[0] is not None and x[1] in ORD_GEST),
                    key=lambda x: x[0])
@@ -605,12 +644,12 @@ def main():
         W("=" * 104)
         W(f"{'REGLA':<6}{'':<4}{'DESCRIPCION':<54}{'MARCADOS':>10}{'%':>8}  ACCION")
         W("-" * 104)
-        for cod, amb, desc, acc in REGLAS:
+        for cod, amb, desc, acc, origen in REGLAS:
             v = R[cod]
             base_ = len(hist) if cod in ("F2", "G1") else (ngs if amb == "GS" else nnn)
             pct = 100.0*v/base_ if base_ else 0
             sev = "!!" if pct > 5 else ("!" if v else "  ")
-            W(f"{cod:<6}{amb:<4}{desc[:53]:<54}{mil(v):>10}{pct:>7.2f}% {sev} {acc}")
+            W(f"{cod:<6}{amb:<4}{desc[:53]:<54}{mil(v):>10}{pct:>7.2f}% {sev} {acc}  [{origen}]")
         W("-" * 104)
         W(f"Filas con al menos una marca: {mil(len(exc))}")
         for r in ("B1", "B2", "B3", "B4", "C1", "C2", "D1"):
@@ -641,8 +680,10 @@ def main():
         W("")
         W("=" * 104); W("INDICE DE RIESGO GESTACIONAL (IRG)"); W("=" * 104)
         t2 = sum(cat_gs.values())
+        noeval_gs = sum(1 for _, _, _, c in res_gs if c == "NO EVALUABLE")
         for k in ("ADECUADO", "PREVENTIVO", "ALTO RIESGO", "CRITICO"):
             W(f"  {k:<14}{mil(cat_gs[k]):>9}{100.0*cat_gs[k]/max(t2,1):>8.2f}%   " + "#"*int(100.0*cat_gs[k]/max(t2,1)/2))
+        W(f"  {'NO EVALUABLE':<14}{mil(noeval_gs):>9}{100.0*noeval_gs/max(t2+noeval_gs,1):>8.2f}%   (excluidos por implausibilidad)")
         W("")
         W("=" * 104); W("INDICE DE DESEMPENO DEL OPERADOR (IDO)   0 = mejor, 100 = peor"); W("=" * 104)
         W(f"  {'IDO':>6}{'n':>8}{'Cobert':>8}{'1 toma':>8}{'NoCumpl':>9}{'Marcas':>8}{'SinCanal':>10}  ENTIDAD")

@@ -273,6 +273,11 @@ tbody tr:hover{background:var(--sunk)}
 .gcard p{margin:0;font-size:13px;color:var(--ink2)}
 .gcard .kk{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
 
+/* ---------- referencias bibliograficas (APA), sangria francesa ---------- */
+.biblio{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:14px;max-width:82ch}
+.biblio li{font-size:13.5px;line-height:1.55;color:var(--ink2);padding-left:1.6em;text-indent:-1.6em}
+.biblio li i{color:var(--ink);font-style:italic}
+
 .empty{padding:26px;text-align:center;color:var(--ink3);font-size:13.5px;border:1px dashed var(--rule);border-radius:12px;margin:11px 0}
 footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-size:11.5px;color:var(--ink3);line-height:1.6}
 
@@ -647,6 +652,42 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .catdato{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;
   letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
 .catdato i{width:8px;height:8px;border-radius:50%;background:var(--icbf-verde);flex:none}
+
+/* ---------- segmentacion de Calidad del dato por origen de la regla ----------
+   Banner degradado con icono, al estilo de .fx .hd / #tt::before, pero con
+   paleta propia por origen para que se distingan de un vistazo. */
+.origen-cal{position:relative;display:flex;align-items:flex-start;gap:14px;
+  padding:16px 20px 17px;border-radius:16px;margin:32px 0 14px;overflow:hidden;
+  box-shadow:0 10px 26px rgba(12,25,18,.16),0 2px 6px rgba(12,25,18,.10)}
+/* brillo suave arrinconado arriba a la derecha (detras de la insignia),
+   no una banda que cruce el texto -- por eso NO se reusa var(--gloss) */
+.origen-cal::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(130% 110% at 100% 0%,rgba(255,255,255,.30) 0%,rgba(255,255,255,0) 52%)}
+.origen-cal.o-guia{background:linear-gradient(135deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 55%,var(--icbf-verde) 100%)}
+.origen-cal.o-oms{background:linear-gradient(135deg,var(--icbf-azul-osc) 0%,var(--icbf-azul) 100%)}
+.origen-cal.o-propia{background:linear-gradient(135deg,#3B2A52 0%,var(--icbf-purpura) 55%,var(--icbf-magenta) 100%)}
+.origen-cal .oc-ico{position:relative;flex:none;width:42px;height:42px;border-radius:13px;
+  background:rgba(18,33,26,.22);display:grid;place-items:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.origen-cal .oc-ico svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.origen-cal .oc-txt{position:relative;flex:1;min-width:0;width:100%;padding-right:82px}
+.origen-cal .oc-kick,.origen-cal h3,.origen-cal p{text-shadow:0 1px 3px rgba(10,20,14,.35)}
+.origen-cal .oc-kick{font-size:11.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:rgba(255,255,255,.9);margin:0 0 4px}
+.origen-cal h3{margin:0 0 6px;font-size:20px;font-weight:700;color:#fff}
+.origen-cal p{margin:0;font-size:14.5px;line-height:1.6;color:rgba(255,255,255,.97);max-width:none}
+.origen-cal .oc-badge{position:absolute;top:0;right:0;text-align:center;color:#fff;
+  background:rgba(255,255,255,.16);border-radius:12px;padding:7px 14px;text-shadow:0 1px 3px rgba(10,20,14,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.origen-cal .oc-badge b{display:block;font-family:var(--mono);font-size:22px;line-height:1.1}
+.origen-cal .oc-badge span{display:block;font-size:9px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;opacity:.9;margin-top:1px}
+@media (max-width:560px){
+  .origen-cal{flex-wrap:wrap}
+  .origen-cal .oc-txt{padding-right:0}
+  .origen-cal .oc-badge{position:static;margin-top:8px;display:inline-block}
+}
 .leg{margin:9px 0 0;padding-top:9px;border-top:1px solid var(--rule2)}
 .panel .leg:first-child{margin-top:0;padding-top:0;border-top:none}
 
@@ -1064,7 +1105,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 
 <script>
 const D = __DATOS__;
-/* busca una de las 27 reglas de depuracion por codigo (A1..G2); nunca
+/* busca una de las reglas de depuracion por codigo (A1..H8); nunca
    falla: si no la encuentra devuelve ceros, para no romper una ficha */
 const regla = cod => D.reglas.find(r => r.cod === cod) || { n: 0, pct: 0, desc: "" };
 
@@ -1345,13 +1386,18 @@ flag:{t:"Flag de plausibilidad OMS",k:"Control de calidad",
               Flag = 0  → ${p1(pct(okD,okD+okF))} dentro de los límites
               Flag ≠ 0  → ${p1(pct(malF,malD+malF))} fuera de los límites
 
-USO EN ESTE   los registros con Flag distinto de cero
-TABLERO       se excluyen del índice de riesgo y quedan
-              marcados como NO EVALUABLE, en vez de
-              contaminar el promedio de su operador`;
+USO EN ESTE   los registros con Flag 2 a 7 se excluyen
+TABLERO       del índice de riesgo y quedan marcados como
+              NO EVALUABLE, en vez de contaminar el
+              promedio de su operador. El Flag 1 SE
+              EVALÚA (no se excluye): la Guía ICBF
+              (Tabla 13) aclara que en servicios de
+              nutrición es posible encontrar casos reales
+              de muy bajo peso para la talla y talla muy
+              baja para la edad`;
  },
- n:"Límites de plausibilidad de la OMS",
- v:"<b>Es un control que ya existe y nadie usa.</b> Un puntaje Z fuera de estos límites es biológicamente imposible: sin filtrar, ese registro puede entrar como obesidad severa o desnutrición severa cuando en realidad es un error de digitación."},
+ n:"Límites de plausibilidad de la OMS · Guía ICBF G44.PP v1, Tabla 13",
+ v:"<b>Es un control que ya existe y antes no se aprovechaba del todo.</b> Un puntaje Z fuera de estos límites es biológicamente imposible: sin filtrar, ese registro puede entrar como obesidad severa o desnutrición severa cuando en realidad es un error de digitación. El Flag 1 es la excepción: la Guía ICBF pide mantenerlo evaluable."},
 
 talla_inf:{t:"Talla inferior a la última toma",k:"Control de calidad",
  q:"Marca del sistema cuando la talla medida es menor que la de la valoración anterior. Un niño no encoge.",
@@ -1365,13 +1411,25 @@ EN EL CORTE   ${mil(c8.n)} registros marcados con 'SI'
               = ${p2(c8.pct)} de las filas
 
 REGLA PROPIA  el tablero además calcula su versión
-DEL TABLERO   dentro del periodo (regla C6) y encuentra
-              ${mil(c6.n)}: no coincide exactamente con lo
-              anterior porque el sistema compara contra
+DEL TABLERO   dentro del periodo (regla C6, autoría propia)
+              y encuentra ${mil(c6.n)}: no coincide exactamente
+              con lo anterior porque el sistema compara contra
               todo el histórico y el tablero solo contra
-              las tomas de este corte (${D.meta.periodo})`;
+              las tomas de este corte (${D.meta.periodo}).
+              C6 hoy solo mira si la talla BAJÓ; la Guía
+              (Tabla 11) además exige un ritmo de crecimiento
+              esperado por trimestre según la edad (≈4 cm/
+              trimestre en menores de 2 años, ≈2 cm/trimestre
+              de 2 a 5 años) — esa versión completa aún no
+              está implementada, C6 es un proxy más simple
+
+USO EN ESTE   la Guía ICBF (Tablas 13 y 14) pide depurar
+TABLERO       (excluir) toda toma marcada 'SI': el tablero
+              la excluye de prevalencias, Semáforo e
+              IRN/IRG y la deja como NO EVALUABLE`;
  },
- v:"Otro control que el sistema ya calcula y que no se está aprovechando. Es el mejor indicador disponible de calidad de la medición por unidad de servicio."},
+ n:"Guía ICBF G44.PP v1, Tablas 13 y 14",
+ v:"Un niño no encoge: por eso, siguiendo la Guía ICBF, esta marca ya no solo se cruza contra C6 — excluye la toma del análisis. Sigue siendo el mejor indicador disponible de calidad de la medición por unidad de servicio."},
 
 evolucion:{t:"Evolución entre tomas",k:"Tendencia",
  q:"Si el beneficiario se acercó o se alejó de la adecuación entre su primera y su última valoración del periodo.",
@@ -1442,7 +1500,7 @@ TRAMOS    0–24 Adecuado    50–74 Alto riesgo
 
 ESTE CORTE  ${mil(a.irc[1])} adecuado · ${mil(a.irc[2])} preventivo
             · ${mil(a.irc[3])} alto riesgo · ${mil(a.irc[4])} crítico`,
- v:"Se excluyen antes los registros con Flag distinto de cero o puntaje Z fuera de los límites OMS: quedan como <b>no evaluables</b>. La vacunación se dejó fuera del peso porque el 99,7 % tiene carnet y no discrimina."},
+ v:"Se excluyen antes los registros con Flag 2 a 7 (el 1 sí se evalúa, Guía ICBF), puntaje Z fuera de los límites OMS, talla inferior a la última toma, grupo de edad 3, edad negativa o mayor a 59 meses, sexo intersexual, diagnóstico de síndrome de Down/acondroplasia/parálisis cerebral, o menor de 40 semanas al valorar: quedan como <b>no evaluables</b>. La vacunación se dejó fuera del peso porque el 99,7 % tiene carnet y no discrimina."},
 
 ido:{t:"Índice de Desempeño del Operador (IDO)",k:"Índice compuesto · 0 a 100",
  q:"Mide al operador, no al niño. Cero es el mejor resultado.",
@@ -1459,7 +1517,7 @@ SEGUIMIENTO   % con Número de toma del beneficiario
 CUMPLIMIENTO  % con Criterio de cumplimiento de
               nutrición (71) en NO CUMPLE
 CALIDAD       % de registros marcados por alguna de las
-              27 reglas de plausibilidad o coherencia
+              reglas de plausibilidad o coherencia
               de este tablero (ver Calidad del dato)
 RESPUESTA     de los casos con Estado Peso Talla (57)
 CLÍNICA       en desnutrición aguda, % SIN canalización
@@ -1507,9 +1565,9 @@ estado nutricional de la gestante.`,
  v:"<b>No se observó relación con el estado nutricional:</b> con 0–2 controles el 39,0 % tiene IMC adecuado; con 6 o más, el 39,3 %. Prácticamente idéntico. Significa que el control prenatal, tal como está registrado, no está moviendo el estado nutricional — y eso vale reportarlo."},
 
 calidad:{t:"Reglas de depuración",k:"Control de calidad",
- q:"Veintisiete reglas que se aplican a cada descarga para saber qué tan confiable es antes de graficar nada.",
+ q:"Treinta y cinco reglas que se aplican a cada descarga para saber qué tan confiable es antes de graficar nada, incluidos los criterios de depuración de la Guía ICBF.",
  c:"Se apoyan en las 71 columnas de niñas y niños y las 44 de gestantes",
- m:()=>`SEIS BLOQUES
+ m:()=>`SIETE BLOQUES
 
   A  INTEGRIDAD     archivos y centros zonales esperados
   B  DOMINIO        categorías fuera del catálogo 2465
@@ -1520,11 +1578,17 @@ calidad:{t:"Reglas de depuración",k:"Control de calidad",
   E  COMPLETITUD    campos obligatorios vacíos
   F  DUPLICIDAD     documento repetido, niño en varias UDS
   G  SEGUIMIENTO    cobertura y rezago de la toma
+  H  GUÍA ICBF      criterios de depuración de la Guía
+                    (Tablas 13 y 14, G44.PP v1): grupo de
+                    edad, edad, sexo, discapacidad, talla
+                    inferior, prematurez y, en gestantes,
+                    semanas de gestación, edad y embarazo
+                    múltiple
 
 SE EVALÚAN    sobre las ${mil(D.meta.filas_nn)} filas de toma, ANTES
               de deduplicar. Por eso son cifras regionales
               y no responden a los filtros del tablero.`,
- v:"<b>Ninguna regla borra datos.</b> Cada una marca y deja constancia en un log trazable hasta el archivo, la unidad de servicio y el documento. La decisión de excluir se toma en el tablero, con la marca a la vista."},
+ v:"<b>La mayoría de las reglas solo marca</b> y deja constancia en un log trazable hasta el archivo, la unidad de servicio y el documento — la decisión de excluir se toma en el tablero, con la marca a la vista. Las reglas C1, C2 (flag distinto de 0 y de 1), C3, C4, C8 y H1 a H8 sí EXCLUYEN la toma de prevalencias, Semáforo e IRN/IRG, porque así lo exige la Guía ICBF para que los registros analizados sean comparables con los patrones de referencia."},
 
 lactancia:{t:"Lactancia materna",k:"Campo no utilizable",
  q:"Meses de lactancia materna exclusiva y total.",
@@ -1661,7 +1725,7 @@ de la fórmula)     fijan una clase mínima SIN IMPORTAR el
                    dentro de cada clase; el piso clínico
                    decide la clase cuando la norma no admite
                    ambigüedad`,
- v:"Ponderar no es promediar: el componente antropométrico del IRN pesa 65 % porque es lo que de verdad importa clínicamente. Los demás (tendencia y factores asociados) ayudan a ordenar prioridades dentro de un mismo nivel de riesgo, pero no lo definen."},
+ v:"Ponderar no es promediar: el componente antropométrico del IRN pesa 65 % porque es lo que de verdad importa clínicamente. Los demás (tendencia y factores asociados) ayudan a ordenar prioridades dentro de un mismo nivel de riesgo, pero no lo definen. <b>El IRN, el IRG y el IDO, con estos pesos y estos tramos de 0 a 100, son autoría propia de este tablero: no están en la Guía ICBF ni en la Resolución 2465.</b> Se construyen SOBRE clasificaciones que sí son oficiales (Estado Peso/Talla, Estado Talla/Edad, Flag, Resolución 2465) para poder priorizar, pero el índice compuesto en sí es un diseño del equipo — no un instrumento normativo del ICBF."},
 };
 
 /* ---------- fuentes de referencia ----------
@@ -1711,6 +1775,19 @@ const FUENTES = {
   n:"openstreetmap.org",
   v:"Ninguno: es un servicio público, sin cruce con los datos del corte."},
 };
+
+/* ---------- referencias bibliograficas (formato APA 7) ----------
+   Solo la documentacion normativa y tecnica que efectivamente se tuvo
+   en cuenta para construir este tablero (depuracion, clasificacion
+   antropometrica, indices). No es la bibliografia completa de la Guia:
+   es la lista de lo que ESTE tablero cita en su codigo y sus fichas. */
+const BIBLIOGRAFIA = [
+ "Instituto Colombiano de Bienestar Familiar. (2026). <i>Guía para la implementación del sistema de vigilancia y seguimiento nutricional del ICBF</i> (G44.PP, Versión 1). ICBF.",
+ "Instituto Colombiano de Bienestar Familiar. (2026). <i>Anexo 1. Orientaciones para la toma de medidas antropométricas en el ICBF</i> (A14.G4.PP, Versión 1). ICBF.",
+ "Ministerio de Salud y Protección Social. (2016). <i>Resolución 2465 de 2016. Por la cual se adoptan los indicadores antropométricos, patrones de referencia y puntos de corte para la clasificación del estado nutricional de niñas, niños y adolescentes menores de 18 años de edad, adultos de 18 a 64 años de edad y gestantes adultas</i>. MSPS.",
+ "Ministerio de Salud y Protección Social. (2018). <i>Resolución 3280 de 2018. Por medio de la cual se adoptan los lineamientos técnicos y operativos de la Ruta Integral de Atención para la Promoción y Mantenimiento de la Salud y la Ruta Integral de Atención en Salud para la Población Materno Perinatal</i>. MSPS.",
+ "Organización Mundial de la Salud. (2006). <i>WHO child growth standards: Length/height-for-age, weight-for-age, weight-for-length, weight-for-height and body mass index-for-age: Methods and development</i>. OMS.",
+];
 
 /* ---------- utilidades ---------- */
 const $ = s => document.querySelector(s);
