@@ -39,6 +39,16 @@ GST = ["", "BAJO PESO PARA LA EDAD GESTACIONAL", "IMC ADECUADO PARA LA EDAD GEST
 ORD = {2: 3, 3: 2, 4: 1, 5: 0, 6: 1, 7: 2, 1: 3}   # pt code -> distancia a la adecuacion
 ORD = {1: 3, 2: 2, 3: 1, 4: 0, 5: 1, 6: 2, 7: 3}
 
+def _gst_code_laxo(st):
+    """Codigo de GST para MOSTRAR (G["st"]/vista): admite sinonimos que no
+    calzan exacto (DELGADEZ, NORMAL, etc.). Distinto del match ESTRICTO que
+    exige indices_gs() en procesar_reportes.py para decidir NO EVALUABLE en
+    el IRG (ver _toma_gs mas abajo) -- no usar este para puntuar el IRG."""
+    return GST.index(st) if st in GST else (
+        1 if "BAJO PESO" in st or st == "DELGADEZ" else
+        3 if "SOBREPESO" in st else 4 if "OBESIDAD" in st else
+        2 if "ADECUADO" in st or st == "NORMAL" else 0)
+
 def F(v):
     try: return float(str(v).replace(",", "."))
     except (ValueError, TypeError): return None
@@ -65,6 +75,19 @@ with open(os.path.join(D, "nn_completo.csv"), encoding="utf-8-sig") as fh:
         t = I(r["toma"])
         if t is not None:
             hist[r["doc"]].append((t, (r["est_pt"] or "").strip()))
+
+# mismo criterio que "hist" de arriba (todas las gestantes alguna vez
+# vistas en gs_completo.csv, vinculadas o no) para que BENEF_GS signifique
+# lo mismo que BENEF_NN=len(hist) -- antes contaba solo len(set(G["doc"])),
+# que ya viene filtrado a VINCULADO (ver mas abajo), dando un numero que no
+# es comparable con BENEF_NN pese al nombre paralelo. Detectado en
+# auditoria de congruencia 2026-08-24: el campo no se muestra en ninguna
+# pantalla hoy, pero quedaba mal calculado para quien lo use despues.
+hist_gs_docs = set()
+with open(os.path.join(D, "gs_completo.csv"), encoding="utf-8-sig") as fh:
+    for r in csv.DictReader(fh):
+        if I(r["toma"]) is not None:
+            hist_gs_docs.add(r["doc"])
 
 ntomas = {}; evol = {}; trans = Counter()
 for d, v in hist.items():
@@ -138,10 +161,7 @@ with open(os.path.join(D, "gs_ultima_toma.csv"), encoding="utf-8-sig") as fh:
         t = I(r["toma"]) or 0
         GTMAX = max(GTMAX, t)
         st = (r["est_gest"] or "").strip()
-        code = GST.index(st) if st in GST else (
-            1 if "BAJO PESO" in st or st == "DELGADEZ" else
-            3 if "SOBREPESO" in st else 4 if "OBESIDAD" in st else
-            2 if "ADECUADO" in st or st == "NORMAL" else 0)
+        code = _gst_code_laxo(st)
         G["doc"].append(r["doc"]); G["nombre"].append(nombre_de(r))
         G["cz"].append(gcz(r["cz"]))
         G["mun"].append(gmun(r["municipio"])); G["eas"].append(geas(r["eas"]))
@@ -255,6 +275,14 @@ def calidad_extra(ruta):
     OMS = {"z_pt": (-5, 5), "z_te": (-6, 6), "z_pe": (-6, 5), "z_imc": (-5, 5)}
     zvals = {k: [] for k in OMS}
     flag = Counter()
+    # preferencia de digito en peso/talla: si el instrumento se lee con
+    # precision de 0,1 (kg/cm), el decimal deberia repartirse ~parejo entre
+    # 0-9. Una concentracion fuerte en .0/.5 es la señal estandar (SMART/
+    # ENA) de que se esta redondeando a ojo en vez de leyendo el
+    # instrumento -- una alerta sobre la TECNICA de medicion en la UDS, no
+    # sobre el calculo del tablero. Se mide sobre nn_completo.csv (todas las
+    # tomas, antes de deduplicar), igual que el resto de este panel.
+    dig_peso = Counter(); dig_talla = Counter()
     with open(ruta, encoding="utf-8-sig") as fh:
         for r in csv.DictReader(fh):
             zf = {k: F(r[k]) for k in OMS}
@@ -268,16 +296,26 @@ def calidad_extra(ruta):
                 flag["ok_dentro" if dentro else "ok_fuera"] += 1
             elif fl is not None:
                 flag["mal_dentro" if dentro else "mal_fuera"] += 1
+            p = F(r["peso"])
+            if p is not None: dig_peso[round(p * 10) % 10] += 1
+            t = F(r["talla"])
+            if t is not None: dig_talla[round(t * 10) % 10] += 1
     def resumen_z(vs):
         if not vs:
             return {"n": 0, "media": None, "mediana": None}
         return {"n": len(vs), "media": round(sum(vs) / len(vs), 2),
                 "mediana": round(statistics.median(vs), 2)}
-    return {"z": {k: resumen_z(v) for k, v in zvals.items()}, "flag": dict(flag)}
+    def resumen_dig(c):
+        tot = sum(c.values())
+        return {"n": tot, "pct": [round(100 * c.get(d, 0) / tot, 1) if tot else 0.0 for d in range(10)]}
+    return {"z": {k: resumen_z(v) for k, v in zvals.items()}, "flag": dict(flag),
+            "digitos": {"peso": resumen_dig(dig_peso), "talla": resumen_dig(dig_talla)}}
 
 CALIDAD_EXTRA = calidad_extra(os.path.join(D, "nn_completo.csv"))
 print("calidad_extra  flag:", CALIDAD_EXTRA["flag"], " z_pt media/mediana:",
       CALIDAD_EXTRA["z"]["z_pt"]["media"], CALIDAD_EXTRA["z"]["z_pt"]["mediana"])
+print("digitos  peso .0:", CALIDAD_EXTRA["digitos"]["peso"]["pct"][0], "%  talla .0+.5:",
+      round(CALIDAD_EXTRA["digitos"]["talla"]["pct"][0] + CALIDAD_EXTRA["digitos"]["talla"]["pct"][5], 1), "%")
 
 def estado_split(ruta):
     c = Counter()
@@ -310,7 +348,7 @@ for ln in open(os.path.join(D, "PANEL depuracion y calidad.txt"), encoding="utf-
 FILAS_NN = sum(1 for _ in io.open(os.path.join(D, "nn_completo.csv"), encoding="utf-8-sig")) - 1
 FILAS_GS = sum(1 for _ in io.open(os.path.join(D, "gs_completo.csv"), encoding="utf-8-sig")) - 1
 BENEF_NN = len(hist)
-BENEF_GS = len(set(G["doc"]))
+BENEF_GS = len(hist_gs_docs)
 tmin = min(t for t in C["tm"] if t) if C["tm"] else 1
 # corte comparable: la ultima toma que alcanzan todos los centros zonales
 _mx = {}
@@ -338,6 +376,85 @@ print("periodo:", PERIODO, "| corte comparable toma", TCOM, "de", TMAX,
       "| beneficiarios NN:", BENEF_NN, "| faltan:", FALTAN or "ninguno",
       "| rezagados:", REZAG or "ninguno")
 
+# ---------------- historial por toma (filtro "Meses" del tablero) -------------
+# Un arreglo por beneficiario, alineado por POSICION con C["doc"]/G["doc"]
+# (mismo orden, mismo largo) -- nunca lleva el documento adentro, asi que
+# la anonimizacion PUBLICO=1 de abajo no tiene que tocarlo. Con esto el
+# tablero recalcula, en el navegador, el estado clinico y el IRN/IRG "como
+# si el corte fuera solo esos meses" -- sin eso, filtrar por mes solo
+# podria esconder/mostrar la fila ya calculada de la ULTIMA toma (lo que
+# ya hacen fcz/fmun/feas), que no sirve para ver "como estaba la poblacion
+# en el trimestre X": ver conversacion que agrego este filtro.
+#
+# La ubicacion (cz/mun/eas/uds) de cada toma NO se repite aqui a proposito:
+# el filtro de Meses sigue usando la ubicacion de la ULTIMA toma (la misma
+# que ya trae C/G) para filtrar y mostrar, exactamente igual que hoy --
+# evita duplicar 6 campos mas por toma (case F2, "beneficiario en mas de
+# una UDS", es la unica situacion real donde esto no coincide, y ya esta
+# marcada aparte como anomalia de calidad, no como el caso comun).
+HIST_NN_ROWS = defaultdict(list)
+with open(os.path.join(D, "nn_historial.csv"), encoding="utf-8-sig") as fh:
+    for r in csv.DictReader(fh):
+        if I(r["toma"]) is not None:
+            HIST_NN_ROWS[r["doc"]].append(r)
+
+def _toma_nn(r):
+    can = (r["canalizado"] or "").strip(); ft = (r["ftlc"] or "").strip()
+    _k = F(r["peso"]); _c = F(r["talla"]); _b = F(r["pb"]); _f = F(r["pc"])
+    _zt = F(r["z_te"]); _zp = F(r["z_pt"]); _ze = F(r["z_pe"])
+    return [
+        I(r["toma"]),
+        PT.index(r["est_pt"]) if r["est_pt"] in PT else 0,
+        TE.index(r["est_te"]) if r["est_te"] in TE else 0,
+        PE.index(r["est_pe"]) if r["est_pe"] in PE else 0,
+        round(_zt, 2) if _zt is not None else None,
+        round(_ze, 2) if _ze is not None else None,
+        round(_zp, 2) if _zp is not None else None,
+        I(r["edad_meses"]) if I(r["edad_meses"]) is not None else -1,
+        1 if (r["criterio"] or "") == "NO CUMPLE" else 0,
+        1 if can == "SI" else 2 if can == "NO" else 0,
+        1 if ft == "SI" else 2 if ft == "NO" else 0,
+        round(_k, 1) if _k else -1,
+        round(_c, 1) if _c else -1,
+        round(_b, 1) if _b else -1,
+        round(_f, 1) if _f else -1,
+        I(r["flag"]) if I(r["flag"]) is not None else -1,
+        I(r["fact_cyd"]) or 0,
+        I(r["fact_vac"]) or 0,
+        r["marcas"] or "",
+    ]
+
+NN_HIST = [sorted((_toma_nn(r) for r in HIST_NN_ROWS.get(doc, [])), key=lambda x: x[0])
+           for doc in C["doc"]]
+
+HIST_GS_ROWS = defaultdict(list)
+with open(os.path.join(D, "gs_historial.csv"), encoding="utf-8-sig") as fh:
+    for r in csv.DictReader(fh):
+        if I(r["toma"]) is not None:
+            HIST_GS_ROWS[r["doc"]].append(r)
+
+def _toma_gs(r):
+    _k = F(r["peso"]); _c = F(r["talla"]); _i = F(r["imc_gest"])
+    return [
+        I(r["toma"]),
+        # estricto (no la variante con sinonimos de _gst_code_laxo): asi
+        # coincide con como analizar_gs() decide "NO EVALUABLE" via
+        # S_GEST.get(eg) en procesar_reportes.py -- codigo 0 = no evaluable.
+        GST.index(r["est_gest"]) if r["est_gest"] in GST else 0,
+        I(r["controles"]) if I(r["controles"]) is not None else -1,
+        round(_k, 1) if _k else -1,
+        round(_c, 1) if _c else -1,
+        round(_i, 1) if _i else -1,
+        I(r["edad_anios"]) if I(r["edad_anios"]) is not None else -1,
+        I(r["sem_gest"]) if I(r["sem_gest"]) is not None else -1,
+        _gst_code_laxo((r["est_gest"] or "").strip()),   # solo para mostrar (G["st"])
+    ]
+
+GS_HIST = [sorted((_toma_gs(r) for r in HIST_GS_ROWS.get(doc, [])), key=lambda x: x[0])
+           for doc in G["doc"]]
+print("historial por toma  NN:", sum(len(v) for v in NN_HIST), "filas  GS:",
+      sum(len(v) for v in GS_HIST), "filas")
+
 # reemplazo del documento por un identificador anonimo, SOLO para la
 # version publica y SOLO despues de que ntomas/evol/hist ya usaron el
 # valor real -- nada de lo que se calcula con "doc" cambia, solo deja
@@ -363,8 +480,10 @@ data = {
     "dic": {"cz": dcz.a, "mun": dmun.a, "eas": deas.a, "serv": dserv.a, "uds": duds.a, "cu": dcu.a},
     "cat": {"pt": PT, "te": TE, "pe": PE, "irc": IRC, "gst": GST},
     "nn": C,
+    "nn_hist": NN_HIST,
     "gdic": {"cz": gcz.a, "mun": gmun.a, "eas": geas.a, "uds": guds.a},
     "gs": G,
+    "gs_hist": GS_HIST,
     "gs_disc": GS_DISC,
     "trans": [{"a": a, "b": b, "n": n} for (a, b), n in trans.most_common(20)],
     "reglas": reglas,

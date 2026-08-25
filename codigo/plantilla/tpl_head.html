@@ -100,6 +100,20 @@ label.f>select{max-width:100%;min-width:0}
 select,input[type=search]{font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--card);
   border:1px solid var(--rule);padding:6px 9px;min-width:200px;border-radius:8px}
 select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+/* filtro "Meses": panel de casillas (no un <select> de una sola opcion,
+   porque se pueden marcar/desmarcar varios meses a la vez) */
+.fmes{position:relative}
+.fmes-btn{font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--card);
+  border:1px solid var(--rule);padding:6px 9px;min-width:200px;max-width:100%;border-radius:8px;
+  text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fmes-btn:hover{border-color:var(--accent2)}
+.fmes-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:20;min-width:220px;max-height:280px;
+  overflow-y:auto;background:var(--card);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--shadow);padding:8px}
+.fmes-panel.abierto{display:block}
+.fmes-panel label{display:flex;align-items:center;gap:7px;font-family:var(--sans);font-size:13px;font-weight:400;
+  text-transform:none;letter-spacing:normal;color:var(--ink);padding:5px 4px;border-radius:6px;cursor:pointer}
+.fmes-panel label:hover{background:var(--glass)}
+.fmes-panel hr{border:none;border-top:1px solid var(--rule);margin:4px 0}
 .pop{margin-left:auto;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink2);text-align:right;line-height:1.35}
 .pop b{color:var(--accent);font-size:19px;font-family:var(--sans)}
 
@@ -115,6 +129,11 @@ section{padding-top:20px}
 h2{font-size:16px;font-weight:600;margin:28px 0 3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 h2:first-child{margin-top:2px}
 .note{font-size:13.5px;color:var(--ink2);margin:0 0 11px;max-width:92ch}
+/* variante de aviso para .note: mismo tono que ya usa el icono de .alert,
+   para una advertencia puntual dentro de una vista (ej. corte desigual
+   bajo un filtro de meses personalizado) sin montar todo el bloque .alert */
+.note.warn2{color:#7A5300;background:rgba(240,180,40,.14);border:1px solid rgba(240,180,40,.4);
+  border-radius:8px;padding:8px 12px;max-width:none}
 
 /* boton de ficha tecnica */
 .btn{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink2);
@@ -1074,6 +1093,12 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
   <label class="f">Centro zonal<select id="fcz"></select></label>
   <label class="f">Municipio de la UDS<select id="fmun"></select></label>
   <label class="f">Entidad contratista<select id="feas"></select></label>
+  <label class="f">Meses
+    <div class="fmes">
+      <button type="button" id="fmesTrigger" class="fmes-btn"><span class="fmes-label">Todos los meses</span></button>
+      <div class="fmes-panel" id="fmesPanel"></div>
+    </div>
+  </label>
   <button type="button" id="reset" class="btn">Limpiar filtros</button>
   <button type="button" id="btnpdf" class="dbaja">
     <svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h4"/></svg>
@@ -1092,6 +1117,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 <section id="v-operadores" hidden></section>
 <section id="v-calidad" hidden></section>
 <section id="v-historico" hidden></section>
+<section id="v-tendencia" hidden></section>
 <section id="v-fuentes" hidden></section>
 <section id="v-glosario" hidden></section>
 

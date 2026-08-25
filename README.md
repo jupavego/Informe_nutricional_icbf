@@ -52,6 +52,21 @@ python codigo/empaquetar.py "TABLERO NUTRICIONAL.html"   # 3. empaqueta
 El paso 1 es parametrizable: apuntándolo a otra carpeta de reportes aplica las
 mismas 27 reglas de depuración y los mismos índices, sin tocar nada más.
 
+## Cómo se publica el sitio público
+
+```bash
+PUBLICO=1 python codigo/generar_tablero.py
+python codigo/empaquetar.py "TABLERO PUBLICO.html"
+bash codigo/pruebas_humo/publicar.sh
+```
+
+El último paso copia el archivo a `$HOME/tablero-publico` (ver
+`codigo/api_publico/LEEME.txt`), publica con `vercel --prod --yes` y corre
+las pruebas de humo automáticamente justo después, en la misma corrida —
+no hay que acordarse de correrlas aparte. Si algo sale mal, `publicar.sh`
+termina con código distinto de cero. Detalle de qué revisan las pruebas en
+`codigo/pruebas_humo/LEEME.txt`.
+
 ## Criterios que conviene no perder
 
 - **Ninguna regla borra datos.** Cada una marca el registro y deja el rastro en
