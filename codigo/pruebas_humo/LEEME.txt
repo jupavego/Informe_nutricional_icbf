@@ -1,0 +1,42 @@
+Pruebas de humo del tablero publicado -- corre en un navegador real
+(Playwright), sin pasar por un LLM. Pensado para volver a correrse cada
+vez que se publique una version nueva del sitio, sin gastar tokens.
+
+Que revisa:
+  1. El sitio responde 200.
+  2. Las 13 pestañas renderizan sin lanzar ninguna excepcion.
+  3. El IRN/IRG que calcula tpl_tail.js en el navegador reproduce EXACTO
+     (0 diferencias) el que calculo procesar_reportes.py en Python --
+     regresion contra D.nn/D.gs con el filtro de Meses en "todos".
+  4. Combinar filtros (centro zonal + municipio + entidad + meses) no
+     pierde ni duplica beneficiarios -- suma de partes == total, en todos
+     los niveles, mas la union de "un solo mes" == "todos los meses".
+  5. Ningun IRN/IRC/Z-score sale como NaN, infinito o fuera de rango, bajo
+     varios filtros (incluye meses no consecutivos).
+  6. El panel del filtro de Meses existe y abre con un clic real.
+
+Como correrlas:
+
+    cd codigo/pruebas_humo
+    npm install          (una sola vez -- si ya existe el cache de
+                          Chromium de Playwright en el equipo, no vuelve
+                          a descargar el navegador, solo el paquete JS)
+    node pruebas_humo.js
+
+Sale con codigo 0 si todo paso, 1 si algo fallo. Para probar un archivo
+generado localmente ANTES de publicarlo (por ejemplo antes de correr
+`vercel --prod`), pasar la ruta como file:// en vez de la URL:
+
+    node pruebas_humo.js "file:///C:/ruta/a/TABLERO NUTRICIONAL.html"
+
+Si Playwright no tiene el navegador instalado (maquina nueva, sin cache
+previo), instalarlo una vez con:
+
+    npx playwright install chromium
+
+Estas pruebas nacieron de la auditoria de congruencia hecha a mano en la
+conversacion de 2026-08 (ver memoria del proyecto): validan exactamente
+lo que ahi se comprobo uno por uno -- que el filtro de Meses no tenga la
+clase de bug que tuvo el tablero de georreferenciacion de Buen Comienzo
+Medellin (perdida/duplicacion al combinar filtros), y que el IRN/IRG
+portado a JavaScript no se desvie del que calcula el Python original.

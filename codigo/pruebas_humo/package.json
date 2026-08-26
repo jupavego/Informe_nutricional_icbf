@@ -1,0 +1,12 @@
+{
+  "name": "pruebas-humo-tablero",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pruebas de humo del tablero nutricional publicado (project-bnivv.vercel.app). Ver LEEME.txt.",
+  "scripts": {
+    "test": "node pruebas_humo.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}

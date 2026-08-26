@@ -88,18 +88,68 @@ header{padding:0}
 .alert b{color:var(--ink)}
 
 /* ---------- controles ---------- */
-.bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin:16px 0 0;
-  background:var(--glass);border:1px solid var(--rule);border-radius:12px;padding:11px 14px;box-shadow:var(--shadow)}
+/* la barra de filtros es la primera decision que toma quien mira el
+   tablero (¿regional o un recorte?) -- por eso lleva su propio acento de
+   color, no el mismo gris plano que cualquier panel, para que no se
+   confunda con contenido de solo lectura */
+/* .bar separa dos cosas que no deben competir por el mismo ancho de
+   columna: el GRID de filtros (crece a lo ancho, auto-fit) y el boton
+   "Limpiar filtros" (un tamaño fijo y chico). Metidos los cinco en un
+   solo grid, "Limpiar filtros" reservaba una columna de >=190px para
+   un boton de 110px y dejaba un hueco enorme a su lado. Como flex-item
+   suelto, ocupa solo lo que necesita y se acomoda junto al grid o debajo,
+   sin reservar de mas. */
+.bar{position:relative;display:flex;flex-wrap:wrap;gap:12px 16px;align-items:end;margin:18px 0 0;
+  background:linear-gradient(135deg,rgba(114,191,68,.10) 0%,rgba(114,191,68,.03) 55%,transparent 100%),var(--glass);
+  border:1px solid var(--rule);border-top:3px solid var(--icbf-verde);border-radius:14px;
+  padding:14px 16px 13px;box-shadow:var(--shadow)}
+/* grid con auto-fit: cada filtro pide un minimo de 190px y el grid decide
+   solo cuantos caben por fila -- nunca estira una columna mas alla de lo
+   que le toca, sea cual sea el ancho de pantalla. */
+.bar-filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:12px 16px;flex:1 1 480px;min-width:0;align-items:end}
+#reset{flex:none}
 /* solo se ve al imprimir (ver @media print): en pantalla los filtros
    activos ya se leen en los propios selects de .bar, pero esos se
    ocultan en el PDF -- sin esto, un informe filtrado y uno regional
    se verian identicos en papel */
 .filtroimpreso{display:none}
-label.f{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%}
-label.f>select{max-width:100%;min-width:0}
-select,input[type=search]{font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--card);
-  border:1px solid var(--rule);padding:6px 9px;min-width:200px;border-radius:8px}
+label.f{font-family:var(--sans);font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--icbf-verde-osc);display:flex;flex-direction:column;gap:5px;min-width:0;max-width:100%}
+label.f>select{max-width:100%;min-width:0;width:100%}
+/* flecha propia (se apaga la nativa del navegador) para que el select y el
+   boton de Meses compartan exactamente el mismo indicador de "desplegable" */
+select,input[type=search]{font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--card);
+  border:1.5px solid var(--rule);padding:8px 32px 8px 12px;min-width:200px;border-radius:10px;
+  box-shadow:0 1px 2px rgba(18,33,26,.05);cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+select{appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  background-repeat:no-repeat;background-position:right 11px center;background-size:15px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F8245' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+select:hover,.fmes-btn:hover{border-color:var(--icbf-verde);box-shadow:0 3px 10px rgba(79,130,69,.16);transform:translateY(-1px)}
 select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+/* filtro "Meses": panel de casillas (no un <select> de una sola opcion,
+   porque se pueden marcar/desmarcar varios meses a la vez) -- el boton
+   imita al select en todo, incluida la flecha, para que se lea como el
+   mismo tipo de control y no como texto suelto */
+/* SIN flex-basis aqui: label.f es flex en columna, asi que un "190px" en
+   este nivel se aplica a la ALTURA (eje principal), no al ancho -- fue
+   justo el bug que inflaba esta celda del grid. label.f ya estira a sus
+   hijos al ancho completo por su "align-items:stretch" por defecto. */
+.fmes{position:relative;min-width:0;max-width:100%}
+.fmes-btn{font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink);background:var(--card);
+  border:1.5px solid var(--rule);padding:8px 32px 8px 12px;min-width:200px;max-width:100%;width:100%;border-radius:10px;
+  box-shadow:0 1px 2px rgba(18,33,26,.05);text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease;position:relative}
+.fmes-btn::after{content:"";position:absolute;right:11px;top:50%;width:15px;height:15px;
+  transform:translateY(-50%);pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F8245' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/15px no-repeat}
+.fmes-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:20;min-width:220px;max-height:280px;
+  overflow-y:auto;background:var(--card);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow);padding:8px}
+.fmes-panel.abierto{display:block}
+.fmes-panel label{display:flex;align-items:center;gap:7px;font-family:var(--sans);font-size:13px;font-weight:400;
+  text-transform:none;letter-spacing:normal;color:var(--ink);padding:5px 4px;border-radius:6px;cursor:pointer}
+.fmes-panel label:hover{background:var(--glass)}
+.fmes-panel hr{border:none;border-top:1px solid var(--rule);margin:4px 0}
 .pop{margin-left:auto;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink2);text-align:right;line-height:1.35}
 .pop b{color:var(--accent);font-size:19px;font-family:var(--sans)}
 
@@ -115,6 +165,11 @@ section{padding-top:20px}
 h2{font-size:16px;font-weight:600;margin:28px 0 3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 h2:first-child{margin-top:2px}
 .note{font-size:13.5px;color:var(--ink2);margin:0 0 11px;max-width:92ch}
+/* variante de aviso para .note: mismo tono que ya usa el icono de .alert,
+   para una advertencia puntual dentro de una vista (ej. corte desigual
+   bajo un filtro de meses personalizado) sin montar todo el bloque .alert */
+.note.warn2{color:#7A5300;background:rgba(240,180,40,.14);border:1px solid rgba(240,180,40,.4);
+  border-radius:8px;padding:8px 12px;max-width:none}
 
 /* boton de ficha tecnica */
 .btn{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink2);
@@ -272,6 +327,11 @@ tbody tr:hover{background:var(--sunk)}
 .gcard h4{margin:0 0 3px;font-size:14px;font-weight:600}
 .gcard p{margin:0;font-size:13px;color:var(--ink2)}
 .gcard .kk{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+
+/* ---------- referencias bibliograficas (APA), sangria francesa ---------- */
+.biblio{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:14px;max-width:none}
+.biblio li{font-size:13.5px;line-height:1.55;color:var(--ink2);padding-left:1.6em;text-indent:-1.6em}
+.biblio li i{color:var(--ink);font-style:italic}
 
 .empty{padding:26px;text-align:center;color:var(--ink3);font-size:13.5px;border:1px dashed var(--rule);border-radius:12px;margin:11px 0}
 footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-size:11.5px;color:var(--ink3);line-height:1.6}
@@ -667,6 +727,42 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .catdato{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;
   letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
 .catdato i{width:8px;height:8px;border-radius:50%;background:var(--icbf-verde);flex:none}
+
+/* ---------- segmentacion de Calidad del dato por origen de la regla ----------
+   Banner degradado con icono, al estilo de .fx .hd / #tt::before, pero con
+   paleta propia por origen para que se distingan de un vistazo. */
+.origen-cal{position:relative;display:flex;align-items:flex-start;gap:14px;
+  padding:16px 20px 17px;border-radius:16px;margin:32px 0 14px;overflow:hidden;
+  box-shadow:0 10px 26px rgba(12,25,18,.16),0 2px 6px rgba(12,25,18,.10)}
+/* brillo suave arrinconado arriba a la derecha (detras de la insignia),
+   no una banda que cruce el texto -- por eso NO se reusa var(--gloss) */
+.origen-cal::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(130% 110% at 100% 0%,rgba(255,255,255,.30) 0%,rgba(255,255,255,0) 52%)}
+.origen-cal.o-guia{background:linear-gradient(135deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 55%,var(--icbf-verde) 100%)}
+.origen-cal.o-oms{background:linear-gradient(135deg,var(--icbf-azul-osc) 0%,var(--icbf-azul) 100%)}
+.origen-cal.o-propia{background:linear-gradient(135deg,#3B2A52 0%,var(--icbf-purpura) 55%,var(--icbf-magenta) 100%)}
+.origen-cal .oc-ico{position:relative;flex:none;width:42px;height:42px;border-radius:13px;
+  background:rgba(18,33,26,.22);display:grid;place-items:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.origen-cal .oc-ico svg{width:23px;height:23px;stroke:#fff;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.origen-cal .oc-txt{position:relative;flex:1;min-width:0;width:100%;padding-right:82px}
+.origen-cal .oc-kick,.origen-cal h3,.origen-cal p{text-shadow:0 1px 3px rgba(10,20,14,.35)}
+.origen-cal .oc-kick{font-size:11.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:rgba(255,255,255,.9);margin:0 0 4px}
+.origen-cal h3{margin:0 0 6px;font-size:20px;font-weight:700;color:#fff}
+.origen-cal p{margin:0;font-size:14.5px;line-height:1.6;color:rgba(255,255,255,.97);max-width:none}
+.origen-cal .oc-badge{position:absolute;top:0;right:0;text-align:center;color:#fff;
+  background:rgba(255,255,255,.16);border-radius:12px;padding:7px 14px;text-shadow:0 1px 3px rgba(10,20,14,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.origen-cal .oc-badge b{display:block;font-family:var(--mono);font-size:22px;line-height:1.1}
+.origen-cal .oc-badge span{display:block;font-size:9px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;opacity:.9;margin-top:1px}
+@media (max-width:560px){
+  .origen-cal{flex-wrap:wrap}
+  .origen-cal .oc-txt{padding-right:0}
+  .origen-cal .oc-badge{position:static;margin-top:8px;display:inline-block}
+}
 .leg{margin:9px 0 0;padding-top:9px;border-top:1px solid var(--rule2)}
 .panel .leg:first-child{margin-top:0;padding-top:0;border-top:none}
 
@@ -740,9 +836,11 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .ecaida .ec b{color:var(--d2);font-family:var(--mono);font-weight:700}
 
 /* ---------- mosaico de 100 casillas ---------- */
-/* iconos de persona un 33% mas chicos (misma proporcion que el ajuste
-   del grafico del IRN): max-width baja de 470 a 315px (470*.67) */
-.waf{display:grid;grid-template-columns:repeat(20,1fr);gap:5px 4px;max-width:315px;margin:9px 0 2px}
+/* usa todo el ancho del panel en vez de un limite fijo (antes 315px, un
+   resto de cuando el ajuste de tamano de icono se hizo con max-width en
+   vez de con el propio tamano del icono): con 20 columnas a 1fr, el
+   icono crece con el contenedor y no deja una franja vacia al lado */
+.waf{display:grid;grid-template-columns:repeat(20,1fr);gap:5px 4px;max-width:100%;margin:9px 0 2px}
 /* la forma la da la mascara y el color el fondo: asi cada categoria conserva
    su color exacto y la silueta se ve igual en cualquier equipo */
 .waf i{aspect-ratio:.75;transition:transform .1s;
@@ -915,6 +1013,28 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .dbaja:hover{background:var(--icbf-verde-med)}
 .dbaja svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- boton flotante "descargar PDF de esta seccion" ----------
+   Circulo fijo en la esquina, no un boton mas metido en la barra de
+   filtros -- se abre a pildora con el texto SOLO al pasar el mouse o
+   enfocar con teclado, para no competir por atencion con los filtros
+   pero sin perder la etiqueta para quien la necesite. */
+.pdf-fab{position:fixed;right:22px;bottom:22px;z-index:40;display:flex;align-items:center;
+  justify-content:center;height:52px;width:52px;border-radius:26px;overflow:hidden;
+  background:linear-gradient(135deg,var(--icbf-verde-osc) 0%,var(--icbf-verde) 100%);
+  color:#fff;border:none;cursor:pointer;
+  box-shadow:0 8px 22px rgba(18,33,26,.24),0 2px 7px rgba(18,33,26,.16);
+  transition:width .28s cubic-bezier(.4,0,.2,1),justify-content .01s,padding .28s ease,
+    box-shadow .2s ease,transform .2s ease}
+.pdf-fab:hover,.pdf-fab:focus-visible{width:238px;justify-content:flex-start;padding-left:17px;
+  box-shadow:0 12px 30px rgba(18,33,26,.3),0 3px 9px rgba(18,33,26,.18);transform:translateY(-2px)}
+.pdf-fab svg{flex:none;width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+.pdf-fab .lbl{max-width:0;opacity:0;white-space:nowrap;overflow:hidden;
+  font-family:var(--sans);font-size:12.5px;font-weight:700;letter-spacing:.01em;margin-left:0;
+  transition:max-width .28s ease,opacity .18s ease,margin-left .28s ease}
+.pdf-fab:hover .lbl,.pdf-fab:focus-visible .lbl{max-width:200px;opacity:1;margin-left:10px}
+@media(prefers-reduced-motion:reduce){.pdf-fab,.pdf-fab .lbl{transition:none}}
 .dwrap{overflow:auto;max-height:52vh;border:1px solid var(--rule);border-radius:10px;
   background:var(--card)}
 .dtab{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
@@ -1008,7 +1128,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 @media print{
   *,*::before,*::after{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   .side,.bar,.alert,#modal,#tt,#evid,footer,
-  .info,.ver,.btabla,.dbaja,.pdftodo,.mapsel,.volver,.leaflet-control-container,
+  .info,.ver,.btabla,.dbaja,.pdftodo,.pdf-fab,.mapsel,.volver,.leaflet-control-container,
   input[type=search]{display:none!important}
   .app{display:block}
   .main{padding:0;min-width:0}
@@ -1053,16 +1173,28 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 <div class="alert" id="warn"></div>
 
 <div class="bar">
-  <label class="f">Centro zonal<select id="fcz"></select></label>
-  <label class="f">Municipio de la UDS<select id="fmun"></select></label>
-  <label class="f">Entidad contratista<select id="feas"></select></label>
+  <div class="bar-filtros">
+    <label class="f">Centro zonal<select id="fcz"></select></label>
+    <label class="f">Municipio de la UDS<select id="fmun"></select></label>
+    <label class="f">Entidad contratista<select id="feas"></select></label>
+    <label class="f">Meses
+      <div class="fmes">
+        <button type="button" id="fmesTrigger" class="fmes-btn"><span class="fmes-label">Todos los meses</span></button>
+        <div class="fmes-panel" id="fmesPanel"></div>
+      </div>
+    </label>
+  </div>
   <button type="button" id="reset" class="btn">Limpiar filtros</button>
-  <button type="button" id="btnpdf" class="dbaja">
-    <svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h4"/></svg>
-    descargar PDF de esta sección
-  </button>
 </div>
 <div class="filtroimpreso" id="filtroimpreso"></div>
+<!-- boton flotante, fijo a la esquina: se saca del flujo de .bar a proposito,
+     asi no compite por ancho con los filtros ni se ve como un boton mas de
+     la barra -- circulo con el icono, se expande a pildora con el texto al
+     pasar el mouse (ver .pdf-fab) -->
+<button type="button" id="btnpdf" class="pdf-fab" aria-label="Descargar PDF de esta sección" title="Descargar PDF de esta sección">
+  <svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h4"/></svg>
+  <span class="lbl">Descargar PDF de esta sección</span>
+</button>
 
 <section id="v-semaforo"></section>
 <section id="v-mapa" hidden></section>
@@ -1074,6 +1206,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 <section id="v-operadores" hidden></section>
 <section id="v-calidad" hidden></section>
 <section id="v-historico" hidden></section>
+<section id="v-tendencia" hidden></section>
 <section id="v-fuentes" hidden></section>
 <section id="v-glosario" hidden></section>
 
@@ -1087,7 +1220,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 
 <script>
 const D = __DATOS__;
-/* busca una de las 27 reglas de depuracion por codigo (A1..G2); nunca
+/* busca una de las reglas de depuracion por codigo (A1..H8); nunca
    falla: si no la encuentra devuelve ceros, para no romper una ficha */
 const regla = cod => D.reglas.find(r => r.cod === cod) || { n: 0, pct: 0, desc: "" };
 
@@ -1368,13 +1501,18 @@ flag:{t:"Flag de plausibilidad OMS",k:"Control de calidad",
               Flag = 0  → ${p1(pct(okD,okD+okF))} dentro de los límites
               Flag ≠ 0  → ${p1(pct(malF,malD+malF))} fuera de los límites
 
-USO EN ESTE   los registros con Flag distinto de cero
-TABLERO       se excluyen del índice de riesgo y quedan
-              marcados como NO EVALUABLE, en vez de
-              contaminar el promedio de su operador`;
+USO EN ESTE   los registros con Flag 2 a 7 se excluyen
+TABLERO       del índice de riesgo y quedan marcados como
+              NO EVALUABLE, en vez de contaminar el
+              promedio de su operador. El Flag 1 SE
+              EVALÚA (no se excluye): la Guía ICBF
+              (Tabla 13) aclara que en servicios de
+              nutrición es posible encontrar casos reales
+              de muy bajo peso para la talla y talla muy
+              baja para la edad`;
  },
- n:"Límites de plausibilidad de la OMS",
- v:"<b>Es un control que ya existe y nadie usa.</b> Un puntaje Z fuera de estos límites es biológicamente imposible: sin filtrar, ese registro puede entrar como obesidad severa o desnutrición severa cuando en realidad es un error de digitación."},
+ n:"Límites de plausibilidad de la OMS · Guía ICBF G44.PP v1, Tabla 13",
+ v:"<b>Es un control que ya existe y antes no se aprovechaba del todo.</b> Un puntaje Z fuera de estos límites es biológicamente imposible: sin filtrar, ese registro puede entrar como obesidad severa o desnutrición severa cuando en realidad es un error de digitación. El Flag 1 es la excepción: la Guía ICBF pide mantenerlo evaluable."},
 
 talla_inf:{t:"Talla inferior a la última toma",k:"Control de calidad",
  q:"Marca del sistema cuando la talla medida es menor que la de la valoración anterior. Un niño no encoge.",
@@ -1388,13 +1526,25 @@ EN EL CORTE   ${mil(c8.n)} registros marcados con 'SI'
               = ${p2(c8.pct)} de las filas
 
 REGLA PROPIA  el tablero además calcula su versión
-DEL TABLERO   dentro del periodo (regla C6) y encuentra
-              ${mil(c6.n)}: no coincide exactamente con lo
-              anterior porque el sistema compara contra
+DEL TABLERO   dentro del periodo (regla C6, autoría propia)
+              y encuentra ${mil(c6.n)}: no coincide exactamente
+              con lo anterior porque el sistema compara contra
               todo el histórico y el tablero solo contra
-              las tomas de este corte (${D.meta.periodo})`;
+              las tomas de este corte (${D.meta.periodo}).
+              C6 hoy solo mira si la talla BAJÓ; la Guía
+              (Tabla 11) además exige un ritmo de crecimiento
+              esperado por trimestre según la edad (≈4 cm/
+              trimestre en menores de 2 años, ≈2 cm/trimestre
+              de 2 a 5 años) — esa versión completa aún no
+              está implementada, C6 es un proxy más simple
+
+USO EN ESTE   la Guía ICBF (Tablas 13 y 14) pide depurar
+TABLERO       (excluir) toda toma marcada 'SI': el tablero
+              la excluye de prevalencias, Semáforo e
+              IRN/IRG y la deja como NO EVALUABLE`;
  },
- v:"Otro control que el sistema ya calcula y que no se está aprovechando. Es el mejor indicador disponible de calidad de la medición por unidad de servicio."},
+ n:"Guía ICBF G44.PP v1, Tablas 13 y 14",
+ v:"Un niño no encoge: por eso, siguiendo la Guía ICBF, esta marca ya no solo se cruza contra C6 — excluye la toma del análisis. Sigue siendo el mejor indicador disponible de calidad de la medición por unidad de servicio."},
 
 evolucion:{t:"Evolución entre tomas",k:"Tendencia",
  q:"Si el beneficiario se acercó o se alejó de la adecuación entre su primera y su última valoración del periodo.",
@@ -1465,7 +1615,7 @@ TRAMOS    0–24 Adecuado    50–74 Alto riesgo
 
 ESTE CORTE  ${mil(a.irc[1])} adecuado · ${mil(a.irc[2])} preventivo
             · ${mil(a.irc[3])} alto riesgo · ${mil(a.irc[4])} crítico`,
- v:"Se excluyen antes los registros con Flag distinto de cero o puntaje Z fuera de los límites OMS: quedan como <b>no evaluables</b>. La vacunación se dejó fuera del peso porque el 99,7 % tiene carnet y no discrimina."},
+ v:"Se excluyen antes los registros con Flag 2 a 7 (el 1 sí se evalúa, Guía ICBF), puntaje Z fuera de los límites OMS, talla inferior a la última toma, grupo de edad 3, edad negativa o mayor a 59 meses, sexo intersexual, diagnóstico de síndrome de Down/acondroplasia/parálisis cerebral, o menor de 40 semanas al valorar: quedan como <b>no evaluables</b>. La vacunación se dejó fuera del peso porque el 99,7 % tiene carnet y no discrimina."},
 
 ido:{t:"Índice de Desempeño del Operador (IDO)",k:"Índice compuesto · 0 a 100",
  q:"Mide al operador, no al niño. Cero es el mejor resultado.",
@@ -1482,7 +1632,7 @@ SEGUIMIENTO   % con Número de toma del beneficiario
 CUMPLIMIENTO  % con Criterio de cumplimiento de
               nutrición (71) en NO CUMPLE
 CALIDAD       % de registros marcados por alguna de las
-              27 reglas de plausibilidad o coherencia
+              reglas de plausibilidad o coherencia
               de este tablero (ver Calidad del dato)
 RESPUESTA     de los casos con Estado Peso Talla (57)
 CLÍNICA       en desnutrición aguda, % SIN canalización
@@ -1530,9 +1680,9 @@ estado nutricional de la gestante.`,
  v:"<b>No se observó relación con el estado nutricional:</b> con 0–2 controles el 39,0 % tiene IMC adecuado; con 6 o más, el 39,3 %. Prácticamente idéntico. Significa que el control prenatal, tal como está registrado, no está moviendo el estado nutricional — y eso vale reportarlo."},
 
 calidad:{t:"Reglas de depuración",k:"Control de calidad",
- q:"Veintisiete reglas que se aplican a cada descarga para saber qué tan confiable es antes de graficar nada.",
+ q:"Treinta y cinco reglas que se aplican a cada descarga para saber qué tan confiable es antes de graficar nada, incluidos los criterios de depuración de la Guía ICBF.",
  c:"Se apoyan en las 71 columnas de niñas y niños y las 44 de gestantes",
- m:()=>`SEIS BLOQUES
+ m:()=>`SIETE BLOQUES
 
   A  INTEGRIDAD     archivos y centros zonales esperados
   B  DOMINIO        categorías fuera del catálogo 2465
@@ -1543,11 +1693,17 @@ calidad:{t:"Reglas de depuración",k:"Control de calidad",
   E  COMPLETITUD    campos obligatorios vacíos
   F  DUPLICIDAD     documento repetido, niño en varias UDS
   G  SEGUIMIENTO    cobertura y rezago de la toma
+  H  GUÍA ICBF      criterios de depuración de la Guía
+                    (Tablas 13 y 14, G44.PP v1): grupo de
+                    edad, edad, sexo, discapacidad, talla
+                    inferior, prematurez y, en gestantes,
+                    semanas de gestación, edad y embarazo
+                    múltiple
 
 SE EVALÚAN    sobre las ${mil(D.meta.filas_nn)} filas de toma, ANTES
               de deduplicar. Por eso son cifras regionales
               y no responden a los filtros del tablero.`,
- v:"<b>Ninguna regla borra datos.</b> Cada una marca y deja constancia en un log trazable hasta el archivo, la unidad de servicio y el documento. La decisión de excluir se toma en el tablero, con la marca a la vista."},
+ v:"<b>La mayoría de las reglas solo marca</b> y deja constancia en un log trazable hasta el archivo, la unidad de servicio y el documento — la decisión de excluir se toma en el tablero, con la marca a la vista. Las reglas C1, C2 (flag distinto de 0 y de 1), C3, C4, C8 y H1 a H8 sí EXCLUYEN la toma de prevalencias, Semáforo e IRN/IRG, porque así lo exige la Guía ICBF para que los registros analizados sean comparables con los patrones de referencia."},
 
 lactancia:{t:"Lactancia materna",k:"Campo no utilizable",
  q:"Meses de lactancia materna exclusiva y total.",
@@ -1684,7 +1840,7 @@ de la fórmula)     fijan una clase mínima SIN IMPORTAR el
                    dentro de cada clase; el piso clínico
                    decide la clase cuando la norma no admite
                    ambigüedad`,
- v:"Ponderar no es promediar: el componente antropométrico del IRN pesa 65 % porque es lo que de verdad importa clínicamente. Los demás (tendencia y factores asociados) ayudan a ordenar prioridades dentro de un mismo nivel de riesgo, pero no lo definen."},
+ v:"Ponderar no es promediar: el componente antropométrico del IRN pesa 65 % porque es lo que de verdad importa clínicamente. Los demás (tendencia y factores asociados) ayudan a ordenar prioridades dentro de un mismo nivel de riesgo, pero no lo definen. <b>El IRN, el IRG y el IDO, con estos pesos y estos tramos de 0 a 100, son autoría propia de este tablero: no están en la Guía ICBF ni en la Resolución 2465.</b> Se construyen SOBRE clasificaciones que sí son oficiales (Estado Peso/Talla, Estado Talla/Edad, Flag, Resolución 2465) para poder priorizar, pero el índice compuesto en sí es un diseño del equipo — no un instrumento normativo del ICBF."},
 };
 
 /* ---------- fuentes de referencia ----------
@@ -1734,6 +1890,19 @@ const FUENTES = {
   n:"openstreetmap.org",
   v:"Ninguno: es un servicio público, sin cruce con los datos del corte."},
 };
+
+/* ---------- referencias bibliograficas (formato APA 7) ----------
+   Solo la documentacion normativa y tecnica que efectivamente se tuvo
+   en cuenta para construir este tablero (depuracion, clasificacion
+   antropometrica, indices). No es la bibliografia completa de la Guia:
+   es la lista de lo que ESTE tablero cita en su codigo y sus fichas. */
+const BIBLIOGRAFIA = [
+ "Instituto Colombiano de Bienestar Familiar. (2026). <i>Guía para la implementación del sistema de vigilancia y seguimiento nutricional del ICBF</i> (G44.PP, Versión 1). ICBF.",
+ "Instituto Colombiano de Bienestar Familiar. (2026). <i>Anexo 1. Orientaciones para la toma de medidas antropométricas en el ICBF</i> (A14.G4.PP, Versión 1). ICBF.",
+ "Ministerio de Salud y Protección Social. (2016). <i>Resolución 2465 de 2016. Por la cual se adoptan los indicadores antropométricos, patrones de referencia y puntos de corte para la clasificación del estado nutricional de niñas, niños y adolescentes menores de 18 años de edad, adultos de 18 a 64 años de edad y gestantes adultas</i>. MSPS.",
+ "Ministerio de Salud y Protección Social. (2018). <i>Resolución 3280 de 2018. Por medio de la cual se adoptan los lineamientos técnicos y operativos de la Ruta Integral de Atención para la Promoción y Mantenimiento de la Salud y la Ruta Integral de Atención en Salud para la Población Materno Perinatal</i>. MSPS.",
+ "Organización Mundial de la Salud. (2006). <i>WHO child growth standards: Length/height-for-age, weight-for-age, weight-for-length, weight-for-height and body mass index-for-age: Methods and development</i>. OMS.",
+];
 
 /* ---------- utilidades ---------- */
 const $ = s => document.querySelector(s);
