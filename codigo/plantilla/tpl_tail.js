@@ -3643,6 +3643,7 @@ function render() {
   const tt2 = VIEWS.find(v => v[0] === TAB);
   $("#tsec").textContent = tt2 ? tt2[1] : "";
   $("#tsub").textContent = SUBS[TAB] || "";
+  $("#ticon").innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + (ICO[TAB] || "") + '"/></svg>';
   VIEWS.forEach(([id]) => { $("#v-" + id).hidden = id !== TAB; });
   /* La alerta del corte se repetia en las diez vistas. Un aviso que aparece
      en cada pantalla se vuelve decorado y deja de leerse: se muestra solo en

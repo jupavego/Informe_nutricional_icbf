@@ -490,10 +490,30 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 
 /* ---------- columna de trabajo ---------- */
 .main{min-width:0;padding:0 clamp(14px,2.2vw,26px) 70px}
-.topbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;
+.topbar{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;
   padding:16px 0 13px;border-bottom:1px solid var(--rule);margin-bottom:0}
-.topbar h2.tt{font-size:20px;font-weight:700;letter-spacing:-.012em;margin:0;line-height:1.2}
-.topbar .sb{font-size:12.5px;color:var(--ink2);margin-top:2px}
+/* ---------- banner del titulo de seccion, al estilo de los banners de
+   origen en Calidad del dato (.origen-cal): degradado + insignia con
+   icono, para que el titulo se distinga del resto del contenido en
+   vez de ser un h2 mas sobre fondo blanco. Un solo degradado (el mismo
+   verde institucional de .hero y .marca) para las doce secciones: no
+   hay que distinguir un titulo de otro entre si, solo del cuerpo. */
+.ttban{position:relative;display:flex;align-items:center;gap:13px;
+  padding:11px 18px 12px 13px;border-radius:14px;overflow:hidden;flex:1 1 auto;min-width:0;
+  background:linear-gradient(135deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 55%,var(--icbf-verde) 100%);
+  box-shadow:0 8px 20px rgba(12,25,18,.14),0 2px 6px rgba(12,25,18,.10)}
+.ttban::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(130% 140% at 100% 0%,rgba(255,255,255,.22) 0%,rgba(255,255,255,0) 55%)}
+.ttban .tt-ico{position:relative;flex:none;width:38px;height:38px;border-radius:11px;
+  background:rgba(18,33,26,.22);display:grid;place-items:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.ttban .tt-ico svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.ttban .tt-txt{position:relative;min-width:0}
+.topbar h2.tt{font-size:19px;font-weight:700;letter-spacing:-.012em;margin:0;line-height:1.2;
+  color:#fff;text-shadow:0 1px 3px rgba(10,20,14,.35)}
+.topbar .sb{font-size:12.5px;color:rgba(255,255,255,.92);margin-top:2px;
+  text-shadow:0 1px 3px rgba(10,20,14,.3)}
 
 /* el resumen regional (antes vivia fijo en el menu lateral, obligando a
    hacer scroll para ver todos los enlaces) se movio a la cabecera de
@@ -1021,9 +1041,12 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 
 <main class="main">
 <div class="topbar">
-  <div>
-    <h2 class="tt" id="tsec"></h2>
-    <div class="sb" id="tsub"></div>
+  <div class="ttban">
+    <div class="tt-ico" id="ticon"></div>
+    <div class="tt-txt">
+      <h2 class="tt" id="tsec"></h2>
+      <div class="sb" id="tsub"></div>
+    </div>
   </div>
   <div class="pie" id="lateral"></div>
 </div>
