@@ -92,19 +92,23 @@ header{padding:0}
    tablero (¿regional o un recorte?) -- por eso lleva su propio acento de
    color, no el mismo gris plano que cualquier panel, para que no se
    confunda con contenido de solo lectura */
-/* grid con auto-fit en vez de flex-wrap: cada control pide un minimo de
-   190px y el grid decide solo cuantos caben por fila. Con flex-wrap, una
-   fila que cae con un solo sobrante (ej. "Meses" solo) se estira para
-   llenar toda la fila y deja huecos raros -- el grid nunca estira una
-   columna mas alla de lo que le toca, sea cual sea el ancho de pantalla. */
-.bar{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-  gap:12px 16px;align-items:end;margin:18px 0 0;
+/* .bar separa dos cosas que no deben competir por el mismo ancho de
+   columna: el GRID de filtros (crece a lo ancho, auto-fit) y el boton
+   "Limpiar filtros" (un tamaño fijo y chico). Metidos los cinco en un
+   solo grid, "Limpiar filtros" reservaba una columna de >=190px para
+   un boton de 110px y dejaba un hueco enorme a su lado. Como flex-item
+   suelto, ocupa solo lo que necesita y se acomoda junto al grid o debajo,
+   sin reservar de mas. */
+.bar{position:relative;display:flex;flex-wrap:wrap;gap:12px 16px;align-items:end;margin:18px 0 0;
   background:linear-gradient(135deg,rgba(114,191,68,.10) 0%,rgba(114,191,68,.03) 55%,transparent 100%),var(--glass);
   border:1px solid var(--rule);border-top:3px solid var(--icbf-verde);border-radius:14px;
   padding:14px 16px 13px;box-shadow:var(--shadow)}
-/* los botones son celdas del mismo grid -- sin esto "stretch" (el default
-   de las celdas) los infla al ancho completo de su columna */
-.bar>button{justify-self:start}
+/* grid con auto-fit: cada filtro pide un minimo de 190px y el grid decide
+   solo cuantos caben por fila -- nunca estira una columna mas alla de lo
+   que le toca, sea cual sea el ancho de pantalla. */
+.bar-filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:12px 16px;flex:1 1 480px;min-width:0;align-items:end}
+#reset{flex:none}
 /* solo se ve al imprimir (ver @media print): en pantalla los filtros
    activos ya se leen en los propios selects de .bar, pero esos se
    ocultan en el PDF -- sin esto, un informe filtrado y uno regional
@@ -989,6 +993,28 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .dbaja:hover{background:var(--icbf-verde-med)}
 .dbaja svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- boton flotante "descargar PDF de esta seccion" ----------
+   Circulo fijo en la esquina, no un boton mas metido en la barra de
+   filtros -- se abre a pildora con el texto SOLO al pasar el mouse o
+   enfocar con teclado, para no competir por atencion con los filtros
+   pero sin perder la etiqueta para quien la necesite. */
+.pdf-fab{position:fixed;right:22px;bottom:22px;z-index:40;display:flex;align-items:center;
+  justify-content:center;height:52px;width:52px;border-radius:26px;overflow:hidden;
+  background:linear-gradient(135deg,var(--icbf-verde-osc) 0%,var(--icbf-verde) 100%);
+  color:#fff;border:none;cursor:pointer;
+  box-shadow:0 8px 22px rgba(18,33,26,.24),0 2px 7px rgba(18,33,26,.16);
+  transition:width .28s cubic-bezier(.4,0,.2,1),justify-content .01s,padding .28s ease,
+    box-shadow .2s ease,transform .2s ease}
+.pdf-fab:hover,.pdf-fab:focus-visible{width:238px;justify-content:flex-start;padding-left:17px;
+  box-shadow:0 12px 30px rgba(18,33,26,.3),0 3px 9px rgba(18,33,26,.18);transform:translateY(-2px)}
+.pdf-fab svg{flex:none;width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+.pdf-fab .lbl{max-width:0;opacity:0;white-space:nowrap;overflow:hidden;
+  font-family:var(--sans);font-size:12.5px;font-weight:700;letter-spacing:.01em;margin-left:0;
+  transition:max-width .28s ease,opacity .18s ease,margin-left .28s ease}
+.pdf-fab:hover .lbl,.pdf-fab:focus-visible .lbl{max-width:200px;opacity:1;margin-left:10px}
+@media(prefers-reduced-motion:reduce){.pdf-fab,.pdf-fab .lbl{transition:none}}
 .dwrap{overflow:auto;max-height:52vh;border:1px solid var(--rule);border-radius:10px;
   background:var(--card)}
 .dtab{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
@@ -1082,7 +1108,7 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 @media print{
   *,*::before,*::after{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   .side,.bar,.alert,#modal,#tt,#evid,footer,
-  .info,.ver,.btabla,.dbaja,.pdftodo,.mapsel,.volver,.leaflet-control-container,
+  .info,.ver,.btabla,.dbaja,.pdftodo,.pdf-fab,.mapsel,.volver,.leaflet-control-container,
   input[type=search]{display:none!important}
   .app{display:block}
   .main{padding:0;min-width:0}
@@ -1124,22 +1150,28 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 <div class="alert" id="warn"></div>
 
 <div class="bar">
-  <label class="f">Centro zonal<select id="fcz"></select></label>
-  <label class="f">Municipio de la UDS<select id="fmun"></select></label>
-  <label class="f">Entidad contratista<select id="feas"></select></label>
-  <label class="f">Meses
-    <div class="fmes">
-      <button type="button" id="fmesTrigger" class="fmes-btn"><span class="fmes-label">Todos los meses</span></button>
-      <div class="fmes-panel" id="fmesPanel"></div>
-    </div>
-  </label>
+  <div class="bar-filtros">
+    <label class="f">Centro zonal<select id="fcz"></select></label>
+    <label class="f">Municipio de la UDS<select id="fmun"></select></label>
+    <label class="f">Entidad contratista<select id="feas"></select></label>
+    <label class="f">Meses
+      <div class="fmes">
+        <button type="button" id="fmesTrigger" class="fmes-btn"><span class="fmes-label">Todos los meses</span></button>
+        <div class="fmes-panel" id="fmesPanel"></div>
+      </div>
+    </label>
+  </div>
   <button type="button" id="reset" class="btn">Limpiar filtros</button>
-  <button type="button" id="btnpdf" class="dbaja">
-    <svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h4"/></svg>
-    descargar PDF de esta sección
-  </button>
 </div>
 <div class="filtroimpreso" id="filtroimpreso"></div>
+<!-- boton flotante, fijo a la esquina: se saca del flujo de .bar a proposito,
+     asi no compite por ancho con los filtros ni se ve como un boton mas de
+     la barra -- circulo con el icono, se expande a pildora con el texto al
+     pasar el mouse (ver .pdf-fab) -->
+<button type="button" id="btnpdf" class="pdf-fab" aria-label="Descargar PDF de esta sección" title="Descargar PDF de esta sección">
+  <svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h4"/></svg>
+  <span class="lbl">Descargar PDF de esta sección</span>
+</button>
 
 <section id="v-semaforo"></section>
 <section id="v-mapa" hidden></section>
