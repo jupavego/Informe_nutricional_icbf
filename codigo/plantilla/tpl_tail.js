@@ -4084,6 +4084,10 @@ function render() {
   $("#tsec").textContent = tt2 ? tt2[1] : "";
   $("#tsub").textContent = SUBS[TAB] || "";
   $("#ticon").innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + (ICO[TAB] || "") + '"/></svg>';
+  /* En Semaforo el propio hero de bienvenida ya dice donde esta el usuario
+     (misma insignia verde); un segundo banner encima con el mismo mensaje
+     era ruido, no refuerzo -- se apaga solo ahi. */
+  $(".ttban").style.display = TAB === "semaforo" ? "none" : "flex";
   VIEWS.forEach(([id]) => { $("#v-" + id).hidden = id !== TAB; });
   /* La alerta del corte se repetia en las diez vistas. Un aviso que aparece
      en cada pantalla se vuelve decorado y deja de leerse: se muestra solo en

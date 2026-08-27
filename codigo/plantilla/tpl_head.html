@@ -66,17 +66,16 @@ header{padding:0}
 /* sin --gloss: igual que en .marca (ver su comentario), el barniz
    blanco de arriba a abajo le baja el contraste al texto, tambien
    blanco, y encima del extremo mas claro del degradado se veia lavado.
-   En su lugar, aros y gotas con borde visible -- circunferencias de
-   verdad, no un resplandor difuso -- repartidos para no pisar el texto,
-   que ademas queda con z-index encima por si acaso. */
+   En su lugar, tres manchas difusas apiladas -- rojo, ambar, verde --
+   un semaforo abstracto y sutil, coherente con el nombre de la seccion.
+   Van a la derecha, lejos del texto, y el texto ademas queda con
+   z-index encima por si acaso. */
 .hero::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:
-    radial-gradient(circle 46px at 92% 22%,transparent 68%,rgba(255,255,255,.45) 72%,rgba(255,255,255,.45) 78%,transparent 82%),
-    radial-gradient(circle 28px at 81% 68%,transparent 62%,rgba(255,255,255,.38) 68%,rgba(255,255,255,.38) 76%,transparent 82%),
-    radial-gradient(circle 68px at 6% -18%,transparent 70%,rgba(255,255,255,.28) 73%,rgba(255,255,255,.28) 78%,transparent 82%),
-    radial-gradient(circle 9px at 70% 30%,rgba(255,255,255,.4),rgba(255,255,255,0) 74%),
-    radial-gradient(circle 6px at 88% 48%,rgba(255,255,255,.32),rgba(255,255,255,0) 74%),
-    radial-gradient(circle 13px at 62% 72%,rgba(255,255,255,.22),rgba(255,255,255,0) 74%)}
+    radial-gradient(90px 90px at 91% 10%,var(--icbf-rojo) 0%,rgba(178,27,21,.55) 40%,transparent 72%),
+    radial-gradient(90px 90px at 91% 46%,var(--icbf-amarillo) 0%,rgba(255,205,0,.5) 40%,transparent 72%),
+    radial-gradient(90px 90px at 91% 82%,#fff 0%,rgba(255,255,255,.45) 40%,transparent 72%);
+  opacity:.24}
 .hero h1{font-size:clamp(19px,2.5vw,26px);font-weight:600;letter-spacing:-.01em;margin:0 0 3px;position:relative;z-index:1}
 .hero .s{font-size:13px;opacity:.93;position:relative;z-index:1}
 .hero .k{position:relative;z-index:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;opacity:.8;margin-bottom:7px}
