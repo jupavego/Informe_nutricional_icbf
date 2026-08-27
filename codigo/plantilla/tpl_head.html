@@ -284,11 +284,19 @@ h2:first-child{margin-top:2px}
 .scroll::-webkit-scrollbar-corner{background:transparent}
 table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
 th,td{padding:7px 11px;text-align:left;border-bottom:1px solid var(--rule2);white-space:nowrap}
-thead th{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);
-  font-weight:600;background:var(--card);position:sticky;top:0;border-bottom:1px solid var(--rule);cursor:pointer;user-select:none}
-thead th:hover{color:var(--accent)}
-thead th.sorted::after{content:" \25BE";color:var(--accent2)}
-thead th.asc::after{content:" \25B4";color:var(--accent2)}
+/* encabezado en degradado verde institucional -- el mismo lenguaje que
+   ya usan .ttban/.hero/.bar -- para que la fila de titulos se distinga
+   de un vistazo del cuerpo de datos, sobre todo ahora que se queda fija
+   arriba (sticky) mientras la tabla se desplaza sola. */
+thead th{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;
+  background:linear-gradient(180deg,var(--icbf-verde-osc) 0%,var(--icbf-verde-med) 100%);
+  text-shadow:0 1px 1px rgba(12,25,18,.25);
+  position:sticky;top:0;z-index:1;border-bottom:2px solid var(--icbf-verde);cursor:pointer;user-select:none}
+thead th:first-child{border-top-left-radius:12px}
+thead th:last-child{border-top-right-radius:12px}
+thead th:hover{background:linear-gradient(180deg,var(--icbf-verde-med) 0%,var(--icbf-verde) 100%)}
+thead th.sorted::after{content:" \25BE";color:#fff}
+thead th.asc::after{content:" \25B4";color:#fff}
 td.n,th.n{text-align:right}
 tbody tr:hover{background:var(--sunk)}
 .pill{display:inline-block;font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:9px;color:#fff}
