@@ -1334,14 +1334,25 @@ function panelPlausibilidad(ix) {
 /* misma silueta de persona que el grafico de "cien casillas" (waffle),
    solo que a escala 1 de cada 10 en vez de 1 de cada 100: para las
    tarjetas resumen, "100 celdas" dejaria 99 vacias en un indicador del
-   1 %, y no cabe ese detalle en el espacio de una tarjeta. */
+   1 %, y no cabe ese detalle en el espacio de una tarjeta.
+   Redondear al entero mas cercano borraba indicadores raros por completo
+   (0,25 de 10 -> "0 de 10", igual que uno en 0,49): cada figura se llena
+   en proporcion a su parte del decimal, asi que 0,25 pinta un cuarto de
+   la primera figura en vez de nada. */
 function personas10(frac, color) {
-  const n = Math.max(0, Math.min(10, Math.round((frac || 0) * 10)));
+  const total = Math.max(0, Math.min(10, (frac || 0) * 10));
   const w = el("div", "p10");
-  w.title = n + " de cada 10, según la prevalencia del conjunto filtrado";
+  w.title = total.toFixed(2).replace(".", ",") + " de cada 10, según la prevalencia del conjunto filtrado";
   for (let i = 0; i < 10; i++) {
-    const c = el("i");
-    c.style.background = i < n ? (color || "var(--icbf-verde)") : "var(--rule2)";
+    const lleno = Math.max(0, Math.min(1, total - i));
+    const c = el("span", "p10c");
+    c.append(el("i", "bg"));
+    if (lleno > 0) {
+      const fg = el("i", "fg");
+      fg.style.background = color || "var(--icbf-verde)";
+      fg.style.clipPath = "inset(0 " + (100 - lleno * 100) + "% 0 0)";
+      c.append(fg);
+    }
     w.append(c);
   }
   return w;

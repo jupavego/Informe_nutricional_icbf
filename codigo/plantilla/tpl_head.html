@@ -516,13 +516,18 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .hcard .hact .btabla svg,.hcard .hact .ver svg{width:11px;height:11px}
 
 /* ---------- personas10 en la tarjeta: 1 de cada 10, misma silueta
-   que el grafico de "cien casillas" (--fig-persona), a escala chica ---------- */
+   que el grafico de "cien casillas" (--fig-persona), a escala chica.
+   Cada figura son dos capas apiladas (gris llena + color recortado con
+   clip-path segun el decimal que le toque) en vez de una sola: asi la
+   figura "a medias" se ve a medias de verdad, no redondeada a 0 o 1. */
 .p10{display:flex;align-items:flex-end;gap:2.5px;height:26px;margin-top:11px;
   padding-top:9px;border-top:1px solid var(--rule2)}
 .tile .lado .p10{margin-top:7px;padding-top:7px;height:22px}
-.p10 i{flex:1;aspect-ratio:.75;align-self:flex-end;
+.p10c{position:relative;flex:1;align-self:flex-end;aspect-ratio:.75}
+.p10c i{position:absolute;inset:0;transform:scale(.9);transform-origin:center bottom;
   -webkit-mask:var(--fig-persona) center/contain no-repeat;
   mask:var(--fig-persona) center/contain no-repeat}
+.p10c .bg{background:var(--rule2)}
 
 
 /* ---------- estructura de dos columnas ---------- */
