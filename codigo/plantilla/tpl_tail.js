@@ -1363,18 +1363,21 @@ function personas10(frac, color) {
   return w;
 }
 
-/* barra de escala de raiz para indicadores tipicamente por debajo del
-   5 %: mismo criterio que reglasPuntos en Calidad del dato (comprime lo
-   grande, abre lo chico) para que un 0,13 % siga dejando una barra
-   visible en vez de una linea de un pixel. La referencia (20 %) es fija,
-   no el maximo del conjunto filtrado -- asi el ancho no cambia de
-   significado segun cuanto se haya filtrado. */
+/* barra LINEAL (no de raiz) para indicadores tipicamente por debajo del
+   5 %: la de raiz que se probo primero comprimia tanto que un 0,25 %
+   quedaba casi tan llena como un 3,3 %, y aqui no hay eje rotulado como
+   en reglasPuntos que avise que la escala no es literal -- en un dato
+   de vigilancia nutricional eso pesa mas que la visibilidad. Con
+   escala lineal el ancho SI es proporcional; el piso minimo (3%) es
+   solo para que un valor positivo no desaparezca en un pixel. La
+   referencia (10 %) es fija, no el maximo del conjunto filtrado, para
+   que el ancho no cambie de significado segun cuanto se haya filtrado. */
 function microBarra(v, color) {
-  const REF = 20;
+  const REF = 10;
   const w = el("div", "mbar");
-  w.title = p2f(v) + " -- escala de raíz, no lineal";
+  w.title = p2f(v);
   const i = el("i");
-  i.style.width = Math.max(3, 100 * Math.pow(Math.min(v, REF) / REF, 0.42)) + "%";
+  i.style.width = (v <= 0 ? 0 : Math.max(3, Math.min(100, 100 * v / REF))) + "%";
   i.style.background = color || "var(--icbf-verde)";
   w.append(i);
   return w;
