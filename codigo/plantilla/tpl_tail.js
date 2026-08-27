@@ -37,11 +37,13 @@ function tiles(list) {
     cuerpo.append(el("span", "v", t.v));
     const lado = el("div", "lado");
     lado.append(el("span", "d", esc(t.d || "")));
-    if (t.sp && t.sp.length > 2) {
-      const sp = spark(t.sp, t.spc);
-      sp.title = "Distribución del indicador entre los centros zonales del conjunto filtrado";
-      lado.append(sp);
-    }
+    /* antes iba un microgafico con la distribucion por centro zonal, pero
+       en indicadores raros (desnutricion aguda, <1 %) las 17 barras
+       quedaban todas pegadas al minimo -- sin diferencia real que
+       mostrar, se leia como ruido. personas10 cuenta lo mismo que ya
+       dice la cifra grande, pero en un formato que se entiende de un
+       vistazo: cuantas de cada 10 caen en el indicador. */
+    if (t.frac != null) lado.append(personas10(t.frac, t.spc));
     cuerpo.append(lado);
     n.append(cuerpo);
     w.append(n);
@@ -1329,18 +1331,19 @@ function panelPlausibilidad(ix) {
   return p;
 }
 
-/* microgafico de barras para las tarjetas */
-function spark(vals, color) {
-  const max = Math.max(...vals, 0.0001);
-  const w = el("div", "spark");
-  vals.forEach((v, i) => {
-    const b = el("i");
-    b.style.height = Math.max(8, 100 * v / max) + "%";
-    b.style.background = color || "var(--icbf-verde)";
-    b.style.color = color || "var(--icbf-verde)";
-    b.style.opacity = i === vals.length - 1 ? "1" : ".42";
-    w.append(b);
-  });
+/* misma silueta de persona que el grafico de "cien casillas" (waffle),
+   solo que a escala 1 de cada 10 en vez de 1 de cada 100: para las
+   tarjetas resumen, "100 celdas" dejaria 99 vacias en un indicador del
+   1 %, y no cabe ese detalle en el espacio de una tarjeta. */
+function personas10(frac, color) {
+  const n = Math.max(0, Math.min(10, Math.round((frac || 0) * 10)));
+  const w = el("div", "p10");
+  w.title = n + " de cada 10, según la prevalencia del conjunto filtrado";
+  for (let i = 0; i < 10; i++) {
+    const c = el("i");
+    c.style.background = i < n ? (color || "var(--icbf-verde)") : "var(--rule2)";
+    w.append(c);
+  }
   return w;
 }
 
@@ -1844,24 +1847,6 @@ function vSemaforo() {
   const ix = idxNN(); const a = resumen(ix);
   const g = resumenGS(idxGS());
   if (!a.n) { s.append(vacio("Ningún beneficiario con la combinación de filtros seleccionada.")); return; }
-  const czr = porDim(ix, "cz", DIC.cz, 1);
-  /* cupos y beneficiarios-del-trimestre por centro zonal, para el spark
-     de la tarjeta de cobertura -- viene de D.uds, no de N.*, asi que se
-     calcula aparte de "resumen()" */
-  const cobPorCz = new Map();
-  (D.uds || []).forEach(u => {
-    if (u.cu == null) return;
-    const e = cobPorCz.get(u.cz) || cobPorCz.set(u.cz, { cu: 0, bt: 0 }).get(u.cz);
-    e.cu += u.cu; e.bt += (u.bt || 0);
-  });
-  const sparks = {
-    dnt: czr.map(x => pct(x.r.dnt, x.r.n)),
-    riesgo: czr.map(x => pct(x.r.riesgo, x.r.n)),
-    retraso: czr.map(x => pct(x.r.retraso, x.r.n)),
-    exceso: czr.map(x => pct(x.r.exceso, x.r.n)),
-    cobcupos: czr.map(x => { const e = cobPorCz.get(x.lb); return e && e.cu > 0 ? 100 * e.bt / e.cu : 0; }),
-    nc: czr.map(x => pct(x.r.nc, x.r.n)),
-  };
   const cob = cobUdsFiltro();
   const cobLbl = D.meta.uds_trimestre && D.meta.uds_trimestre.lbl ? D.meta.uds_trimestre.lbl : null;
   /* las tarjetas de gestantes ya llevan su propio "Personas gestantes"
@@ -1869,10 +1854,10 @@ function vSemaforo() {
      que aclarara que hablan de niñas y niños */
   s.append(h2("Niñas y niños"));
   s.append(tiles([
-    { t: "Desnutrición aguda", f: "dnt_aguda", tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9 - OFFSET_NN, asc: true, lead: "Los casos clasificados en <b>desnutrición aguda severa o moderada</b> por peso para la talla, según la Resolución 2465 de 2016. Ordenados por puntaje Z de menor a mayor: arriba el caso más comprometido.", pie: "La columna <b>Canalizado</b> en «No» es la que exige gestión: hay caso detectado y no hay remisión registrada." }, v: mil(a.dnt), sp: sparks.dnt, spc: "var(--d2)", d: `${p2(pct(a.dnt, a.n))} · ${mil(a.dnt - a.canal)} sin canalizar`, cls: "crit" },
-    { t: "Riesgo de desnutrición", f: "pt", tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9 - OFFSET_NN, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar. Todavía no es desnutrición, pero es el grupo que puede cruzar el umbral entre una toma y la siguiente." }, v: p1(pct(a.riesgo, a.n)), d: mil(a.riesgo) + " niñas y niños", sp: sparks.riesgo, spc: "var(--d1)", cls: "crit" },
-    { t: "Retraso en talla", f: "retraso", tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11 - OFFSET_NN, asc: true, lead: "Talla por debajo de −2 desviaciones estándar para la edad. Ordenados por puntaje Z de talla para la edad, de menor a mayor.", pie: "Contraste la <b>edad en meses</b> con el puntaje Z: si el retraso se concentra en los menores de 24 meses, revise cómo se está midiendo la longitud en acostado." }, v: p1(pct(a.retraso, a.n)), d: mil(a.retraso) + " niñas y niños", sp: sparks.retraso, spc: "var(--d2)", cls: "crit" },
-    { t: "Sobrepeso u obesidad", f: "exceso", tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9 - OFFSET_NN, lead: "Peso para la talla por encima de +2 desviaciones estándar. Ordenados de mayor a menor puntaje Z." }, v: p1(pct(a.exceso, a.n)), d: mil(a.exceso) + " niñas y niños", sp: sparks.exceso, spc: "var(--e2)", cls: "warn" },
+    { t: "Desnutrición aguda", f: "dnt_aguda", tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9 - OFFSET_NN, asc: true, lead: "Los casos clasificados en <b>desnutrición aguda severa o moderada</b> por peso para la talla, según la Resolución 2465 de 2016. Ordenados por puntaje Z de menor a mayor: arriba el caso más comprometido.", pie: "La columna <b>Canalizado</b> en «No» es la que exige gestión: hay caso detectado y no hay remisión registrada." }, v: mil(a.dnt), frac: a.dnt / a.n, spc: "var(--d2)", d: `${p2(pct(a.dnt, a.n))} · ${mil(a.dnt - a.canal)} sin canalizar`, cls: "crit" },
+    { t: "Riesgo de desnutrición", f: "pt", tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9 - OFFSET_NN, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar. Todavía no es desnutrición, pero es el grupo que puede cruzar el umbral entre una toma y la siguiente." }, v: p1(pct(a.riesgo, a.n)), d: mil(a.riesgo) + " niñas y niños", frac: a.riesgo / a.n, spc: "var(--d1)", cls: "crit" },
+    { t: "Retraso en talla", f: "retraso", tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11 - OFFSET_NN, asc: true, lead: "Talla por debajo de −2 desviaciones estándar para la edad. Ordenados por puntaje Z de talla para la edad, de menor a mayor.", pie: "Contraste la <b>edad en meses</b> con el puntaje Z: si el retraso se concentra en los menores de 24 meses, revise cómo se está midiendo la longitud en acostado." }, v: p1(pct(a.retraso, a.n)), d: mil(a.retraso) + " niñas y niños", frac: a.retraso / a.n, spc: "var(--d2)", cls: "crit" },
+    { t: "Sobrepeso u obesidad", f: "exceso", tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9 - OFFSET_NN, lead: "Peso para la talla por encima de +2 desviaciones estándar. Ordenados de mayor a menor puntaje Z." }, v: p1(pct(a.exceso, a.n)), d: mil(a.exceso) + " niñas y niños", frac: a.exceso / a.n, spc: "var(--e2)", cls: "warn" },
     { t: "Cobertura de toma", f: "cobertura",
       tabla: { t: "Cobertura de toma por unidad de servicio", cols: COLS_UDS_COB,
         idx: () => (D.uds || []).filter(u => u.cu != null
@@ -1885,9 +1870,9 @@ function vSemaforo() {
         pie: "Las unidades sin cupo conocido en el reporte de Unidades de Servicio no aparecen en esta lista." },
       v: cob.pct != null ? p1(cob.pct) : "—",
       d: "cupos UDS" + (cobLbl ? " · trim. " + cobLbl : ""),
-      sp: sparks.cobcupos, spc: "var(--icbf-verde)",
+      frac: cob.pct != null ? cob.pct / 100 : null, spc: "var(--icbf-verde)",
       cls: cob.pct == null ? "neut" : cob.pct > 85 ? "good" : "warn" },
-    { t: "No cumple criterio", f: "criterio", tabla: { t: "Registros que no cumplen criterio", idx: () => ix.filter(i => N.cr[i] === 1), lead: "Registros marcados por el sistema como <b>NO CUMPLE</b> en el campo de criterio." }, v: p1(pct(a.nc, a.n)), d: mil(a.nc) + " registros", sp: sparks.nc, spc: "var(--icbf-naranja)", cls: "warn" },
+    { t: "No cumple criterio", f: "criterio", tabla: { t: "Registros que no cumplen criterio", idx: () => ix.filter(i => N.cr[i] === 1), lead: "Registros marcados por el sistema como <b>NO CUMPLE</b> en el campo de criterio." }, v: p1(pct(a.nc, a.n)), d: mil(a.nc) + " registros", frac: a.nc / a.n, spc: "var(--icbf-naranja)", cls: "warn" },
     { t: "Con grupo étnico", v: mil(ix.filter(i => etnRegistrada(N.et[i])).length), d: "con pertenencia étnica registrada", cls: "neut",
       tabla: { t: "Niñas y niños con grupo étnico registrado", idx: () => ix.filter(i => etnRegistrada(N.et[i])),
         lead: "Los <b>" + mil(ix.filter(i => etnRegistrada(N.et[i])).length) + "</b> beneficiarios con pertenencia a un grupo étnico registrada en el reporte (indígena, afrocolombiano, raizal o palenquero), excluidos quienes no se autorreconocen en ninguno o no tienen el dato." } },

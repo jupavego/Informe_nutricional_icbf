@@ -515,16 +515,14 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .hcard .hact .ver.act{background:var(--icbf-verde-osc);color:#fff;border-color:transparent}
 .hcard .hact .btabla svg,.hcard .hact .ver svg{width:11px;height:11px}
 
-/* ---------- microgafico en la tarjeta ---------- */
-.spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:11px;
+/* ---------- personas10 en la tarjeta: 1 de cada 10, misma silueta
+   que el grafico de "cien casillas" (--fig-persona), a escala chica ---------- */
+.p10{display:flex;align-items:flex-end;gap:2.5px;height:26px;margin-top:11px;
   padding-top:9px;border-top:1px solid var(--rule2)}
-.tile .lado .spark{margin-top:7px;padding-top:7px;height:22px}
-.spark i{flex:1;border-radius:1.5px 1.5px 0 0;min-height:2px;position:relative}
-/* el ultimo punto es la lectura vigente: se marca con un remate, como la
-   aguja de un instrumento sobre su ultima medicion */
-.tile .lado .spark i:last-child::after{content:"";position:absolute;left:50%;top:-4px;
-  width:5px;height:5px;border-radius:50%;background:currentColor;transform:translateX(-50%);
-  box-shadow:0 0 0 3px var(--card)}
+.tile .lado .p10{margin-top:7px;padding-top:7px;height:22px}
+.p10 i{flex:1;aspect-ratio:.75;align-self:flex-end;
+  -webkit-mask:var(--fig-persona) center/contain no-repeat;
+  mask:var(--fig-persona) center/contain no-repeat}
 
 
 /* ---------- estructura de dos columnas ---------- */
