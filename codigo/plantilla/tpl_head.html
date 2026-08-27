@@ -83,6 +83,10 @@ header{padding:0}
 
 .alert{margin-top:12px;display:flex;gap:11px;align-items:flex-start;border-radius:12px;padding:11px 15px;
   background:var(--glass);border:1px solid var(--rule);box-shadow:var(--shadow);font-size:13.5px;color:var(--ink2)}
+/* display:flex empata en especificidad con el [hidden] del navegador y gana
+   por ir despues en la cascada: sin esto el aviso queda vacio pero visible
+   en toda seccion que no sea el Semaforo. Mismo caso ya resuelto en section[hidden]. */
+.alert[hidden]{display:none}
 .alert .ic{flex:none;width:20px;height:20px;border-radius:50%;background:var(--icbf-amarillo);color:#3a2b00;
   display:grid;place-items:center;font-weight:700;font-size:12px}
 .alert b{color:var(--ink)}
