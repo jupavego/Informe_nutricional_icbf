@@ -271,7 +271,17 @@ h2:first-child{margin-top:2px}
 .leg i{width:11px;height:11px;border-radius:3px;flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 
 /* ---------- tabla ---------- */
-.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:13px;background:var(--card);margin:11px 0;box-shadow:var(--shadow)}
+/* alto acotado al viewport, no a la cantidad de filas: una lista de
+   2.000 beneficiarios ya no vuelve la pagina kilometrica -- se desplaza
+   sola, con su propio encabezado pegajoso (thead th ya trae position:
+   sticky, pero necesitaba un contenedor con overflow-y real para que
+   sirviera). El scroll horizontal para tablas anchas sigue igual. */
+.scroll{position:relative;overflow:auto;max-height:min(620px,64vh);
+  border:1px solid var(--rule);border-radius:13px;background:var(--card);margin:11px 0;box-shadow:var(--shadow);
+  scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+.scroll::-webkit-scrollbar{width:9px;height:9px}
+.scroll::-webkit-scrollbar-thumb{background:var(--rule);border-radius:5px}
+.scroll::-webkit-scrollbar-corner{background:transparent}
 table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
 th,td{padding:7px 11px;text-align:left;border-bottom:1px solid var(--rule2);white-space:nowrap}
 thead th{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);
@@ -1155,6 +1165,10 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
   .filtroimpreso{display:block;font-size:11.5px;color:#12211a;background:#EDF3EC;
     border:1px solid #4F8245;border-radius:8px;padding:7px 11px;margin:2px 0 10px}
   .filtroimpreso b{color:#0C1912}
+  /* el alto acotado de .scroll es para la pantalla; en papel el PDF debe
+     llevar la tabla completa, no solo lo que entraba en el recuadro */
+  .scroll{max-height:none;overflow:visible}
+  thead th{position:static}
   section{padding-top:10px}
   .fig,.panel,.hcard,.tile,.hall{break-inside:avoid}
   .imprimeTitulo{font-size:18px;font-weight:700;margin:22px 0 4px;

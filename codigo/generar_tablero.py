@@ -10,7 +10,7 @@ navegador, sin volver a leer los archivos.
 MUNICIPIO = el de la UNIDAD DE SERVICIO (columna 4 'Municipio' en NN y
 'Municipio UDS' en GS), no el de residencia del beneficiario.
 """
-import csv, json, os, io, statistics, datetime
+import csv, json, os, io, statistics, datetime, calendar
 from collections import Counter, defaultdict
 
 # PUBLICO=1 genera una version para publicar en internet: el numero de
@@ -358,13 +358,18 @@ for _i, _t in enumerate(C["tm"]):
 TCOM = min(_mx.values()) if _mx else TMAX
 REZAG = sorted(dcz.a[c] for c, v in _mx.items() if v > TCOM)
 PERIODO = "%s a %s" % (MESES[min(tmin, 12)], MESES[min(TCOM, 12)])
-# La fecha de corte es la de la ULTIMA EXTRACCION REAL de los .xlsx, no la
-# de hoy: nn_completo.csv solo se reescribe cuando procesar_reportes.py lee
-# los reportes de verdad (con --solo-analisis no se toca). Un string fijo
-# aqui es exactamente el error que dejo "Corte 18-06-2026" pegado en la
-# cabecera meses despues de que los datos ya eran de otro corte.
-CORTE = os.environ.get("CORTE") or datetime.datetime.fromtimestamp(
-    os.path.getmtime(os.path.join(D, "nn_completo.csv"))).strftime("%d-%m-%Y")
+# La fecha de corte es el ULTIMO DIA DEL MES que cubren los datos (el mes
+# de la toma comparable TCOM), no la fecha en que se corrio este script.
+# Antes se usaba la fecha de modificacion de nn_completo.csv como proxy de
+# "ultima extraccion real" -- pero eso se rompe apenas se reprocesa el
+# mismo corte un dia despues (p.ej. para un cambio de plantilla sin datos
+# nuevos): el archivo se reescribe hoy y el titulo salta a "hoy" aunque
+# los reportes sigan siendo de febrero a julio. Reprocesar no es lo mismo
+# que recibir un corte nuevo.
+_mes_corte = min(TCOM, 12)
+_anio_corte = datetime.datetime.now().year
+_ultimo_dia_corte = calendar.monthrange(_anio_corte, _mes_corte)[1]
+CORTE = os.environ.get("CORTE") or "%02d-%02d-%d" % (_ultimo_dia_corte, _mes_corte, _anio_corte)
 CZ_ESPERADOS = [
     "CZ ABURRA NORTE", "CZ ABURRA SUR", "CZ BAJO CAUCA", "CZ INTEGRAL NOROCCIDENTAL",
     "CZ INTEGRAL NORORIENTAL", "CZ LA MESETA", "CZ MAGDALENA MEDIO", "CZ OCCIDENTE",
