@@ -42,8 +42,13 @@ function tiles(list) {
        quedaban todas pegadas al minimo -- sin diferencia real que
        mostrar, se leia como ruido. personas10 cuenta lo mismo que ya
        dice la cifra grande, pero en un formato que se entiende de un
-       vistazo: cuantas de cada 10 caen en el indicador. */
+       vistazo: cuantas de cada 10 caen en el indicador.
+       Para desnutricion aguda y riesgo -- tipicamente por debajo del 5 %,
+       a veces del 1 % en un filtro chico -- ni el relleno parcial de una
+       sola figura alcanza a verse: se usa gauge, una barra de escala de
+       raiz (mismo criterio que reglasPuntos en Calidad del dato). */
     if (t.frac != null) lado.append(personas10(t.frac, t.spc));
+    else if (t.gauge != null) lado.append(microBarra(t.gauge, t.spc));
     cuerpo.append(lado);
     n.append(cuerpo);
     w.append(n);
@@ -1358,6 +1363,23 @@ function personas10(frac, color) {
   return w;
 }
 
+/* barra de escala de raiz para indicadores tipicamente por debajo del
+   5 %: mismo criterio que reglasPuntos en Calidad del dato (comprime lo
+   grande, abre lo chico) para que un 0,13 % siga dejando una barra
+   visible en vez de una linea de un pixel. La referencia (20 %) es fija,
+   no el maximo del conjunto filtrado -- asi el ancho no cambia de
+   significado segun cuanto se haya filtrado. */
+function microBarra(v, color) {
+  const REF = 20;
+  const w = el("div", "mbar");
+  w.title = p2f(v) + " -- escala de raíz, no lineal";
+  const i = el("i");
+  i.style.width = Math.max(3, 100 * Math.pow(Math.min(v, REF) / REF, 0.42)) + "%";
+  i.style.background = color || "var(--icbf-verde)";
+  w.append(i);
+  return w;
+}
+
 /* =====================================================================
    PANEL DE EVIDENCIA
    Reutiliza el grafico de puntos en version compacta para sustentar lo que
@@ -1865,8 +1887,8 @@ function vSemaforo() {
      que aclarara que hablan de niñas y niños */
   s.append(h2("Niñas y niños"));
   s.append(tiles([
-    { t: "Desnutrición aguda", f: "dnt_aguda", tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9 - OFFSET_NN, asc: true, lead: "Los casos clasificados en <b>desnutrición aguda severa o moderada</b> por peso para la talla, según la Resolución 2465 de 2016. Ordenados por puntaje Z de menor a mayor: arriba el caso más comprometido.", pie: "La columna <b>Canalizado</b> en «No» es la que exige gestión: hay caso detectado y no hay remisión registrada." }, v: mil(a.dnt), frac: a.dnt / a.n, spc: "var(--d2)", d: `${p2(pct(a.dnt, a.n))} · ${mil(a.dnt - a.canal)} sin canalizar`, cls: "crit" },
-    { t: "Riesgo de desnutrición", f: "pt", tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9 - OFFSET_NN, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar. Todavía no es desnutrición, pero es el grupo que puede cruzar el umbral entre una toma y la siguiente." }, v: p1(pct(a.riesgo, a.n)), d: mil(a.riesgo) + " niñas y niños", frac: a.riesgo / a.n, spc: "var(--d1)", cls: "crit" },
+    { t: "Desnutrición aguda", f: "dnt_aguda", tabla: { t: "Desnutrición aguda moderada o severa", idx: () => ix.filter(i => N.pt[i] === 1 || N.pt[i] === 2), ordenar: 9 - OFFSET_NN, asc: true, lead: "Los casos clasificados en <b>desnutrición aguda severa o moderada</b> por peso para la talla, según la Resolución 2465 de 2016. Ordenados por puntaje Z de menor a mayor: arriba el caso más comprometido.", pie: "La columna <b>Canalizado</b> en «No» es la que exige gestión: hay caso detectado y no hay remisión registrada." }, v: mil(a.dnt), gauge: pct(a.dnt, a.n), spc: "var(--d2)", d: `${p2(pct(a.dnt, a.n))} · ${mil(a.dnt - a.canal)} sin canalizar`, cls: "crit" },
+    { t: "Riesgo de desnutrición", f: "pt", tabla: { t: "Riesgo de desnutrición aguda", idx: () => ix.filter(i => N.pt[i] === 3), ordenar: 9 - OFFSET_NN, asc: true, lead: "Peso para la talla entre −2 y −1 desviaciones estándar. Todavía no es desnutrición, pero es el grupo que puede cruzar el umbral entre una toma y la siguiente." }, v: p1(pct(a.riesgo, a.n)), d: mil(a.riesgo) + " niñas y niños", gauge: pct(a.riesgo, a.n), spc: "var(--d1)", cls: "crit" },
     { t: "Retraso en talla", f: "retraso", tabla: { t: "Retraso en talla", idx: () => ix.filter(i => N.te[i] === 1), ordenar: 11 - OFFSET_NN, asc: true, lead: "Talla por debajo de −2 desviaciones estándar para la edad. Ordenados por puntaje Z de talla para la edad, de menor a mayor.", pie: "Contraste la <b>edad en meses</b> con el puntaje Z: si el retraso se concentra en los menores de 24 meses, revise cómo se está midiendo la longitud en acostado." }, v: p1(pct(a.retraso, a.n)), d: mil(a.retraso) + " niñas y niños", frac: a.retraso / a.n, spc: "var(--d2)", cls: "crit" },
     { t: "Sobrepeso u obesidad", f: "exceso", tabla: { t: "Sobrepeso u obesidad", idx: () => ix.filter(i => N.pt[i] === 6 || N.pt[i] === 7), ordenar: 9 - OFFSET_NN, lead: "Peso para la talla por encima de +2 desviaciones estándar. Ordenados de mayor a menor puntaje Z." }, v: p1(pct(a.exceso, a.n)), d: mil(a.exceso) + " niñas y niños", frac: a.exceso / a.n, spc: "var(--e2)", cls: "warn" },
     { t: "Cobertura de toma", f: "cobertura",
