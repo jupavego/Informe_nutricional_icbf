@@ -4072,8 +4072,7 @@ function render() {
     + '<div class="n"><b>' + mil(a.n) + '</b><span>niñas y niños</span></div>'
     + '<div class="n"><b>' + mil(g.n) + '</b><span>gestantes</span></div>'
     + '<div class="c">Corte ' + esc(D.meta.corte) + ' · tomas de ' + esc(D.meta.periodo)
-    + ' · ' + DIC.cz.length + ' centros zonales</div>'
-    + '<div class="v2"><i></i>versión ' + esc(D.meta.build || "—") + '</div>';
+    + ' · ' + DIC.cz.length + ' centros zonales</div>';
   /* solo se ve al imprimir (.filtroimpreso en pantalla es display:none):
      los selects de .bar ya muestran el filtro activo, pero se ocultan
      en el PDF -- sin este texto fijo, un informe filtrado y uno
@@ -4169,7 +4168,9 @@ function descargarInformeCompleto() {
   const notaId = D.meta.publico
     ? "Los datos de identificación (documento y nombre) se reemplazaron por un código secuencial antes de publicar esta versión: no permiten ubicar ni identificar a ningún beneficiario."
     : "Contiene número de documento y nombre completo del beneficiario para permitir la ubicación del caso en el sistema: <b>tratar como información de uso interno y confidencial</b>.";
-  $("#foot").innerHTML = `Leído de ${DIC.cz.length * 2} archivos de Cuéntame · Sistema de Información Primera Infancia. Cifras deduplicadas a la última toma y filtradas a beneficiarios vinculados; el municipio es siempre el de la <b>unidad de servicio</b>, no el de residencia. Clasificación antropométrica según la <b>Resolución 2465 de 2016</b> sobre los Patrones de Crecimiento Infantil de la OMS. Generado por <code>procesar_reportes.py</code>.<br>${notaId}<br>Colores institucionales del Manual de Imagen Corporativa del ICBF; las rampas de los gráficos se derivaron de esos tonos y se validaron para visión con deficiencia cromática.`;
+  $("#foot").innerHTML = `Leído de ${DIC.cz.length * 2} archivos de Cuéntame · Sistema de Información Primera Infancia. Cifras deduplicadas a la última toma y filtradas a beneficiarios vinculados; el municipio es siempre el de la <b>unidad de servicio</b>, no el de residencia. Clasificación antropométrica según la <b>Resolución 2465 de 2016</b> sobre los Patrones de Crecimiento Infantil de la OMS. Generado por <code>procesar_reportes.py</code>.<br>${notaId}<br>Colores institucionales del Manual de Imagen Corporativa del ICBF; las rampas de los gráficos se derivaron de esos tonos y se validaron para visión con deficiencia cromática.`
+    + `<div class="fpie"><span>Desarrollado por Área de Analítica ICBF Regional Antioquia · GITP</span>`
+    + `<span class="v2"><i></i>versión ${esc(D.meta.build || "—")}</span></div>`;
   render();
   /* una sola vez por carga de pagina, no por cada clic en Glosario */
   if (D.meta.publico) {

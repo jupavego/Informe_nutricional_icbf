@@ -598,9 +598,17 @@ footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--rule);font-si
 .topbar .pie .n b{font-size:16px;font-weight:700;color:var(--icbf-verde-osc);letter-spacing:-.01em}
 .topbar .pie .n span{font-size:11px;color:var(--ink2)}
 .topbar .pie .c{font-size:11px;color:var(--ink2);padding-left:12px;border-left:1px solid var(--rule)}
-.topbar .pie .v2{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--ink3);
+/* generico (sin el prefijo .topbar .pie): el footer tambien lo usa para
+   su propia marca de version, en .fpie */
+.v2{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--ink3);
   display:flex;align-items:center;gap:5px;padding-left:12px;border-left:1px solid var(--rule)}
-.topbar .pie .v2 i{width:5px;height:5px;border-radius:50%;background:var(--icbf-verde);flex:none}
+.v2 i{width:5px;height:5px;border-radius:50%;background:var(--icbf-verde);flex:none}
+/* linea final del pie de pagina: autoria a la izquierda, version a la
+   derecha, mas delgada y silenciosa que el resto del footer -- es un
+   sello, no informacion que alguien necesite leer para usar el tablero */
+.fpie{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;
+  gap:6px 10px;margin-top:10px;padding-top:8px;border-top:1px solid var(--rule2)}
+.fpie .v2{padding-left:0;border-left:none}
 
 @media(max-width:1000px){
   .app{grid-template-columns:1fr}
