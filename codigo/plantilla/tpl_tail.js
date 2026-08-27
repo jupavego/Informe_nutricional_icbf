@@ -1832,12 +1832,15 @@ function vSemaforo() {
   const s = $("#v-semaforo"); s.textContent = "";
   /* el Semaforo es la puerta de entrada del tablero: quien llega por
      primera vez necesita saber en que sitio esta antes de leer una sola
-     cifra. Va solo aqui, no en las otras diez pestañas, para que siga
-     leyendose como bienvenida y no como decoracion repetida. */
-  s.append(el("div", "hero",
+     cifra. #hero vive fuera de las doce secciones, antes del topbar
+     (ver tpl_head.html), asi que esto es literalmente lo primero que
+     se ve -- por eso su icono es el mismo tt-ico que trae cada seccion,
+     para que se lea como familia y no como un elemento aparte. */
+  $("#hero").innerHTML =
     '<div class="k">ICBF · Regional Antioquia · Sistema de Información Primera Infancia</div>'
-    + '<h1>Tablero de vigilancia nutricional</h1>'
-    + '<div class="s">Está viendo el Semáforo: el punto de partida del ejercicio, con las cifras que deciden si hay que profundizar en niñas, niños y gestantes de toda la Regional. Filtre arriba por centro zonal, municipio o entidad contratista, y recorra el resto del menú para el detalle.</div>'));
+    + '<div class="hero-tt"><div class="tt-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'
+    + ICO.semaforo + '"/></svg></div><h1>Tablero de vigilancia nutricional</h1></div>'
+    + '<div class="s">Está viendo el Semáforo: el punto de partida del ejercicio, con las cifras que deciden si hay que profundizar en niñas, niños y gestantes de toda la Regional. Filtre arriba por centro zonal, municipio o entidad contratista, y recorra el resto del menú para el detalle.</div>';
   const ix = idxNN(); const a = resumen(ix);
   const g = resumenGS(idxGS());
   if (!a.n) { s.append(vacio("Ningún beneficiario con la combinación de filtros seleccionada.")); return; }
@@ -4085,9 +4088,11 @@ function render() {
   $("#tsub").textContent = SUBS[TAB] || "";
   $("#ticon").innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + (ICO[TAB] || "") + '"/></svg>';
   /* En Semaforo el propio hero de bienvenida ya dice donde esta el usuario
-     (misma insignia verde); un segundo banner encima con el mismo mensaje
-     era ruido, no refuerzo -- se apaga solo ahi. */
+     (misma insignia verde, ahora antes incluso del topbar); un segundo
+     banner encima con el mismo mensaje era ruido, no refuerzo -- se apaga
+     solo ahi. */
   $(".ttban").style.display = TAB === "semaforo" ? "none" : "flex";
+  $("#hero").hidden = TAB !== "semaforo";
   VIEWS.forEach(([id]) => { $("#v-" + id).hidden = id !== TAB; });
   /* La alerta del corte se repetia en las diez vistas. Un aviso que aparece
      en cada pantalla se vuelve decorado y deja de leerse: se muestra solo en
